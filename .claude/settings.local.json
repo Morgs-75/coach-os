@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npm install)",
+      "Bash(supabase --version:*)",
+      "Bash(npm install:*)",
+      "Bash(winget install:*)",
+      "Bash(docker:*)",
+      "Bash(npm run dev:web:*)",
+      "Bash(if exist \".next\\\\dev\\\\lock\" del /f \".next\\\\dev\\\\lock\")",
+      "Bash(del /f \"C:\\\\Users\\\\Troy Morgan\\\\OneDrive\\\\coach-os\\\\apps\\\\trainer-web\\\\.next\\\\dev\\\\lock\")",
+      "Bash(ls:*)",
+      "Bash(npm run dev)",
+      "Bash(npm run:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout:*)",
+      "Bash(start http://localhost:3000)",
+      "Bash(cd:*)",
+      "WebSearch",
+      "WebFetch(domain:api.basiq.io)",
+      "Bash(npx supabase:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

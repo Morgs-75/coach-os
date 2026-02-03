@@ -1,0 +1,18 @@
+{
+  "name": "coach-os",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/trainer-web",
+    "dev:mobile": "npm run start --workspace=apps/client-mobile",
+    "build:web": "npm run build --workspace=apps/trainer-web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
