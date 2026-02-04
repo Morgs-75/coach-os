@@ -82,15 +82,52 @@ export default function TransactionsPage() {
     transactionId: string,
     accountId: string,
     taxTreatment?: string,
-    notes?: string
+    notes?: string,
+    splits?: Array<{ id: string; accountId: string; amountCents: number; taxTreatment: string; description: string }>,
+    rememberRule?: { matchField: string; matchValue: string }
   ) {
     try {
-      await fetch(`/api/my-accounts/transactions/${transactionId}`, {
+      const response = await fetch(`/api/my-accounts/transactions/${transactionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account_id: accountId, tax_treatment: taxTreatment, notes }),
+        body: JSON.stringify({
+          account_id: accountId,
+          tax_treatment: taxTreatment,
+          notes,
+          splits,
+          remember_rule: rememberRule,
+        }),
       });
-      await loadData();
+      const data = await response.json();
+
+      // In mock mode, update local state directly since data isn't persisted
+      if (data._mock || response.ok) {
+        const selectedAccount = accounts.find((a) => a.id === accountId);
+        const status = selectedAccount?.code === "OTH-003" ? "excluded" : "coded";
+
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.id === transactionId
+              ? {
+                  ...t,
+                  account_id: accountId,
+                  account: selectedAccount || null,
+                  tax_treatment: taxTreatment || selectedAccount?.tax_treatment || "gst",
+                  status,
+                  notes: notes || t.notes,
+                  coded_at: new Date().toISOString(),
+                  splits: splits || undefined,
+                }
+              : t
+          )
+        );
+
+        // If remember rule was set, show a brief confirmation
+        if (rememberRule) {
+          console.log("Created coding rule for:", rememberRule.matchValue);
+        }
+      }
+
       setEditingTransaction(null);
     } catch (error) {
       console.error("Failed to code transaction:", error);
@@ -99,7 +136,7 @@ export default function TransactionsPage() {
 
   async function handleBulkCode(accountId: string) {
     try {
-      await fetch("/api/my-accounts/transactions/bulk-code", {
+      const response = await fetch("/api/my-accounts/transactions/bulk-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,8 +144,30 @@ export default function TransactionsPage() {
           account_id: accountId,
         }),
       });
+      const data = await response.json();
+
+      // In mock mode, update local state directly
+      if (data._mock || response.ok) {
+        const selectedAccount = accounts.find((a) => a.id === accountId);
+        const status = selectedAccount?.code === "OTH-003" ? "excluded" : "coded";
+
+        setTransactions((prev) =>
+          prev.map((t) =>
+            selectedIds.has(t.id)
+              ? {
+                  ...t,
+                  account_id: accountId,
+                  account: selectedAccount || null,
+                  tax_treatment: selectedAccount?.tax_treatment || "gst",
+                  status,
+                  coded_at: new Date().toISOString(),
+                }
+              : t
+          )
+        );
+      }
+
       setSelectedIds(new Set());
-      await loadData();
     } catch (error) {
       console.error("Failed to bulk code:", error);
     }

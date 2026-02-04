@@ -4,14 +4,28 @@ import { useState } from "react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { BankTransactionWithRelations, ChartOfAccount } from "@coach-os/shared";
 import { AccountPicker } from "./AccountPicker";
-import { AISuggestionBadge } from "./AISuggestionBadge";
 import { PlatformMatchBadge } from "./PlatformMatchBadge";
 import { clsx } from "clsx";
+
+interface Split {
+  id: string;
+  accountId: string;
+  amountCents: number;
+  taxTreatment: string;
+  description: string;
+}
 
 interface TransactionCodingModalProps {
   transaction: BankTransactionWithRelations;
   accounts: ChartOfAccount[];
-  onSave: (transactionId: string, accountId: string, taxTreatment?: string, notes?: string) => void;
+  onSave: (
+    transactionId: string,
+    accountId: string,
+    taxTreatment?: string,
+    notes?: string,
+    splits?: Split[],
+    rememberRule?: { matchField: string; matchValue: string }
+  ) => void;
   onClose: () => void;
 }
 
@@ -26,18 +40,114 @@ export function TransactionCodingModal({
   const [notes, setNotes] = useState(transaction.notes || "");
   const [saving, setSaving] = useState(false);
 
+  // Split transaction state
+  const [isSplit, setIsSplit] = useState(false);
+  const [splits, setSplits] = useState<Split[]>([]);
+
+  // Remember rule state
+  const [rememberThis, setRememberThis] = useState(false);
+  const [matchField, setMatchField] = useState<"merchant" | "description">("merchant");
+
   const selectedAccount = accounts.find((a) => a.id === accountId);
 
+  // Calculate split totals
+  const splitTotal = splits.reduce((sum, s) => sum + s.amountCents, 0);
+  const remainingAmount = transaction.amount_cents - splitTotal;
+
+  // Initialize splits for payment fee scenario
+  function initializeFeeSplt() {
+    const feePercent = 0.05; // 5% default
+    const grossAmount = Math.round(transaction.amount_cents / (1 - feePercent));
+    const feeAmount = grossAmount - transaction.amount_cents;
+
+    // Find payment fees account
+    const feeAccount = accounts.find(a =>
+      a.name.toLowerCase().includes("payment") ||
+      a.name.toLowerCase().includes("processing") ||
+      a.name.toLowerCase().includes("bank fee") ||
+      a.code === "EXP-007"
+    );
+
+    setSplits([
+      {
+        id: "split-1",
+        accountId: accountId || "",
+        amountCents: grossAmount,
+        taxTreatment: "gst",
+        description: "Gross revenue",
+      },
+      {
+        id: "split-2",
+        accountId: feeAccount?.id || "",
+        amountCents: -feeAmount,
+        taxTreatment: "gst_free",
+        description: "Payment processing fee",
+      },
+    ]);
+    setIsSplit(true);
+  }
+
+  function addSplit() {
+    setSplits([
+      ...splits,
+      {
+        id: `split-${Date.now()}`,
+        accountId: "",
+        amountCents: remainingAmount,
+        taxTreatment: "gst",
+        description: "",
+      },
+    ]);
+  }
+
+  function updateSplit(id: string, updates: Partial<Split>) {
+    setSplits(splits.map(s => s.id === id ? { ...s, ...updates } : s));
+  }
+
+  function removeSplit(id: string) {
+    setSplits(splits.filter(s => s.id !== id));
+    if (splits.length <= 1) {
+      setIsSplit(false);
+    }
+  }
+
   async function handleSave() {
-    if (!accountId) return;
+    if (isSplit) {
+      // Validate splits
+      if (Math.abs(splitTotal - transaction.amount_cents) > 1) {
+        alert("Split amounts must equal the transaction total");
+        return;
+      }
+      if (splits.some(s => !s.accountId)) {
+        alert("All splits must have a category selected");
+        return;
+      }
+    } else if (!accountId) {
+      return;
+    }
+
     setSaving(true);
-    await onSave(transaction.id, accountId, taxTreatment, notes);
+
+    const rememberRule = rememberThis ? {
+      matchField,
+      matchValue: matchField === "merchant"
+        ? transaction.merchant_name || transaction.description
+        : transaction.description,
+    } : undefined;
+
+    await onSave(
+      transaction.id,
+      isSplit ? splits[0].accountId : accountId,
+      isSplit ? splits[0].taxTreatment : taxTreatment,
+      notes,
+      isSplit ? splits : undefined,
+      rememberRule
+    );
     setSaving(false);
   }
 
   async function handleExclude() {
     setSaving(true);
-    // Find the "Personal / Exclude" account
     const excludeAccount = accounts.find((a) => a.code === "OTH-003");
     if (excludeAccount) {
       await onSave(transaction.id, excludeAccount.id, "bas_excluded", notes);
@@ -101,7 +211,7 @@ export function TransactionCodingModal({
         </div>
 
         {/* AI Suggestion */}
-        {transaction.ai_suggested_account && (
+        {transaction.ai_suggested_account && !isSplit && (
           <div className="px-6 py-4 bg-blue-50 border-b border-blue-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -141,39 +251,201 @@ export function TransactionCodingModal({
 
         {/* Coding Form */}
         <div className="px-6 py-6 space-y-4">
-          <div>
-            <label className="label">Category</label>
-            <AccountPicker
-              accounts={accounts}
-              value={accountId}
-              onChange={(id) => {
-                setAccountId(id);
-                const account = accounts.find((a) => a.id === id);
-                if (account) {
-                  setTaxTreatment(account.tax_treatment);
-                }
-              }}
-              placeholder="Select a category..."
-            />
-          </div>
+          {/* Split Toggle - only show for credits (income) */}
+          {transaction.direction === "credit" && (
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Split Transaction</p>
+                <p className="text-xs text-gray-500">Record gross revenue and payment fees separately</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {!isSplit && (
+                  <button
+                    onClick={initializeFeeSplt}
+                    className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+                  >
+                    Add 5% Fee Split
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (isSplit) {
+                      setIsSplit(false);
+                      setSplits([]);
+                    } else {
+                      setIsSplit(true);
+                      setSplits([{
+                        id: "split-1",
+                        accountId: accountId,
+                        amountCents: transaction.amount_cents,
+                        taxTreatment: taxTreatment,
+                        description: "",
+                      }]);
+                    }
+                  }}
+                  className={clsx(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    isSplit ? "bg-brand-600" : "bg-gray-200"
+                  )}
+                >
+                  <span
+                    className={clsx(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      isSplit ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
 
-          <div>
-            <label className="label">Tax Treatment</label>
-            <select
-              value={taxTreatment}
-              onChange={(e) => setTaxTreatment(e.target.value)}
-              className="input"
-            >
-              <option value="gst">GST (10%)</option>
-              <option value="gst_free">GST Free</option>
-              <option value="bas_excluded">BAS Excluded</option>
-            </select>
-            {taxTreatment === "gst" && (
-              <p className="text-sm text-gray-500 mt-1">
-                GST: {formatCurrency(Math.round(transaction.amount_cents / 11))}
-              </p>
-            )}
-          </div>
+          {isSplit ? (
+            /* Split Transaction UI */
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-gray-700">Transaction Splits</p>
+
+              {splits.map((split, index) => (
+                <div key={split.id} className="p-4 bg-gray-50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">
+                      Split {index + 1}
+                    </span>
+                    {splits.length > 1 && (
+                      <button
+                        onClick={() => removeSplit(split.id)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label text-xs">Category</label>
+                      <AccountPicker
+                        accounts={accounts}
+                        value={split.accountId}
+                        onChange={(id) => {
+                          const account = accounts.find(a => a.id === id);
+                          updateSplit(split.id, {
+                            accountId: id,
+                            taxTreatment: account?.tax_treatment || "gst"
+                          });
+                        }}
+                        placeholder="Select category..."
+                      />
+                    </div>
+                    <div>
+                      <label className="label text-xs">Amount</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={(split.amountCents / 100).toFixed(2)}
+                          onChange={(e) => updateSplit(split.id, {
+                            amountCents: Math.round(parseFloat(e.target.value || "0") * 100)
+                          })}
+                          className="input pl-7"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label text-xs">Tax Treatment</label>
+                      <select
+                        value={split.taxTreatment}
+                        onChange={(e) => updateSplit(split.id, { taxTreatment: e.target.value })}
+                        className="input text-sm"
+                      >
+                        <option value="gst">GST (10%)</option>
+                        <option value="gst_free">GST Free</option>
+                        <option value="bas_excluded">BAS Excluded</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label text-xs">Description (optional)</label>
+                      <input
+                        type="text"
+                        value={split.description}
+                        onChange={(e) => updateSplit(split.id, { description: e.target.value })}
+                        className="input text-sm"
+                        placeholder="e.g., Payment fee"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={addSplit}
+                  className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+                >
+                  + Add Another Split
+                </button>
+                <div className="text-sm">
+                  <span className="text-gray-500">Total: </span>
+                  <span className={clsx(
+                    "font-medium",
+                    Math.abs(splitTotal - transaction.amount_cents) <= 1
+                      ? "text-green-600"
+                      : "text-red-600"
+                  )}>
+                    {formatCurrency(splitTotal)}
+                  </span>
+                  <span className="text-gray-400"> / {formatCurrency(transaction.amount_cents)}</span>
+                </div>
+              </div>
+
+              {Math.abs(splitTotal - transaction.amount_cents) > 1 && (
+                <p className="text-sm text-red-600">
+                  Splits must equal {formatCurrency(transaction.amount_cents)}
+                  (difference: {formatCurrency(Math.abs(splitTotal - transaction.amount_cents))})
+                </p>
+              )}
+            </div>
+          ) : (
+            /* Standard Single Category UI */
+            <>
+              <div>
+                <label className="label">Category</label>
+                <AccountPicker
+                  accounts={accounts}
+                  value={accountId}
+                  onChange={(id) => {
+                    setAccountId(id);
+                    const account = accounts.find((a) => a.id === id);
+                    if (account) {
+                      setTaxTreatment(account.tax_treatment);
+                    }
+                  }}
+                  placeholder="Select a category..."
+                />
+              </div>
+
+              <div>
+                <label className="label">Tax Treatment</label>
+                <select
+                  value={taxTreatment}
+                  onChange={(e) => setTaxTreatment(e.target.value)}
+                  className="input"
+                >
+                  <option value="gst">GST (10%)</option>
+                  <option value="gst_free">GST Free</option>
+                  <option value="bas_excluded">BAS Excluded</option>
+                </select>
+                {taxTreatment === "gst" && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    GST: {formatCurrency(Math.round(transaction.amount_cents / 11))}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
 
           <div>
             <label className="label">Notes (optional)</label>
@@ -184,6 +456,56 @@ export function TransactionCodingModal({
               rows={2}
               placeholder="Add any notes about this transaction..."
             />
+          </div>
+
+          {/* Remember This Transaction */}
+          <div className="pt-4 border-t border-gray-200">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberThis}
+                onChange={(e) => setRememberThis(e.target.checked)}
+                className="mt-0.5 rounded text-brand-600"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-700">Remember this for future transactions</p>
+                <p className="text-xs text-gray-500">Automatically code similar transactions the same way</p>
+              </div>
+            </label>
+
+            {rememberThis && (
+              <div className="mt-3 ml-6">
+                <label className="label text-xs">Match by:</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="matchField"
+                      value="merchant"
+                      checked={matchField === "merchant"}
+                      onChange={() => setMatchField("merchant")}
+                      className="text-brand-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Merchant: <span className="font-medium">{transaction.merchant_name || transaction.description}</span>
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="matchField"
+                      value="description"
+                      checked={matchField === "description"}
+                      onChange={() => setMatchField("description")}
+                      className="text-brand-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Description pattern
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -202,7 +524,7 @@ export function TransactionCodingModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={!accountId || saving}
+              disabled={(!accountId && !isSplit) || saving || (isSplit && Math.abs(splitTotal - transaction.amount_cents) > 1)}
               className="btn-primary"
             >
               {saving ? "Saving..." : "Save"}

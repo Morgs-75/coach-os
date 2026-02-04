@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ChartOfAccount } from "@coach-os/shared";
 import { clsx } from "clsx";
 
@@ -21,10 +22,23 @@ export function AccountPicker({
 }: AccountPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedAccount = accounts.find((a) => a.id === value);
+
+  // Update dropdown position when opening
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [isOpen]);
 
   // Filter accounts by search
   const filteredAccounts = accounts.filter(
@@ -41,7 +55,11 @@ export function AccountPicker({
   // Close on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Check if click is inside the container or inside the portal dropdown
+      const isInContainer = containerRef.current?.contains(target);
+      const isInDropdown = (target as Element).closest?.('[data-account-picker-dropdown]');
+      if (!isInContainer && !isInDropdown) {
         setIsOpen(false);
       }
     }
@@ -66,8 +84,15 @@ export function AccountPicker({
           {selectedAccount ? selectedAccount.name : placeholder}
         </button>
 
-        {isOpen && (
-          <div className="absolute z-50 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto">
+        {isOpen && typeof window !== "undefined" && createPortal(
+          <div
+            data-account-picker-dropdown
+            className="fixed z-[9999] w-64 bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto"
+            style={{
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+            }}
+          >
             <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
               <input
                 ref={inputRef}
@@ -86,7 +111,8 @@ export function AccountPicker({
               onSelect={handleSelect}
               selectedId={value}
             />
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
@@ -127,8 +153,16 @@ export function AccountPicker({
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto">
+      {isOpen && typeof window !== "undefined" && createPortal(
+        <div
+          data-account-picker-dropdown
+          className="fixed z-[9999] bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width || 300,
+          }}
+        >
           <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
             <input
               ref={inputRef}
@@ -137,6 +171,7 @@ export function AccountPicker({
               onChange={(e) => setSearch(e.target.value)}
               className="input py-1.5 text-sm"
               placeholder="Search accounts..."
+              autoFocus
             />
           </div>
           <AccountList
@@ -146,7 +181,8 @@ export function AccountPicker({
             onSelect={handleSelect}
             selectedId={value}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
