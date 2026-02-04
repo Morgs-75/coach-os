@@ -1,8 +1,9 @@
 import Link from "next/link";
 
-// Force static generation - this page has no dynamic content
+// Force static generation at edge for fastest possible response
 export const dynamic = "force-static";
 export const revalidate = false;
+export const runtime = "edge";
 
 export default function LandingPage() {
   return (
