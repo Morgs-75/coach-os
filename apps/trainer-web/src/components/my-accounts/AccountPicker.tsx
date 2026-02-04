@@ -41,17 +41,25 @@ export function AccountPicker({
       // If not enough space below and more space above, open upward
       const openUpward = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
 
+      // Calculate available height for dropdown
+      const availableHeight = openUpward
+        ? Math.min(DROPDOWN_HEIGHT, spaceAbove - 10)
+        : Math.min(DROPDOWN_HEIGHT, spaceBelow - 10);
+
       let top: number;
       if (openUpward) {
-        // Position above the button
-        top = rect.top + window.scrollY - Math.min(DROPDOWN_HEIGHT, spaceAbove - 10);
+        // Position above the button (fixed positioning uses viewport coords)
+        top = rect.top - availableHeight;
       } else {
         // Position below the button
-        top = rect.bottom + window.scrollY + 4;
+        top = rect.bottom + 4;
       }
 
+      // Ensure dropdown stays within viewport vertically
+      top = Math.max(10, Math.min(top, viewportHeight - availableHeight - 10));
+
       // Ensure left position doesn't go off-screen
-      let left = rect.left + window.scrollX;
+      let left = rect.left;
       const dropdownWidth = Math.max(rect.width, 300);
       if (left + dropdownWidth > window.innerWidth) {
         left = window.innerWidth - dropdownWidth - 10;
