@@ -103,7 +103,8 @@ export default function TransactionsPage() {
       // In mock mode, update local state directly since data isn't persisted
       if (data._mock || response.ok) {
         const selectedAccount = accounts.find((a) => a.id === accountId);
-        const status = selectedAccount?.code === "OTH-003" ? "excluded" : "coded";
+        const status = (selectedAccount?.code === "OTH-003" ? "excluded" : "coded") as "excluded" | "coded";
+        const newTaxTreatment = (taxTreatment || selectedAccount?.tax_treatment || "gst") as "gst" | "gst_free" | "bas_excluded";
 
         setTransactions((prev) =>
           prev.map((t) =>
@@ -111,12 +112,22 @@ export default function TransactionsPage() {
               ? {
                   ...t,
                   account_id: accountId,
-                  account: selectedAccount || null,
-                  tax_treatment: taxTreatment || selectedAccount?.tax_treatment || "gst",
+                  account: selectedAccount,
+                  tax_treatment: newTaxTreatment,
                   status,
                   notes: notes || t.notes,
                   coded_at: new Date().toISOString(),
-                  splits: splits || undefined,
+                  splits: splits?.map(s => ({
+                    id: s.id,
+                    org_id: t.org_id,
+                    transaction_id: t.id,
+                    account_id: s.accountId,
+                    amount_cents: s.amountCents,
+                    tax_treatment: s.taxTreatment as "gst" | "gst_free" | "bas_excluded",
+                    gst_cents: s.taxTreatment === "gst" ? Math.round(s.amountCents / 11) : 0,
+                    description: s.description || null,
+                    created_at: new Date().toISOString(),
+                  })),
                 }
               : t
           )
@@ -149,7 +160,8 @@ export default function TransactionsPage() {
       // In mock mode, update local state directly
       if (data._mock || response.ok) {
         const selectedAccount = accounts.find((a) => a.id === accountId);
-        const status = selectedAccount?.code === "OTH-003" ? "excluded" : "coded";
+        const status = (selectedAccount?.code === "OTH-003" ? "excluded" : "coded") as "excluded" | "coded";
+        const newTaxTreatment = (selectedAccount?.tax_treatment || "gst") as "gst" | "gst_free" | "bas_excluded";
 
         setTransactions((prev) =>
           prev.map((t) =>
@@ -157,8 +169,8 @@ export default function TransactionsPage() {
               ? {
                   ...t,
                   account_id: accountId,
-                  account: selectedAccount || null,
-                  tax_treatment: selectedAccount?.tax_treatment || "gst",
+                  account: selectedAccount,
+                  tax_treatment: newTaxTreatment,
                   status,
                   coded_at: new Date().toISOString(),
                 }
