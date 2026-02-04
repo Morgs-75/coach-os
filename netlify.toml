@@ -8,9 +8,7 @@
   # Use Australia region for faster response times
   AWS_LAMBDA_JS_RUNTIME = "nodejs20.x"
 
-[functions]
-  # Deploy functions to Sydney region
-  region = "ap-southeast-2"
+# Note: Function region is set in Netlify UI under Site Settings > Functions
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
