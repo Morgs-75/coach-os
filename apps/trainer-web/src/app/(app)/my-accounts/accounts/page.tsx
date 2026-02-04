@@ -7,8 +7,8 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ code: "", name: "", tax_treatment: "gst" });
-  const [newAccount, setNewAccount] = useState<{ category: string; code: string; name: string; tax_treatment: string } | null>(null);
+  const [editData, setEditData] = useState({ name: "", tax_treatment: "gst" });
+  const [newAccount, setNewAccount] = useState<{ category: string; name: string; tax_treatment: string } | null>(null);
 
   useEffect(() => {
     loadAccounts();
@@ -57,7 +57,6 @@ export default function AccountsPage() {
   function startEdit(account: ChartOfAccount) {
     setEditingId(account.id);
     setEditData({
-      code: account.code,
       name: account.name,
       tax_treatment: account.tax_treatment || "gst",
     });
@@ -68,17 +67,9 @@ export default function AccountsPage() {
     setNewAccount(null);
   }
 
-  function generateCode(category: string) {
-    const prefix = category === "income" ? "INC" : category === "expense" ? "EXP" : "OTH";
-    const existingCodes = accounts.filter(a => a.code.startsWith(prefix)).map(a => parseInt(a.code.split("-")[1] || "0", 10));
-    const nextNum = Math.max(0, ...existingCodes) + 1;
-    return `${prefix}-${String(nextNum).padStart(3, "0")}`;
-  }
-
   function addNewRow(category: string) {
     setNewAccount({
       category,
-      code: generateCode(category),
       name: "",
       tax_treatment: "gst",
     });
@@ -93,7 +84,7 @@ export default function AccountsPage() {
   }
 
   return (
-    <div className="space-y-6" style={{ fontSize: '8pt' }}>
+    <div className="space-y-4" style={{ fontSize: '8pt' }}>
       {/* Income */}
       <AccountTable
         title="Income"
@@ -107,7 +98,7 @@ export default function AccountsPage() {
         onDelete={deleteAccount}
         newAccount={newAccount?.category === "income" ? newAccount : null}
         onAddNew={() => addNewRow("income")}
-        onSaveNew={() => saveAccount({ ...newAccount, is_system: false })}
+        onSaveNew={() => saveAccount({ ...newAccount, code: `INC-${Date.now()}`, is_system: false })}
         onNewChange={(data) => setNewAccount({ ...newAccount!, ...data })}
         color="green"
       />
@@ -125,7 +116,7 @@ export default function AccountsPage() {
         onDelete={deleteAccount}
         newAccount={newAccount?.category === "expense" ? newAccount : null}
         onAddNew={() => addNewRow("expense")}
-        onSaveNew={() => saveAccount({ ...newAccount, is_system: false })}
+        onSaveNew={() => saveAccount({ ...newAccount, code: `EXP-${Date.now()}`, is_system: false })}
         onNewChange={(data) => setNewAccount({ ...newAccount!, ...data })}
         color="red"
       />
@@ -143,7 +134,7 @@ export default function AccountsPage() {
         onDelete={deleteAccount}
         newAccount={newAccount?.category === "other" ? newAccount : null}
         onAddNew={() => addNewRow("other")}
-        onSaveNew={() => saveAccount({ ...newAccount, is_system: false })}
+        onSaveNew={() => saveAccount({ ...newAccount, code: `OTH-${Date.now()}`, is_system: false })}
         onNewChange={(data) => setNewAccount({ ...newAccount!, ...data })}
         color="gray"
       />
@@ -170,16 +161,16 @@ function AccountTable({
   title: string;
   accounts: ChartOfAccount[];
   editingId: string | null;
-  editData: { code: string; name: string; tax_treatment: string };
-  setEditData: (data: { code: string; name: string; tax_treatment: string }) => void;
+  editData: { name: string; tax_treatment: string };
+  setEditData: (data: { name: string; tax_treatment: string }) => void;
   onStartEdit: (account: ChartOfAccount) => void;
   onSave: (id: string) => void;
   onCancel: () => void;
   onDelete: (id: string) => void;
-  newAccount: { code: string; name: string; tax_treatment: string } | null;
+  newAccount: { name: string; tax_treatment: string } | null;
   onAddNew: () => void;
   onSaveNew: () => void;
-  onNewChange: (data: Partial<{ code: string; name: string; tax_treatment: string }>) => void;
+  onNewChange: (data: Partial<{ name: string; tax_treatment: string }>) => void;
   color: "green" | "red" | "gray";
 }) {
   const headerColors = {
@@ -193,11 +184,9 @@ function AccountTable({
       <table className="min-w-full">
         <thead>
           <tr className={headerColors[color]}>
-            <th className="px-2 py-1.5 text-left font-bold w-20">{title}</th>
-            <th className="px-2 py-1.5 text-left font-semibold w-24">Code</th>
-            <th className="px-2 py-1.5 text-left font-semibold">Account Name</th>
-            <th className="px-2 py-1.5 text-center font-semibold w-16">GST</th>
-            <th className="px-2 py-1.5 text-right w-20">
+            <th className="px-3 py-1.5 text-left font-bold">{title}</th>
+            <th className="px-3 py-1.5 text-center font-semibold w-12">GST</th>
+            <th className="px-3 py-1.5 text-right w-24">
               <button onClick={onAddNew} className="text-blue-600 hover:text-blue-800 font-medium">
                 + Add
               </button>
@@ -209,55 +198,40 @@ function AccountTable({
             <tr key={account.id} className="hover:bg-gray-50">
               {editingId === account.id ? (
                 <>
-                  <td className="px-2 py-1"></td>
-                  <td className="px-2 py-1">
-                    <input
-                      type="text"
-                      value={editData.code}
-                      onChange={(e) => setEditData({ ...editData, code: e.target.value.toUpperCase() })}
-                      className="w-full px-1 py-0.5 border border-gray-300 rounded text-xs font-mono"
-                    />
-                  </td>
-                  <td className="px-2 py-1">
+                  <td className="px-3 py-1">
                     <input
                       type="text"
                       value={editData.name}
                       onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                      className="w-full px-1 py-0.5 border border-gray-300 rounded text-xs"
+                      className="w-full px-2 py-0.5 border border-gray-300 rounded"
                       autoFocus
                     />
                   </td>
-                  <td className="px-2 py-1 text-center">
+                  <td className="px-3 py-1 text-center">
                     <select
                       value={editData.tax_treatment}
                       onChange={(e) => setEditData({ ...editData, tax_treatment: e.target.value })}
-                      className="px-1 py-0.5 border border-gray-300 rounded text-xs"
+                      className="px-1 py-0.5 border border-gray-300 rounded"
                     >
                       <option value="gst">Y</option>
                       <option value="gst_free">N</option>
                       <option value="bas_excluded">-</option>
                     </select>
                   </td>
-                  <td className="px-2 py-1 text-right">
+                  <td className="px-3 py-1 text-right whitespace-nowrap">
                     <button onClick={() => onSave(account.id)} className="text-green-600 hover:text-green-800 mr-2">Save</button>
                     <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">Cancel</button>
                   </td>
                 </>
               ) : (
                 <>
-                  <td className="px-2 py-1"></td>
-                  <td className="px-2 py-1 font-mono text-gray-600">{account.code}</td>
-                  <td className="px-2 py-1 text-gray-900">{account.name}</td>
-                  <td className="px-2 py-1 text-center text-gray-600">
+                  <td className="px-3 py-1 text-gray-900">{account.name}</td>
+                  <td className="px-3 py-1 text-center text-gray-600">
                     {account.tax_treatment === "gst" ? "Y" : account.tax_treatment === "gst_free" ? "N" : "-"}
                   </td>
-                  <td className="px-2 py-1 text-right">
-                    {!account.is_system && (
-                      <>
-                        <button onClick={() => onStartEdit(account)} className="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                        <button onClick={() => onDelete(account.id)} className="text-red-600 hover:text-red-800">Del</button>
-                      </>
-                    )}
+                  <td className="px-3 py-1 text-right whitespace-nowrap">
+                    <button onClick={() => onStartEdit(account)} className="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                    <button onClick={() => onDelete(account.id)} className="text-red-600 hover:text-red-800">Del</button>
                   </td>
                 </>
               )}
@@ -265,37 +239,28 @@ function AccountTable({
           ))}
           {newAccount && (
             <tr className="bg-blue-50">
-              <td className="px-2 py-1"></td>
-              <td className="px-2 py-1">
-                <input
-                  type="text"
-                  value={newAccount.code}
-                  onChange={(e) => onNewChange({ code: e.target.value.toUpperCase() })}
-                  className="w-full px-1 py-0.5 border border-gray-300 rounded text-xs font-mono"
-                />
-              </td>
-              <td className="px-2 py-1">
+              <td className="px-3 py-1">
                 <input
                   type="text"
                   value={newAccount.name}
                   onChange={(e) => onNewChange({ name: e.target.value })}
-                  className="w-full px-1 py-0.5 border border-gray-300 rounded text-xs"
+                  className="w-full px-2 py-0.5 border border-gray-300 rounded"
                   placeholder="Account name..."
                   autoFocus
                 />
               </td>
-              <td className="px-2 py-1 text-center">
+              <td className="px-3 py-1 text-center">
                 <select
                   value={newAccount.tax_treatment}
                   onChange={(e) => onNewChange({ tax_treatment: e.target.value })}
-                  className="px-1 py-0.5 border border-gray-300 rounded text-xs"
+                  className="px-1 py-0.5 border border-gray-300 rounded"
                 >
                   <option value="gst">Y</option>
                   <option value="gst_free">N</option>
                   <option value="bas_excluded">-</option>
                 </select>
               </td>
-              <td className="px-2 py-1 text-right">
+              <td className="px-3 py-1 text-right whitespace-nowrap">
                 <button onClick={onSaveNew} className="text-green-600 hover:text-green-800 mr-2">Save</button>
                 <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">Cancel</button>
               </td>
@@ -303,7 +268,7 @@ function AccountTable({
           )}
           {accounts.length === 0 && !newAccount && (
             <tr>
-              <td colSpan={5} className="px-2 py-3 text-center text-gray-400">
+              <td colSpan={3} className="px-3 py-2 text-center text-gray-400">
                 No accounts. Click + Add to create one.
               </td>
             </tr>
