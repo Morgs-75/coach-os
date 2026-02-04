@@ -118,8 +118,8 @@ export default function PnLPage() {
     return Array.from(accountMap.values());
   }, [pnlData]);
 
-  const incomeAccounts = accounts.filter(a => a.category === "income");
-  const expenseAccounts = accounts.filter(a => a.category === "expense");
+  const incomeAccounts = accounts.filter(a => a.category === "income").sort((a, b) => a.name.localeCompare(b.name));
+  const expenseAccounts = accounts.filter(a => a.category === "expense").sort((a, b) => a.name.localeCompare(b.name));
 
   // Build data matrix: account -> month -> amount
   const dataMatrix = useMemo(() => {

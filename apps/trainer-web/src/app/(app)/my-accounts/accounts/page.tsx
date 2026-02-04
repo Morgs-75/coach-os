@@ -59,9 +59,9 @@ export default function AccountsPage() {
     ? accounts
     : accounts.filter(a => a.category === filter);
 
-  const incomeAccounts = filteredAccounts.filter(a => a.category === "income");
-  const expenseAccounts = filteredAccounts.filter(a => a.category === "expense");
-  const otherAccounts = filteredAccounts.filter(a => a.category === "other");
+  const incomeAccounts = filteredAccounts.filter(a => a.category === "income").sort((a, b) => a.name.localeCompare(b.name));
+  const expenseAccounts = filteredAccounts.filter(a => a.category === "expense").sort((a, b) => a.name.localeCompare(b.name));
+  const otherAccounts = filteredAccounts.filter(a => a.category === "other").sort((a, b) => a.name.localeCompare(b.name));
 
   if (loading) {
     return <div className="text-center py-12 text-gray-500">Loading accounts...</div>;
