@@ -45,30 +45,35 @@ export default function TransactionsPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // Load transactions
+      // Build transaction URL
       let url = "/api/my-accounts/transactions?";
       if (statusFilter !== "all") url += `status=${statusFilter}&`;
       if (bankAccountFilter !== "all") url += `bank_account_id=${bankAccountFilter}&`;
       if (dateRange.start) url += `start_date=${dateRange.start}&`;
       if (dateRange.end) url += `end_date=${dateRange.end}&`;
 
-      const txResponse = await fetch(url);
-      const txData = await txResponse.json();
+      // Load all data in parallel for faster loading
+      const [txResponse, coaResponse, bankResponse] = await Promise.all([
+        fetch(url),
+        fetch("/api/my-accounts/chart-of-accounts"),
+        fetch("/api/my-accounts/accounts"),
+      ]);
+
+      const [txData, coaData, bankData] = await Promise.all([
+        txResponse.json(),
+        coaResponse.json(),
+        bankResponse.json(),
+      ]);
+
       setTransactions(txData.transactions || []);
-
-      // Load chart of accounts
-      await loadAccounts();
-
-      // Load bank accounts
-      const bankResponse = await fetch("/api/my-accounts/accounts");
-      const bankData = await bankResponse.json();
+      setAccounts(coaData.accounts || []);
       setBankAccounts(bankData.accounts || []);
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, bankAccountFilter, dateRange, loadAccounts]);
+  }, [statusFilter, bankAccountFilter, dateRange]);
 
   useEffect(() => {
     loadData();
