@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ChartOfAccount } from "@coach-os/shared";
+import type { ChartOfAccount, TaxTreatment, AccountCategory } from "@coach-os/shared";
+
+type EditData = { name: string; tax_treatment: TaxTreatment };
+type NewAccountData = { category: AccountCategory; name: string; tax_treatment: TaxTreatment };
 
 export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ name: "", tax_treatment: "gst" });
-  const [newAccount, setNewAccount] = useState<{ category: string; name: string; tax_treatment: string } | null>(null);
+  const [editData, setEditData] = useState<EditData>({ name: "", tax_treatment: "gst" });
+  const [newAccount, setNewAccount] = useState<NewAccountData | null>(null);
 
   useEffect(() => {
     loadAccounts();
@@ -67,7 +70,7 @@ export default function AccountsPage() {
     setNewAccount(null);
   }
 
-  function addNewRow(category: string) {
+  function addNewRow(category: AccountCategory) {
     setNewAccount({
       category,
       name: "",
@@ -161,16 +164,16 @@ function AccountTable({
   title: string;
   accounts: ChartOfAccount[];
   editingId: string | null;
-  editData: { name: string; tax_treatment: string };
-  setEditData: (data: { name: string; tax_treatment: string }) => void;
+  editData: EditData;
+  setEditData: (data: EditData) => void;
   onStartEdit: (account: ChartOfAccount) => void;
   onSave: (id: string) => void;
   onCancel: () => void;
   onDelete: (id: string) => void;
-  newAccount: { name: string; tax_treatment: string } | null;
+  newAccount: { name: string; tax_treatment: TaxTreatment } | null;
   onAddNew: () => void;
   onSaveNew: () => void;
-  onNewChange: (data: Partial<{ name: string; tax_treatment: string }>) => void;
+  onNewChange: (data: Partial<{ name: string; tax_treatment: TaxTreatment }>) => void;
   color: "green" | "red" | "gray";
 }) {
   const headerColors = {
@@ -210,7 +213,7 @@ function AccountTable({
                   <td className="px-3 py-1 text-center">
                     <select
                       value={editData.tax_treatment}
-                      onChange={(e) => setEditData({ ...editData, tax_treatment: e.target.value })}
+                      onChange={(e) => setEditData({ ...editData, tax_treatment: e.target.value as TaxTreatment })}
                       className="px-1 py-0.5 border border-gray-300 rounded"
                     >
                       <option value="gst">Y</option>
@@ -252,7 +255,7 @@ function AccountTable({
               <td className="px-3 py-1 text-center">
                 <select
                   value={newAccount.tax_treatment}
-                  onChange={(e) => onNewChange({ tax_treatment: e.target.value })}
+                  onChange={(e) => onNewChange({ tax_treatment: e.target.value as TaxTreatment })}
                   className="px-1 py-0.5 border border-gray-300 rounded"
                 >
                   <option value="gst">Y</option>
