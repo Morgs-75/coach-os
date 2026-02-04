@@ -15,6 +15,7 @@ interface TransactionTableProps {
   onSelectOne: (id: string, checked: boolean) => void;
   onEdit: (transaction: BankTransactionWithRelations) => void;
   onQuickCode: (transactionId: string, accountId: string) => void;
+  onAccountsChange?: () => void;
 }
 
 export function TransactionTable({
@@ -25,6 +26,7 @@ export function TransactionTable({
   onSelectOne,
   onEdit,
   onQuickCode,
+  onAccountsChange,
 }: TransactionTableProps) {
   const allSelected = transactions.length > 0 && selectedIds.size === transactions.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < transactions.length;
@@ -71,6 +73,7 @@ export function TransactionTable({
                 onSelect={(checked) => onSelectOne(tx.id, checked)}
                 onEdit={() => onEdit(tx)}
                 onQuickCode={(accountId) => onQuickCode(tx.id, accountId)}
+                onAccountsChange={onAccountsChange}
               />
             ))}
           </tbody>
@@ -87,6 +90,7 @@ interface TransactionRowProps {
   onSelect: (checked: boolean) => void;
   onEdit: () => void;
   onQuickCode: (accountId: string) => void;
+  onAccountsChange?: () => void;
 }
 
 function TransactionRow({
@@ -96,6 +100,7 @@ function TransactionRow({
   onSelect,
   onEdit,
   onQuickCode,
+  onAccountsChange,
 }: TransactionRowProps) {
   const statusColors = {
     uncoded: "bg-amber-50",
@@ -165,6 +170,7 @@ function TransactionRow({
             accounts={accounts}
             value=""
             onChange={onQuickCode}
+            onAccountsChange={onAccountsChange}
             placeholder="Select category..."
             compact
           />

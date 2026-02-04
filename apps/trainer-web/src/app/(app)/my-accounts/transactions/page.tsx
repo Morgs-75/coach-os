@@ -32,6 +32,16 @@ export default function TransactionsPage() {
     }
   }, [searchParams]);
 
+  const loadAccounts = useCallback(async () => {
+    try {
+      const coaResponse = await fetch("/api/my-accounts/chart-of-accounts");
+      const coaData = await coaResponse.json();
+      setAccounts(coaData.accounts || []);
+    } catch (error) {
+      console.error("Failed to load accounts:", error);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -47,9 +57,7 @@ export default function TransactionsPage() {
       setTransactions(txData.transactions || []);
 
       // Load chart of accounts
-      const coaResponse = await fetch("/api/my-accounts/chart-of-accounts");
-      const coaData = await coaResponse.json();
-      setAccounts(coaData.accounts || []);
+      await loadAccounts();
 
       // Load bank accounts
       const bankResponse = await fetch("/api/my-accounts/accounts");
@@ -60,7 +68,7 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, bankAccountFilter, dateRange]);
+  }, [statusFilter, bankAccountFilter, dateRange, loadAccounts]);
 
   useEffect(() => {
     loadData();
@@ -333,6 +341,7 @@ export default function TransactionsPage() {
           onSelectOne={handleSelectOne}
           onEdit={setEditingTransaction}
           onQuickCode={handleCodeTransaction}
+          onAccountsChange={loadAccounts}
         />
       )}
 

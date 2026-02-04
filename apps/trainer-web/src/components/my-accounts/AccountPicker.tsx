@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import type { ChartOfAccount } from "@coach-os/shared";
+import type { ChartOfAccount, AccountCategory, TaxTreatment } from "@coach-os/shared";
 import { clsx } from "clsx";
 
 interface AccountPickerProps {
   accounts: ChartOfAccount[];
   value: string;
   onChange: (accountId: string) => void;
+  onAccountsChange?: () => void;
   placeholder?: string;
   compact?: boolean;
 }
@@ -17,12 +18,16 @@ export function AccountPicker({
   accounts,
   value,
   onChange,
+  onAccountsChange,
   placeholder = "Select an account...",
   compact = false,
 }: AccountPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0, openUpward: false });
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddData, setQuickAddData] = useState({ name: "", category: "expense" as AccountCategory, tax_treatment: "gst" as TaxTreatment });
+  const [saving, setSaving] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -105,6 +110,37 @@ export function AccountPicker({
     onChange(accountId);
     setIsOpen(false);
     setSearch("");
+    setShowQuickAdd(false);
+  }
+
+  async function handleQuickAdd() {
+    if (!quickAddData.name.trim()) return;
+    setSaving(true);
+    try {
+      const prefix = quickAddData.category === "income" ? "INC" : quickAddData.category === "expense" ? "EXP" : "OTH";
+      const response = await fetch("/api/my-accounts/chart-of-accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: `${prefix}-${Date.now()}`,
+          name: quickAddData.name.trim(),
+          category: quickAddData.category,
+          tax_treatment: quickAddData.tax_treatment,
+        }),
+      });
+      const data = await response.json();
+      if (data.account?.id) {
+        onAccountsChange?.();
+        onChange(data.account.id);
+        setIsOpen(false);
+        setShowQuickAdd(false);
+        setQuickAddData({ name: "", category: "expense", tax_treatment: "gst" });
+      }
+    } catch (error) {
+      console.error("Failed to create account:", error);
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (compact) {
@@ -145,6 +181,14 @@ export function AccountPicker({
               otherAccounts={otherAccounts}
               onSelect={handleSelect}
               selectedId={value}
+            />
+            <QuickAddSection
+              show={showQuickAdd}
+              onToggle={() => setShowQuickAdd(!showQuickAdd)}
+              data={quickAddData}
+              onChange={setQuickAddData}
+              onSave={handleQuickAdd}
+              saving={saving}
             />
           </div>,
           document.body
@@ -216,6 +260,14 @@ export function AccountPicker({
             otherAccounts={otherAccounts}
             onSelect={handleSelect}
             selectedId={value}
+          />
+          <QuickAddSection
+            show={showQuickAdd}
+            onToggle={() => setShowQuickAdd(!showQuickAdd)}
+            data={quickAddData}
+            onChange={setQuickAddData}
+            onSave={handleQuickAdd}
+            saving={saving}
           />
         </div>,
         document.body
@@ -306,6 +358,82 @@ function AccountGroup({
           )}
         </button>
       ))}
+    </div>
+  );
+}
+
+function QuickAddSection({
+  show,
+  onToggle,
+  data,
+  onChange,
+  onSave,
+  saving,
+}: {
+  show: boolean;
+  onToggle: () => void;
+  data: { name: string; category: AccountCategory; tax_treatment: TaxTreatment };
+  onChange: (data: { name: string; category: AccountCategory; tax_treatment: TaxTreatment }) => void;
+  onSave: () => void;
+  saving: boolean;
+}) {
+  return (
+    <div className="border-t border-gray-200">
+      {!show ? (
+        <button
+          onClick={onToggle}
+          className="w-full px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 text-left font-medium"
+        >
+          + Add New Account
+        </button>
+      ) : (
+        <div className="p-3 bg-gray-50 space-y-2">
+          <input
+            type="text"
+            value={data.name}
+            onChange={(e) => onChange({ ...data, name: e.target.value })}
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+            placeholder="Account name..."
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && onSave()}
+          />
+          <div className="flex gap-2">
+            <select
+              value={data.category}
+              onChange={(e) => onChange({ ...data, category: e.target.value as AccountCategory })}
+              className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded"
+            >
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+              <option value="other">Other</option>
+            </select>
+            <select
+              value={data.tax_treatment}
+              onChange={(e) => onChange({ ...data, tax_treatment: e.target.value as TaxTreatment })}
+              className="px-2 py-1.5 text-sm border border-gray-300 rounded"
+            >
+              <option value="gst">GST</option>
+              <option value="gst_free">No GST</option>
+              <option value="bas_excluded">Exclude</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onSave}
+              disabled={saving || !data.name.trim()}
+              className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Add"}
+            </button>
+            <button
+              onClick={onToggle}
+              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
