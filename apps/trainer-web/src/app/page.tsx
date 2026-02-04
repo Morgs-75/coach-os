@@ -45,12 +45,16 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-            Your PT Business,
-            <br />
+            Your PT Business
+          </h1>
+          <p className="text-lg md:text-xl text-gray-400 mb-4">
+            Have your PT or online coaching business set up in 15 mins
+          </p>
+          <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
             <span className="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">
               Supercharged
             </span>
-          </h1>
+          </h2>
 
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             The all-in-one platform for personal trainers. Manage clients, track finances,

@@ -26,6 +26,43 @@ const categories = [
   { value: "other", label: "Other" },
 ];
 
+// Extract compound name and dose from product name for smart sorting
+function parseProductName(name: string): { compound: string; dose: number | null } {
+  // Match patterns like "bpc-157 (10mg)", "Product 5mg", "Compound (10 mg)", etc.
+  const doseMatch = name.match(/^(.+?)\s*\(?(\d+(?:\.\d+)?)\s*(mg|g|ml|iu|mcg|kg|lb|oz)\)?$/i);
+
+  if (doseMatch) {
+    return {
+      compound: doseMatch[1].trim(),
+      dose: parseFloat(doseMatch[2]),
+    };
+  }
+
+  // No dose found, return name as compound with null dose
+  return { compound: name, dose: null };
+}
+
+// Sort products by compound name, then by dose (lower doses first)
+function sortProductsByDose(products: Product[]): Product[] {
+  return [...products].sort((a, b) => {
+    const parsedA = parseProductName(a.name);
+    const parsedB = parseProductName(b.name);
+
+    // First, compare by compound name (case-insensitive)
+    const compoundCompare = parsedA.compound.toLowerCase().localeCompare(parsedB.compound.toLowerCase());
+    if (compoundCompare !== 0) {
+      return compoundCompare;
+    }
+
+    // Same compound - sort by dose (null doses go last)
+    if (parsedA.dose === null && parsedB.dose === null) return 0;
+    if (parsedA.dose === null) return 1;
+    if (parsedB.dose === null) return -1;
+
+    return parsedA.dose - parsedB.dose;
+  });
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,9 +235,11 @@ export default function ProductsPage() {
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(cents / 100);
 
-  const filteredProducts = filterCategory === "all"
-    ? products
-    : products.filter((p) => p.category === filterCategory);
+  const filteredProducts = sortProductsByDose(
+    filterCategory === "all"
+      ? products
+      : products.filter((p) => p.category === filterCategory)
+  );
 
   const totalValue = products.reduce((sum, p) => {
     if (p.stock_quantity && p.cost_cents) {
