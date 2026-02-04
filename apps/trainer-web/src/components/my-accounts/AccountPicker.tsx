@@ -149,7 +149,7 @@ export function AccountPicker({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="text-xs text-gray-500 hover:text-gray-700 underline"
+          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline"
         >
           {selectedAccount ? selectedAccount.name : placeholder}
         </button>
@@ -157,14 +157,14 @@ export function AccountPicker({
         {isOpen && typeof window !== "undefined" && createPortal(
           <div
             data-account-picker-dropdown
-            className="fixed z-[9999] w-64 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto"
+            className="fixed z-[9999] w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-y-auto"
             style={{
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               maxHeight: Math.min(DROPDOWN_HEIGHT, window.innerHeight - 40),
             }}
           >
-            <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 p-2 border-b border-gray-100 dark:border-gray-700">
               <input
                 ref={inputRef}
                 type="text"
@@ -316,7 +316,7 @@ function AccountList({
         />
       )}
       {incomeAccounts.length === 0 && expenseAccounts.length === 0 && otherAccounts.length === 0 && (
-        <div className="px-3 py-4 text-sm text-gray-500 text-center">
+        <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
           No accounts found
         </div>
       )}
@@ -337,7 +337,7 @@ function AccountGroup({
 }) {
   return (
     <div>
-      <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase bg-gray-50">
+      <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800">
         {title}
       </div>
       {accounts.map((account) => (
@@ -345,16 +345,16 @@ function AccountGroup({
           key={account.id}
           onClick={() => onSelect(account.id)}
           className={clsx(
-            "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center justify-between",
-            selectedId === account.id && "bg-brand-50 text-brand-700"
+            "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between dark:text-gray-200",
+            selectedId === account.id && "bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400"
           )}
         >
           <span>
-            <span className="font-mono text-xs text-gray-400 mr-2">{account.code}</span>
+            <span className="font-mono text-xs text-gray-400 dark:text-gray-500 mr-2">{account.code}</span>
             {account.name}
           </span>
           {account.tax_treatment === "gst_free" && (
-            <span className="text-xs text-gray-400">GST Free</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">GST Free</span>
           )}
         </button>
       ))}
@@ -378,21 +378,21 @@ function QuickAddSection({
   saving: boolean;
 }) {
   return (
-    <div className="border-t border-gray-200">
+    <div className="border-t border-gray-200 dark:border-gray-700">
       {!show ? (
         <button
           onClick={onToggle}
-          className="w-full px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 text-left font-medium"
+          className="w-full px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-left font-medium"
         >
           + Add New Account
         </button>
       ) : (
-        <div className="p-3 bg-gray-50 space-y-2">
+        <div className="p-3 bg-gray-50 dark:bg-gray-800 space-y-2">
           <input
             type="text"
             value={data.name}
             onChange={(e) => onChange({ ...data, name: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded"
             placeholder="Account name..."
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && onSave()}
@@ -401,7 +401,7 @@ function QuickAddSection({
             <select
               value={data.category}
               onChange={(e) => onChange({ ...data, category: e.target.value as AccountCategory })}
-              className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="flex-1 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded"
             >
               <option value="income">Income</option>
               <option value="expense">Expense</option>
@@ -410,7 +410,7 @@ function QuickAddSection({
             <select
               value={data.tax_treatment}
               onChange={(e) => onChange({ ...data, tax_treatment: e.target.value as TaxTreatment })}
-              className="px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded"
             >
               <option value="gst">GST</option>
               <option value="gst_free">No GST</option>
@@ -427,7 +427,7 @@ function QuickAddSection({
             </button>
             <button
               onClick={onToggle}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+              className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             >
               Cancel
             </button>

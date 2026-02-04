@@ -34,8 +34,8 @@ export function TransactionTable({
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               <th className="px-4 py-3 w-10">
                 <input
@@ -45,25 +45,25 @@ export function TransactionTable({
                     if (el) el.indeterminate = someSelected;
                   }}
                   onChange={(e) => onSelectAll(e.target.checked)}
-                  className="rounded border-gray-300"
+                  className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Date
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Description
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Category
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Amount
               </th>
               <th className="px-4 py-3 w-10"></th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {transactions.map((tx) => (
               <TransactionRow
                 key={tx.id}
@@ -103,16 +103,16 @@ function TransactionRow({
   onAccountsChange,
 }: TransactionRowProps) {
   const statusColors = {
-    uncoded: "bg-amber-50",
-    ai_suggested: "bg-blue-50",
-    coded: "bg-white",
-    excluded: "bg-gray-50",
+    uncoded: "bg-amber-50 dark:bg-amber-950/30",
+    ai_suggested: "bg-blue-50 dark:bg-blue-950/30",
+    coded: "bg-white dark:bg-gray-900",
+    excluded: "bg-gray-50 dark:bg-gray-800/50",
   };
 
   return (
     <tr
       className={clsx(
-        "hover:bg-gray-50 transition-colors",
+        "hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
         statusColors[tx.status]
       )}
     >
@@ -121,20 +121,20 @@ function TransactionRow({
           type="checkbox"
           checked={isSelected}
           onChange={(e) => onSelect(e.target.checked)}
-          className="rounded border-gray-300"
+          className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
         />
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
         {formatDate(tx.transaction_date)}
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               {tx.merchant_name || tx.description}
             </p>
             {tx.merchant_name && tx.description !== tx.merchant_name && (
-              <p className="text-xs text-gray-500 truncate">{tx.description}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{tx.description}</p>
             )}
           </div>
           {tx.matched_money_event_id && (
@@ -144,7 +144,7 @@ function TransactionRow({
       </td>
       <td className="px-4 py-3">
         {tx.status === "coded" && tx.account ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">
             {tx.account.name}
           </span>
         ) : tx.status === "ai_suggested" && tx.ai_suggested_account ? (
@@ -156,13 +156,13 @@ function TransactionRow({
             />
             <button
               onClick={() => onQuickCode(tx.ai_suggested_account_id!)}
-              className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+              className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
             >
               Use
             </button>
           </div>
         ) : tx.status === "excluded" ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
             Excluded
           </span>
         ) : (
@@ -179,7 +179,7 @@ function TransactionRow({
       <td
         className={clsx(
           "px-4 py-3 text-sm font-medium text-right whitespace-nowrap",
-          tx.direction === "credit" ? "text-green-600" : "text-gray-900"
+          tx.direction === "credit" ? "text-green-600 dark:text-green-400" : "text-gray-900 dark:text-gray-100"
         )}
       >
         {tx.direction === "credit" ? "+" : "-"}
@@ -188,7 +188,7 @@ function TransactionRow({
       <td className="px-4 py-3">
         <button
           onClick={onEdit}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           title="Edit transaction"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
