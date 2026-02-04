@@ -9,6 +9,7 @@ const tabs = [
   { name: "Transactions", href: "/my-accounts/transactions" },
   { name: "P&L", href: "/my-accounts/pnl" },
   { name: "Ledger", href: "/my-accounts/ledger" },
+  { name: "Accounts", href: "/my-accounts/accounts" },
   { name: "Settings", href: "/my-accounts/settings" },
 ];
 

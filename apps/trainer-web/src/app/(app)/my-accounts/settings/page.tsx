@@ -11,6 +11,8 @@ export default function SettingsPage() {
   const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
   const [showRuleForm, setShowRuleForm] = useState(false);
   const [editingRule, setEditingRule] = useState<CodingRule | null>(null);
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<ChartOfAccount | null>(null);
 
   useEffect(() => {
     loadData();
@@ -80,6 +82,34 @@ export default function SettingsPage() {
       await loadData();
     } catch (error) {
       console.error("Failed to delete rule:", error);
+    }
+  }
+
+  async function saveAccount(account: Partial<ChartOfAccount>) {
+    try {
+      await fetch("/api/my-accounts/chart-of-accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(account),
+      });
+      await loadData();
+      setShowAccountForm(false);
+      setEditingAccount(null);
+    } catch (error) {
+      console.error("Failed to save account:", error);
+    }
+  }
+
+  async function deleteAccount(accountId: string) {
+    if (!confirm("Delete this account? This cannot be undone.")) return;
+
+    try {
+      await fetch(`/api/my-accounts/chart-of-accounts?id=${accountId}`, {
+        method: "DELETE",
+      });
+      await loadData();
+    } catch (error) {
+      console.error("Failed to delete account:", error);
     }
   }
 
@@ -215,8 +245,8 @@ export default function SettingsPage() {
               Categories for coding transactions
             </p>
           </div>
-          <button className="btn-secondary">
-            Add Custom Account
+          <button onClick={() => setShowAccountForm(true)} className="btn-primary">
+            + Add Account
           </button>
         </div>
         <div className="overflow-x-auto">
@@ -228,6 +258,7 @@ export default function SettingsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tax</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -252,6 +283,27 @@ export default function SettingsPage() {
                       </span>
                     )}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    {!account.is_system && (
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingAccount(account);
+                            setShowAccountForm(true);
+                          }}
+                          className="text-sm text-gray-600 hover:text-gray-900"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteAccount(account.id)}
+                          className="text-sm text-red-600 hover:text-red-800"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -268,6 +320,19 @@ export default function SettingsPage() {
           onClose={() => {
             setShowRuleForm(false);
             setEditingRule(null);
+          }}
+        />
+      )}
+
+      {/* Account Form Modal */}
+      {showAccountForm && (
+        <AccountFormModal
+          account={editingAccount}
+          existingCodes={accounts.map((a) => a.code)}
+          onSave={saveAccount}
+          onClose={() => {
+            setShowAccountForm(false);
+            setEditingAccount(null);
           }}
         />
       )}
@@ -421,6 +486,154 @@ function RuleFormModal({
             </button>
             <button type="submit" className="btn-primary">
               Save Rule
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AccountFormModal({
+  account,
+  existingCodes,
+  onSave,
+  onClose,
+}: {
+  account: ChartOfAccount | null;
+  existingCodes: string[];
+  onSave: (account: Partial<ChartOfAccount>) => void;
+  onClose: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    code: account?.code || "",
+    name: account?.name || "",
+    category: account?.category || "expense",
+    tax_treatment: account?.tax_treatment || "gst",
+  });
+  const [codeError, setCodeError] = useState("");
+
+  // Generate next code based on category
+  function generateCode(category: string) {
+    const prefix = category === "income" ? "INC" : category === "expense" ? "EXP" : "OTH";
+    const existingInCategory = existingCodes.filter((c) => c.startsWith(prefix));
+    const numbers = existingInCategory.map((c) => parseInt(c.split("-")[1] || "0", 10));
+    const nextNum = Math.max(0, ...numbers) + 1;
+    return `${prefix}-${String(nextNum).padStart(3, "0")}`;
+  }
+
+  // Auto-generate code when category changes (for new accounts)
+  function handleCategoryChange(category: string) {
+    setFormData((prev) => ({
+      ...prev,
+      category: category as "income" | "expense" | "other",
+      code: account ? prev.code : generateCode(category),
+    }));
+  }
+
+  // Initialize code for new accounts
+  useState(() => {
+    if (!account) {
+      setFormData((prev) => ({
+        ...prev,
+        code: generateCode(prev.category),
+      }));
+    }
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    // Validate code uniqueness
+    if (!account && existingCodes.includes(formData.code)) {
+      setCodeError("This code already exists");
+      return;
+    }
+
+    onSave({
+      ...account,
+      ...formData,
+      is_system: false,
+    } as Partial<ChartOfAccount>);
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-lg w-full">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {account ? "Edit Account" : "Add New Account"}
+          </h2>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="input"
+                required
+              >
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Code</label>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => {
+                  setFormData({ ...formData, code: e.target.value.toUpperCase() });
+                  setCodeError("");
+                }}
+                className={`input font-mono ${codeError ? "border-red-500" : ""}`}
+                required
+                placeholder="e.g., EXP-015"
+              />
+              {codeError && <p className="text-red-500 text-xs mt-1">{codeError}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Account Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="input"
+              required
+              placeholder="e.g., Supplements"
+            />
+          </div>
+
+          <div>
+            <label className="label">Tax Treatment</label>
+            <select
+              value={formData.tax_treatment}
+              onChange={(e) => setFormData({ ...formData, tax_treatment: e.target.value as any })}
+              className="input"
+              required
+            >
+              <option value="gst">GST (10%)</option>
+              <option value="gst_free">GST Free</option>
+              <option value="bas_excluded">BAS Excluded</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {formData.tax_treatment === "gst" && "Standard GST rate applies"}
+              {formData.tax_treatment === "gst_free" && "No GST (e.g., insurance, some food)"}
+              {formData.tax_treatment === "bas_excluded" && "Not reported on BAS (e.g., wages, private expenses)"}
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              {account ? "Save Changes" : "Add Account"}
             </button>
           </div>
         </form>

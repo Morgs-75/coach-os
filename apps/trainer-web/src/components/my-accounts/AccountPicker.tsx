@@ -22,20 +22,46 @@ export function AccountPicker({
 }: AccountPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0, openUpward: false });
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedAccount = accounts.find((a) => a.id === value);
 
-  // Update dropdown position when opening
+  const DROPDOWN_HEIGHT = 320; // max-h-72 = 18rem = 288px + padding
+
+  // Update dropdown position when opening - ensure it stays in viewport
   useEffect(() => {
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // If not enough space below and more space above, open upward
+      const openUpward = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
+
+      let top: number;
+      if (openUpward) {
+        // Position above the button
+        top = rect.top + window.scrollY - Math.min(DROPDOWN_HEIGHT, spaceAbove - 10);
+      } else {
+        // Position below the button
+        top = rect.bottom + window.scrollY + 4;
+      }
+
+      // Ensure left position doesn't go off-screen
+      let left = rect.left + window.scrollX;
+      const dropdownWidth = Math.max(rect.width, 300);
+      if (left + dropdownWidth > window.innerWidth) {
+        left = window.innerWidth - dropdownWidth - 10;
+      }
+
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
+        top,
+        left: Math.max(10, left),
         width: rect.width,
+        openUpward,
       });
     }
   }, [isOpen]);
@@ -87,10 +113,11 @@ export function AccountPicker({
         {isOpen && typeof window !== "undefined" && createPortal(
           <div
             data-account-picker-dropdown
-            className="fixed z-[9999] w-64 bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto"
+            className="fixed z-[9999] w-64 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto"
             style={{
               top: dropdownPosition.top,
               left: dropdownPosition.left,
+              maxHeight: Math.min(DROPDOWN_HEIGHT, window.innerHeight - 40),
             }}
           >
             <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
@@ -156,11 +183,12 @@ export function AccountPicker({
       {isOpen && typeof window !== "undefined" && createPortal(
         <div
           data-account-picker-dropdown
-          className="fixed z-[9999] bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto"
+          className="fixed z-[9999] bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,
-            width: dropdownPosition.width || 300,
+            width: Math.max(dropdownPosition.width, 300),
+            maxHeight: Math.min(DROPDOWN_HEIGHT, window.innerHeight - 40),
           }}
         >
           <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
