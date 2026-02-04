@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
-import { ThemeToggle } from "./ThemeToggle";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: "📊" },
@@ -127,13 +126,6 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* Theme Toggle */}
-      <div className="border-t border-gray-700 pt-4 mt-4 px-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">Theme</span>
-          <ThemeToggle />
-        </div>
-      </div>
     </aside>
   );
 }
