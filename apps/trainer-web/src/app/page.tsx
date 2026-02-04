@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+// Force static generation - this page has no dynamic content
+export const dynamic = "force-static";
+export const revalidate = false;
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
