@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getFromCache, setInCache } from "@/lib/cache";
 import { TransactionTable } from "@/components/my-accounts/TransactionTable";
 import { TransactionCodingModal } from "@/components/my-accounts/TransactionCodingModal";
 import { BulkCodingBar } from "@/components/my-accounts/BulkCodingBar";
+import { TransactionTableSkeleton } from "@/components/ui/Skeleton";
 import type { BankTransactionWithRelations, ChartOfAccount } from "@coach-os/shared";
 import { useSearchParams } from "next/navigation";
 
@@ -13,7 +14,10 @@ type FilterStatus = "all" | "uncoded" | "ai_suggested" | "coded" | "excluded";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<BankTransactionWithRelations[]>([]);
-  const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
+  const [accounts, setAccounts] = useState<ChartOfAccount[]>(() => {
+    // Initialize from cache for instant display
+    return getFromCache<ChartOfAccount[]>("chart-of-accounts") || [];
+  });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -22,6 +26,7 @@ export default function TransactionsPage() {
   const [bankAccountFilter, setBankAccountFilter] = useState<string>("all");
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const initialLoadDone = useRef(false);
 
   const searchParams = useSearchParams();
 
@@ -36,14 +41,20 @@ export default function TransactionsPage() {
     try {
       const coaResponse = await fetch("/api/my-accounts/chart-of-accounts");
       const coaData = await coaResponse.json();
-      setAccounts(coaData.accounts || []);
+      const accountsList = coaData.accounts || [];
+      setAccounts(accountsList);
+      setInCache("chart-of-accounts", accountsList, 10 * 60 * 1000); // Cache for 10 mins
     } catch (error) {
       console.error("Failed to load accounts:", error);
     }
   }, []);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    // Only show loading skeleton on first load, not on filter changes
+    if (!initialLoadDone.current) {
+      setLoading(true);
+    }
+
     try {
       // Build transaction URL
       let url = "/api/my-accounts/transactions?";
@@ -66,8 +77,11 @@ export default function TransactionsPage() {
       ]);
 
       setTransactions(txData.transactions || []);
-      setAccounts(coaData.accounts || []);
+      const accountsList = coaData.accounts || [];
+      setAccounts(accountsList);
+      setInCache("chart-of-accounts", accountsList, 10 * 60 * 1000);
       setBankAccounts(bankData.accounts || []);
+      initialLoadDone.current = true;
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {
@@ -327,9 +341,7 @@ export default function TransactionsPage() {
 
       {/* Transaction Table */}
       {loading ? (
-        <div className="card p-12 text-center text-gray-500">
-          Loading transactions...
-        </div>
+        <TransactionTableSkeleton rows={10} />
       ) : transactions.length === 0 ? (
         <div className="card p-12 text-center">
           <p className="text-gray-500 mb-4">No transactions found</p>
