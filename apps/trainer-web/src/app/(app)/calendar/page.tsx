@@ -621,7 +621,7 @@ export default function CalendarPage() {
   };
 
   if (loading) {
-    return <div className="text-gray-500 text-sm">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400 text-sm">Loading...</div>;
   }
 
   return (
@@ -629,8 +629,8 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-gray-900">Calendar</h1>
-          <span className="text-sm text-gray-500">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Calendar</h1>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {weekStart.toLocaleDateString("en-AU", { month: "short", year: "numeric" })}
           </span>
         </div>
@@ -676,7 +676,7 @@ export default function CalendarPage() {
               });
               setShowBlockModal(true);
             }}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
           >
             Block Time
           </button>
@@ -686,16 +686,16 @@ export default function CalendarPage() {
               "px-3 py-1.5 text-xs font-medium rounded-lg",
               showNotes
                 ? "bg-amber-100 text-amber-700"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
             )}
           >
             {showNotes ? "Hide Notes" : "Show Notes"}
           </button>
-          <div className="flex items-center gap-1 border-l border-gray-200 pl-2 ml-1">
+          <div className="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
             <button
               onClick={() => setZoomLevel(Math.max(0, zoomLevel - 1))}
               disabled={zoomLevel === 0}
-              className="w-7 h-7 flex items-center justify-center text-sm font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-7 h-7 flex items-center justify-center text-sm font-bold rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Zoom out"
             >
               −
@@ -703,7 +703,7 @@ export default function CalendarPage() {
             <button
               onClick={() => setZoomLevel(Math.min(4, zoomLevel + 1))}
               disabled={zoomLevel === 4}
-              className="w-7 h-7 flex items-center justify-center text-sm font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-7 h-7 flex items-center justify-center text-sm font-bold rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Zoom in"
             >
               +
@@ -753,7 +753,7 @@ export default function CalendarPage() {
             d.setDate(d.getDate() - 7);
             setCurrentDate(d);
           }}
-          className="p-1.5 hover:bg-gray-100 rounded"
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -761,7 +761,7 @@ export default function CalendarPage() {
         </button>
         <button
           onClick={() => setCurrentDate(new Date())}
-          className="px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded"
+          className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
         >
           Today
         </button>
@@ -771,7 +771,7 @@ export default function CalendarPage() {
             d.setDate(d.getDate() + 7);
             setCurrentDate(d);
           }}
-          className="p-1.5 hover:bg-gray-100 rounded"
+          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -780,22 +780,22 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 border border-gray-200 rounded-lg overflow-hidden bg-white overflow-y-auto mt-3">
+      <div className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 overflow-y-auto mt-3">
         {/* Day headers */}
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
-          <div className="p-1 text-xs text-gray-500"></div>
+        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+          <div className="p-1 text-xs text-gray-500 dark:text-gray-400"></div>
           {weekDays.map((date, i) => (
             <div
               key={i}
               className={clsx(
-                "p-2 text-center border-l border-gray-200",
+                "p-2 text-center border-l border-gray-200 dark:border-gray-700",
                 isToday(date) && "bg-blue-50"
               )}
             >
-              <div className="text-xs text-gray-500">{SHORT_DAYS[date.getDay()]}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{SHORT_DAYS[date.getDay()]}</div>
               <div className={clsx(
                 "text-sm font-medium",
-                isToday(date) ? "text-blue-600" : "text-gray-900"
+                isToday(date) ? "text-blue-600" : "text-gray-900 dark:text-gray-100"
               )}>
                 {date.getDate()}
               </div>
@@ -808,14 +808,14 @@ export default function CalendarPage() {
           <div key={slotIndex} className="grid grid-cols-[60px_repeat(7,1fr)]">
             <div
               className={clsx(
-                "relative border-r border-gray-200",
-                slot.minute === 0 ? "border-t border-gray-300" : "border-t border-gray-100"
+                "relative border-r border-gray-200 dark:border-gray-700",
+                slot.minute === 0 ? "border-t border-gray-300 dark:border-gray-600" : "border-t border-gray-100"
               )}
               style={{ height: `${rowHeight}px` }}
             >
               {/* Only show hour labels, positioned at the line */}
               {slot.minute === 0 && (
-                <span className="absolute -top-[10px] left-0 right-1 text-right text-xs text-gray-500 font-medium bg-white pr-1">
+                <span className="absolute -top-[10px] left-0 right-1 text-right text-xs text-gray-500 dark:text-gray-400 font-medium bg-white dark:bg-gray-900 pr-1">
                   {slot.hour.toString().padStart(2, "0")}:00
                 </span>
               )}
@@ -836,7 +836,7 @@ export default function CalendarPage() {
                     slot.minute === 0 ? "border-t-gray-300" : "border-t-gray-100",
                     available && !isBooked && "bg-green-50 hover:bg-green-100 cursor-pointer",
                     isBooked && "cursor-pointer",
-                    !available && !isBooked && "bg-gray-100"
+                    !available && !isBooked && "bg-gray-100 dark:bg-gray-700"
                   )}
                   style={{ height: `${rowHeight}px` }}
                 >
@@ -890,7 +890,7 @@ export default function CalendarPage() {
                           e.stopPropagation();
                           sendBookingConfirmation(booking);
                         }}
-                        className="absolute top-1 right-1 hidden group-hover:flex items-center justify-center w-6 h-6 bg-white/20 hover:bg-white/30 rounded text-white"
+                        className="absolute top-1 right-1 hidden group-hover:flex items-center justify-center w-6 h-6 bg-white dark:bg-gray-900/20 hover:bg-white dark:bg-gray-900/30 rounded text-white"
                         title="Send SMS confirmation"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -912,7 +912,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded bg-green-50 border border-green-200"></div>
           <span>Available</span>
@@ -922,7 +922,7 @@ export default function CalendarPage() {
           <span>Booked</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-gray-100 relative overflow-hidden">
+          <div className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
             <div className="absolute inset-0 opacity-40" style={{
               backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 1px, #9ca3af 1px, #9ca3af 2px)"
             }} />
@@ -935,18 +935,18 @@ export default function CalendarPage() {
       {/* Booking Modal */}
       {showBookingModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {editingBooking ? "Edit Booking" : selectedSlot ? "New Booking" : "Add Booking"}
               </h2>
               {selectedSlot && !editingBooking && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {selectedSlot.date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })} at {formatTime(selectedSlot.hour, selectedSlot.minute)}
                 </p>
               )}
               {editingBooking && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {editingBooking.client_name}
                 </p>
               )}
@@ -954,7 +954,7 @@ export default function CalendarPage() {
 
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client *</label>
                 <select
                   value={bookingForm.client_id}
                   onChange={(e) => {
@@ -962,7 +962,7 @@ export default function CalendarPage() {
                     setBookingForm({ ...bookingForm, client_id: clientId, client_purchase_id: "" });
                     loadClientPackages(clientId);
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">Select a client</option>
                   {clients.map((client) => (
@@ -976,12 +976,12 @@ export default function CalendarPage() {
               {/* Package Selection */}
               {bookingForm.client_id && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Use Package</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Use Package</label>
                   {clientPackages.length > 0 ? (
                     <select
                       value={bookingForm.client_purchase_id}
                       onChange={(e) => setBookingForm({ ...bookingForm, client_purchase_id: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="">No package (casual session)</option>
                       {clientPackages.map((pkg) => (
@@ -1000,18 +1000,18 @@ export default function CalendarPage() {
 
               {(!selectedSlot || editingBooking) && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date & Time *</label>
                   <input
                     type="datetime-local"
                     value={bookingForm.datetime}
                     onChange={(e) => setBookingForm({ ...bookingForm, datetime: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Session Type *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Session Type *</label>
                 {sessionTypes.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {sessionTypes.map((st) => (
@@ -1026,8 +1026,8 @@ export default function CalendarPage() {
                         className={clsx(
                           "px-3 py-1.5 text-sm rounded-lg border transition-colors flex items-center gap-2",
                           bookingForm.session_type_id === st.id
-                            ? "border-gray-900 bg-gray-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-gray-900 bg-gray-50 dark:bg-gray-800"
+                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:border-gray-600"
                         )}
                       >
                         <span
@@ -1040,7 +1040,7 @@ export default function CalendarPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     No session types configured.{" "}
                     <a href="/settings/session-types" className="text-blue-600 hover:underline">
                       Add session types
@@ -1051,11 +1051,11 @@ export default function CalendarPage() {
 
               {bookingForm.session_type_id && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Custom Duration</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Custom Duration</label>
                   <select
                     value={bookingForm.duration}
                     onChange={(e) => setBookingForm({ ...bookingForm, duration: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value={15}>15 min</option>
                     <option value={30}>30 min</option>
@@ -1069,19 +1069,19 @@ export default function CalendarPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
                 <textarea
                   value={bookingForm.notes}
                   onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                   rows={2}
                   placeholder="Optional notes..."
                 />
               </div>
 
               {/* SMS Reminder */}
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <label className="flex items-center gap-3 p-3 bg-gray-50 cursor-pointer">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={bookingForm.sendSmsReminder}
@@ -1089,7 +1089,7 @@ export default function CalendarPage() {
                     className="w-4 h-4 rounded text-blue-600"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-900">Send SMS confirmation</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Send SMS confirmation</span>
                   </div>
                   <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -1097,7 +1097,7 @@ export default function CalendarPage() {
                 </label>
 
                 {bookingForm.sendSmsReminder && (
-                  <div className="p-3 space-y-3 border-t border-gray-200">
+                  <div className="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -1105,7 +1105,7 @@ export default function CalendarPage() {
                         className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
                           bookingForm.smsType === "standard"
                             ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800"
                         }`}
                       >
                         Standard message
@@ -1129,7 +1129,7 @@ export default function CalendarPage() {
                         className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
                           bookingForm.smsType === "custom"
                             ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800"
                         }`}
                       >
                         Custom message
@@ -1145,9 +1145,9 @@ export default function CalendarPage() {
                             onChange={(e) => setBookingForm({ ...bookingForm, requestConfirmation: e.target.checked })}
                             className="w-4 h-4 rounded text-blue-600"
                           />
-                          <span className="text-sm text-gray-700">Request confirmation (Reply Y)</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Request confirmation (Reply Y)</span>
                         </label>
-                        <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2 rounded">
                           "Hi [Name], your session is confirmed for [Date] at [Time].
                           {bookingForm.requestConfirmation ? " Reply Y to confirm." : ""} See you then!"
                         </p>
@@ -1158,7 +1158,7 @@ export default function CalendarPage() {
                       <textarea
                         value={bookingForm.customSmsMessage}
                         onChange={(e) => setBookingForm({ ...bookingForm, customSmsMessage: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                         rows={3}
                         placeholder="Enter your custom message..."
                       />
@@ -1168,7 +1168,7 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-200 flex justify-between">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
               {editingBooking ? (
                 <button
                   onClick={handleDeleteBooking}
@@ -1186,7 +1186,7 @@ export default function CalendarPage() {
                     setSelectedSlot(null);
                     setEditingBooking(null);
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -1210,17 +1210,17 @@ export default function CalendarPage() {
       {/* Block Time Modal */}
       {showBlockModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {editingBlock ? "Edit Blocked Time" : "Block Time"}
               </h2>
-              <p className="text-sm text-gray-500">Mark times as unavailable for bookings</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Mark times as unavailable for bookings</p>
             </div>
 
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Block Type</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Block Type</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2">
                     <input
@@ -1245,21 +1245,21 @@ export default function CalendarPage() {
 
               {blockForm.type === "specific" ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
                   <input
                     type="date"
                     value={blockForm.date}
                     onChange={(e) => setBlockForm({ ...blockForm, date: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Day of Week</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day of Week</label>
                   <select
                     value={blockForm.day_of_week}
                     onChange={(e) => setBlockForm({ ...blockForm, day_of_week: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                   >
                     {DAYS.map((day, i) => (
                       <option key={i} value={i}>{day}</option>
@@ -1281,35 +1281,35 @@ export default function CalendarPage() {
                     })}
                     className="rounded text-red-600"
                   />
-                  <span className="text-sm font-medium text-gray-700">All Day</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">All Day</span>
                 </label>
               </div>
 
               {!blockForm.all_day && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
                     <input
                       type="time"
                       value={blockForm.start_time}
                       onChange={(e) => setBlockForm({ ...blockForm, start_time: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
                     <input
                       type="time"
                       value={blockForm.end_time}
                       onChange={(e) => setBlockForm({ ...blockForm, end_time: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-gray-200 flex justify-between">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
               {editingBlock ? (
                 <button
                   onClick={() => {
@@ -1330,7 +1330,7 @@ export default function CalendarPage() {
                     setShowBlockModal(false);
                     setEditingBlock(null);
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded-lg"
                 >
                   Cancel
                 </button>

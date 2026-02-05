@@ -726,11 +726,11 @@ export default function ClientDetailPage() {
   }
 
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
   }
 
   if (!client) {
-    return <div className="text-gray-500">Client not found</div>;
+    return <div className="text-gray-500 dark:text-gray-400">Client not found</div>;
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -753,7 +753,7 @@ export default function ClientDetailPage() {
   return (
     <div>
       <div className="mb-6">
-        <Link href="/clients" className="text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block">
+        <Link href="/clients" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 mb-2 inline-block">
           ← Back to Clients
         </Link>
 
@@ -768,8 +768,8 @@ export default function ClientDetailPage() {
               </div>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{client.full_name}</h1>
-              <p className="text-gray-500">{client.email}</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{client.full_name}</h1>
+              <p className="text-gray-500 dark:text-gray-400">{client.email}</p>
               {client.date_of_birth && (
                 <p className="text-sm text-gray-400">
                   {calculateAge(client.date_of_birth)} years old
@@ -800,7 +800,7 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
         <nav className="flex gap-6 overflow-x-auto">
           {[
             { key: "overview", label: "Overview" },
@@ -819,7 +819,7 @@ export default function ClientDetailPage() {
                 "py-3 border-b-2 text-sm font-medium transition-colors whitespace-nowrap",
                 activeTab === tab.key
                   ? "border-brand-600 text-brand-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300"
               )}
             >
               {tab.label}
@@ -844,10 +844,10 @@ export default function ClientDetailPage() {
                 "card p-6",
                 todayRisk.tier === "red" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"
               )}>
-                <h2 className="font-semibold text-gray-900 mb-2">Risk Factors</h2>
+                <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Risk Factors</h2>
                 <ul className="space-y-1">
                   {todayRisk.reasons?.map((reason: string, i: number) => (
-                    <li key={i} className="text-sm text-gray-700">• {reason}</li>
+                    <li key={i} className="text-sm text-gray-700 dark:text-gray-300">• {reason}</li>
                   ))}
                 </ul>
               </div>
@@ -872,29 +872,29 @@ export default function ClientDetailPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4">
               <div className="card p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {client.weight_kg ? `${client.weight_kg} kg` : "—"}
                 </p>
-                <p className="text-sm text-gray-500">Current Weight</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Current Weight</p>
               </div>
               <div className="card p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {client.target_weight_kg ? `${client.target_weight_kg} kg` : "—"}
                 </p>
-                <p className="text-sm text-gray-500">Target Weight</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Target Weight</p>
               </div>
               <div className="card p-4 text-center">
                 <p className="text-2xl font-bold text-green-600">
                   ${(totalPaid / 100).toFixed(0)}
                 </p>
-                <p className="text-sm text-gray-500">Total Paid</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Paid</p>
               </div>
             </div>
 
             {/* Goals */}
             {client.goals && client.goals.length > 0 && (
               <div className="card p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Goals</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Goals</h3>
                 <div className="flex flex-wrap gap-2">
                   {client.goals.map((goal: string, i: number) => (
                     <span key={i} className="px-3 py-1 bg-brand-100 text-brand-700 rounded-full text-sm">
@@ -909,7 +909,7 @@ export default function ClientDetailPage() {
             {measurements.length > 0 && (
               <div className="card p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">Recent Measurements</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Recent Measurements</h3>
                   <button onClick={() => setActiveTab("logs")} className="text-sm text-brand-600 hover:text-brand-700">
                     View all
                   </button>
@@ -917,9 +917,9 @@ export default function ClientDetailPage() {
                 <div className="space-y-2">
                   {measurements.slice(0, 5).map((m) => (
                     <div key={m.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <span className="text-gray-700">{m.measurement_type}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{m.measurement_type}</span>
                       <div className="text-right">
-                        <span className="font-medium text-gray-900">{m.value} {m.unit}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{m.value} {m.unit}</span>
                         <span className="text-xs text-gray-400 ml-2">{formatDate(m.measured_at)}</span>
                       </div>
                     </div>
@@ -933,15 +933,15 @@ export default function ClientDetailPage() {
           <div className="space-y-6">
             {/* Subscription */}
             <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Subscription</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription</h3>
               <dl className="space-y-3">
                 <div>
-                  <dt className="text-sm text-gray-500">Status</dt>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Status</dt>
                   <dd className={clsx(
                     "font-medium capitalize",
                     subscription?.status === "active" && "text-green-600",
                     subscription?.status === "past_due" && "text-red-600",
-                    (!subscription || subscription?.status === "canceled" || subscription?.status === "none") && "text-gray-500"
+                    (!subscription || subscription?.status === "canceled" || subscription?.status === "none") && "text-gray-500 dark:text-gray-400"
                   )}>
                     {subscription?.status?.replace("_", " ") ?? "None"}
                   </dd>
@@ -956,17 +956,17 @@ export default function ClientDetailPage() {
 
             {/* Contact */}
             <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Contact</h3>
               <dl className="space-y-3">
                 {client.phone && (
                   <div>
-                    <dt className="text-sm text-gray-500">Phone</dt>
+                    <dt className="text-sm text-gray-500 dark:text-gray-400">Phone</dt>
                     <dd><a href={`tel:${client.phone}`} className="text-brand-600 hover:underline">{client.phone}</a></dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm text-gray-500">Member Since</dt>
-                  <dd className="text-gray-900">{formatDate(client.created_at)}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Member Since</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{formatDate(client.created_at)}</dd>
                 </div>
               </dl>
             </div>
@@ -974,8 +974,8 @@ export default function ClientDetailPage() {
             {/* Emergency Contact */}
             {client.emergency_contact_name && (
               <div className="card p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Emergency Contact</h3>
-                <p className="font-medium text-gray-900">{client.emergency_contact_name}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Emergency Contact</h3>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{client.emergency_contact_name}</p>
                 {client.emergency_contact_phone && (
                   <a href={`tel:${client.emergency_contact_phone}`} className="text-brand-600 hover:underline">
                     {client.emergency_contact_phone}
@@ -992,24 +992,24 @@ export default function ClientDetailPage() {
           {/* Payment Summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="card p-4">
-              <p className="text-sm text-gray-500">Total Paid</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Paid</p>
               <p className="text-2xl font-bold text-green-600">${(totalPaid / 100).toFixed(2)}</p>
             </div>
             <div className="card p-4">
-              <p className="text-sm text-gray-500">Successful Payments</p>
-              <p className="text-2xl font-bold text-gray-900">{successfulPayments.length}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Successful Payments</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{successfulPayments.length}</p>
             </div>
             <div className="card p-4">
-              <p className="text-sm text-gray-500">Failed Payments</p>
-              <p className={clsx("text-2xl font-bold", failedPayments.length > 0 ? "text-red-600" : "text-gray-900")}>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Failed Payments</p>
+              <p className={clsx("text-2xl font-bold", failedPayments.length > 0 ? "text-red-600" : "text-gray-900 dark:text-gray-100")}>
                 {failedPayments.length}
               </p>
             </div>
             <div className="card p-4">
-              <p className="text-sm text-gray-500">Subscription Status</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Subscription Status</p>
               <p className={clsx(
                 "text-2xl font-bold capitalize",
-                subscription?.status === "active" ? "text-green-600" : "text-gray-500"
+                subscription?.status === "active" ? "text-green-600" : "text-gray-500 dark:text-gray-400"
               )}>
                 {subscription?.status || "None"}
               </p>
@@ -1027,10 +1027,10 @@ export default function ClientDetailPage() {
                   <div key={payment.id} className="px-6 py-4 bg-red-50/50">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
                           ${(payment.amount_cents / 100).toFixed(2)} {payment.currency?.toUpperCase()}
                         </p>
-                        <p className="text-sm text-gray-500">{formatDateTime(payment.event_date)}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatDateTime(payment.event_date)}</p>
                         {payment.failure_reason && (
                           <p className="text-sm text-red-600 mt-1">{payment.failure_reason}</p>
                         )}
@@ -1040,7 +1040,7 @@ export default function ClientDetailPage() {
                           Failed
                         </span>
                         {payment.retry_count > 0 && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {payment.retry_count} retry attempt{payment.retry_count > 1 ? "s" : ""}
                           </p>
                         )}
@@ -1054,8 +1054,8 @@ export default function ClientDetailPage() {
 
           {/* All Payment History */}
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Payment History</h3>
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Payment History</h3>
             </div>
             <div className="divide-y divide-gray-200">
               {payments.length > 0 ? (
@@ -1065,10 +1065,10 @@ export default function ClientDetailPage() {
                   return (
                     <div key={payment.id} className="px-6 py-4 flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
                           {isRefund ? "Refund" : "Payment"}
                         </p>
-                        <p className="text-sm text-gray-500">{formatDateTime(payment.event_date)}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatDateTime(payment.event_date)}</p>
                         {payment.stripe_invoice_id && (
                           <p className="text-xs text-gray-400">Invoice: {payment.stripe_invoice_id}</p>
                         )}
@@ -1093,7 +1093,7 @@ export default function ClientDetailPage() {
                   );
                 })
               ) : (
-                <p className="px-6 py-12 text-center text-gray-500">No payment history</p>
+                <p className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No payment history</p>
               )}
             </div>
           </div>
@@ -1104,7 +1104,7 @@ export default function ClientDetailPage() {
         <div className="space-y-6">
           {/* Add Package Button */}
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Packages & Session Packs</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Packages & Session Packs</h2>
             <button
               onClick={() => {
                 setEditingPackage(null);
@@ -1119,7 +1119,7 @@ export default function ClientDetailPage() {
           {/* Edit Package Form */}
           {editingPackage && (
             <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Edit Package: {editingPackage.offers?.name || "Package"}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1178,10 +1178,10 @@ export default function ClientDetailPage() {
                     onChange={(e) => setEditPackageForm({ ...editPackageForm, expires_at: e.target.value })}
                     className="input"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Leave blank for no expiry</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave blank for no expiry</p>
                 </div>
               </div>
-              <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={savePackageEdit}
                   disabled={savingPackageEdit}
@@ -1202,7 +1202,7 @@ export default function ClientDetailPage() {
           {/* Add Package Form */}
           {showPackageForm && !editingPackage && (
             <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Add Package</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Add Package</h3>
               <div className="space-y-4">
                 <div>
                   <label className="label">Select Package</label>
@@ -1224,34 +1224,34 @@ export default function ClientDetailPage() {
                 </div>
 
                 {selectedOffer && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     {(() => {
                       const offer = offers.find(o => o.id === selectedOffer);
                       if (!offer) return null;
                       return (
                         <div className="space-y-2">
-                          <p className="font-medium text-gray-900">{offer.name}</p>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{offer.name}</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                             ${(offer.price_cents / 100).toFixed(2)}
                           </p>
                           {offer.sessions_included && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               {offer.sessions_included + (offer.bonus_sessions || 0)} sessions
                               {offer.bonus_sessions > 0 && ` (${offer.bonus_sessions} bonus)`}
                             </p>
                           )}
                           {offer.pack_validity_days && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               Valid for {offer.pack_validity_days} days
                             </p>
                           )}
                           {offer.description && (
-                            <p className="text-sm text-gray-600 mt-2">{offer.description}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{offer.description}</p>
                           )}
                           {offer.included_items && offer.included_items.length > 0 && (
                             <ul className="mt-3 space-y-1">
                               {offer.included_items.map((item: string, i: number) => (
-                                <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                                <li key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                   <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
@@ -1266,7 +1266,7 @@ export default function ClientDetailPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => savePackagePending()}
                     disabled={!selectedOffer || sendingPaymentLink}
@@ -1320,10 +1320,10 @@ export default function ClientDetailPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                           {purchase.offers?.name || "Package"}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Purchased {formatDate(purchase.purchased_at)}
                         </p>
                       </div>
@@ -1337,13 +1337,13 @@ export default function ClientDetailPage() {
                             )}>
                               {sessionsRemaining}
                             </span>
-                            <span className="text-gray-500 text-sm"> / {purchase.sessions_total} sessions left</span>
+                            <span className="text-gray-500 dark:text-gray-400 text-sm"> / {purchase.sessions_total} sessions left</span>
                           </div>
                         )}
                         <span className={clsx(
                           "inline-block px-2 py-1 rounded text-xs font-medium",
                           isExpired ? "bg-red-100 text-red-700" :
-                          isExhausted ? "bg-gray-100 text-gray-500" :
+                          isExhausted ? "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400" :
                           purchase.payment_status === "succeeded" ? "bg-green-100 text-green-700" :
                           purchase.payment_status === "pending" ? "bg-amber-100 text-amber-700" :
                           "bg-red-100 text-red-700"
@@ -1369,7 +1369,7 @@ export default function ClientDetailPage() {
                             style={{ width: `${(sessionsRemaining / purchase.sessions_total) * 100}%` }}
                           />
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {purchase.sessions_used} session{purchase.sessions_used !== 1 ? "s" : ""} used
                         </p>
                       </div>
@@ -1378,7 +1378,7 @@ export default function ClientDetailPage() {
                     {purchase.expires_at && (
                       <p className={clsx(
                         "text-sm mt-3",
-                        isExpired ? "text-red-600" : "text-gray-500"
+                        isExpired ? "text-red-600" : "text-gray-500 dark:text-gray-400"
                       )}>
                         {isExpired ? "Expired" : "Expires"} {formatDate(purchase.expires_at)}
                       </p>
@@ -1428,7 +1428,7 @@ export default function ClientDetailPage() {
                       "flex items-center justify-between mt-4 pt-4 border-t border-gray-100",
                       purchase.payment_status === "pending" && "mt-3 pt-3"
                     )}>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {purchase.payment_status === "succeeded" ? "Paid" : "Amount"}: ${(purchase.amount_paid_cents / 100).toFixed(2)}
                         {purchase.payment_method && (
                           <span className="ml-1 text-gray-400">
@@ -1484,7 +1484,7 @@ export default function ClientDetailPage() {
                                 ));
                               }
                             }}
-                            className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 font-medium"
                           >
                             Reinstate
                           </button>
@@ -1498,7 +1498,7 @@ export default function ClientDetailPage() {
           ) : (
             !showPackageForm && (
               <div className="card p-12 text-center">
-                <p className="text-gray-500 mb-4">No packages assigned yet</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No packages assigned yet</p>
                 <button onClick={() => setShowPackageForm(true)} className="btn-primary">
                   Add First Package
                 </button>
@@ -1523,7 +1523,7 @@ export default function ClientDetailPage() {
         <div className="space-y-6">
           {/* Add Measurement Button */}
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Measurements & Logs</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Measurements & Logs</h2>
             <button
               onClick={() => setShowMeasurementForm(true)}
               className="btn-primary"
@@ -1535,7 +1535,7 @@ export default function ClientDetailPage() {
           {/* New Measurement Form */}
           {showMeasurementForm && (
             <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Log New Measurement</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Log New Measurement</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="label">Measurement Type</label>
@@ -1613,8 +1613,8 @@ export default function ClientDetailPage() {
 
             return (
               <div key={cat.key} className="card">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">{cat.label}</h3>
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">{cat.label}</h3>
                 </div>
                 <div className="divide-y divide-gray-200">
                   {categoryMeasurements.map(([type, entries]) => {
@@ -1626,15 +1626,15 @@ export default function ClientDetailPage() {
                     return (
                       <div key={type} className="px-6 py-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-900">{type}</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{type}</span>
                           <div className="flex items-center gap-3">
-                            <span className="text-lg font-bold text-gray-900">
+                            <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                               {latest.value} {typeInfo?.unit}
                             </span>
                             {change !== null && (
                               <span className={clsx(
                                 "text-sm font-medium",
-                                change < 0 ? "text-green-600" : change > 0 ? "text-red-600" : "text-gray-500"
+                                change < 0 ? "text-green-600" : change > 0 ? "text-red-600" : "text-gray-500 dark:text-gray-400"
                               )}>
                                 {change > 0 ? "+" : ""}{change.toFixed(1)}
                               </span>
@@ -1643,9 +1643,9 @@ export default function ClientDetailPage() {
                         </div>
                         <div className="flex gap-2 overflow-x-auto pb-2">
                           {entries.slice(0, 10).map((entry: any) => (
-                            <div key={entry.id} className="flex-shrink-0 px-3 py-2 bg-gray-50 rounded text-center min-w-[80px]">
-                              <p className="font-medium text-gray-900">{entry.value}</p>
-                              <p className="text-xs text-gray-500">{formatDate(entry.measured_at)}</p>
+                            <div key={entry.id} className="flex-shrink-0 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded text-center min-w-[80px]">
+                              <p className="font-medium text-gray-900 dark:text-gray-100">{entry.value}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(entry.measured_at)}</p>
                             </div>
                           ))}
                         </div>
@@ -1659,7 +1659,7 @@ export default function ClientDetailPage() {
 
           {measurements.length === 0 && !showMeasurementForm && (
             <div className="card p-12 text-center">
-              <p className="text-gray-500 mb-4">No measurements logged yet</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No measurements logged yet</p>
               <button onClick={() => setShowMeasurementForm(true)} className="btn-primary">
                 Log First Measurement
               </button>
@@ -1693,7 +1693,7 @@ export default function ClientDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Personal Details */}
               <div className="card p-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Personal Details</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Personal Details</h3>
                 <div>
                   <label className="label">Full Name</label>
                   <input type="text" value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} className="input" />
@@ -1727,7 +1727,7 @@ export default function ClientDetailPage() {
 
               {/* Address */}
               <div className="card p-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Address</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Address</h3>
                 <div>
                   <label className="label">Street Address</label>
                   <input type="text" value={editForm.address_line1} onChange={(e) => setEditForm({ ...editForm, address_line1: e.target.value })} className="input" />
@@ -1764,7 +1764,7 @@ export default function ClientDetailPage() {
 
               {/* Physical Stats */}
               <div className="card p-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Physical Stats</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Physical Stats</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="label">Height (cm)</label>
@@ -1791,12 +1791,12 @@ export default function ClientDetailPage() {
 
               {/* Training Preferences */}
               <div className="card p-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Training Preferences</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Training Preferences</h3>
                 <div>
                   <label className="label">Goals</label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {goalOptions.map((goal) => (
-                      <button key={goal} type="button" onClick={() => toggleEditGoal(goal)} className={`px-3 py-1 rounded-full text-sm ${editForm.goals?.includes(goal) ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-700"}`}>
+                      <button key={goal} type="button" onClick={() => toggleEditGoal(goal)} className={`px-3 py-1 rounded-full text-sm ${editForm.goals?.includes(goal) ? "bg-brand-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"}`}>
                         {goal}
                       </button>
                     ))}
@@ -1806,7 +1806,7 @@ export default function ClientDetailPage() {
                   <label className="label">Preferred Days</label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {trainingDays.map((day) => (
-                      <button key={day} type="button" onClick={() => toggleEditDay(day)} className={`px-3 py-1 rounded-full text-sm ${editForm.preferred_training_days?.includes(day) ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-700"}`}>
+                      <button key={day} type="button" onClick={() => toggleEditDay(day)} className={`px-3 py-1 rounded-full text-sm ${editForm.preferred_training_days?.includes(day) ? "bg-brand-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"}`}>
                         {day.slice(0, 3)}
                       </button>
                     ))}
@@ -1817,7 +1817,7 @@ export default function ClientDetailPage() {
                   {editForm.preferred_time_windows?.length > 0 && (
                     <div className="space-y-2 mt-2 mb-3">
                       {editForm.preferred_time_windows.map((tw: any, i: number) => (
-                        <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                        <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded">
                           <span className="capitalize text-sm w-20">{tw.day}</span>
                           <span className="text-sm">{tw.start} - {tw.end}</span>
                           <button type="button" onClick={() => removeEditTimeWindow(i)} className="ml-auto text-red-500 text-sm">Remove</button>
@@ -1830,7 +1830,7 @@ export default function ClientDetailPage() {
                       {trainingDays.map((day) => (<option key={day} value={day.toLowerCase()}>{day}</option>))}
                     </select>
                     <input type="time" value={newTimeWindow.start} onChange={(e) => setNewTimeWindow({ ...newTimeWindow, start: e.target.value })} className="input text-sm py-1.5 w-24" />
-                    <span className="text-gray-500 pb-2">to</span>
+                    <span className="text-gray-500 dark:text-gray-400 pb-2">to</span>
                     <input type="time" value={newTimeWindow.end} onChange={(e) => setNewTimeWindow({ ...newTimeWindow, end: e.target.value })} className="input text-sm py-1.5 w-24" />
                     <button type="button" onClick={addEditTimeWindow} className="btn-secondary text-sm py-1.5">Add</button>
                   </div>
@@ -1839,7 +1839,7 @@ export default function ClientDetailPage() {
 
               {/* Emergency Contact */}
               <div className="card p-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Emergency Contact</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Emergency Contact</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="label">Contact Name</label>
@@ -1854,7 +1854,7 @@ export default function ClientDetailPage() {
 
               {/* Notes */}
               <div className="card p-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Notes</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Notes</h3>
                 <textarea value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className="input" rows={4} />
               </div>
             </div>
@@ -1862,34 +1862,34 @@ export default function ClientDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Personal Details */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Personal Details</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Personal Details</h3>
             <dl className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-gray-500">Full Name</dt>
-                  <dd className="text-gray-900">{client.full_name}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Full Name</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.full_name}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-gray-500">Gender</dt>
-                  <dd className="text-gray-900 capitalize">{client.gender?.replace("_", " ") || "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Gender</dt>
+                  <dd className="text-gray-900 dark:text-gray-100 capitalize">{client.gender?.replace("_", " ") || "—"}</dd>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-gray-500">Date of Birth</dt>
-                  <dd className="text-gray-900">{client.date_of_birth ? formatDate(client.date_of_birth) : "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Date of Birth</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.date_of_birth ? formatDate(client.date_of_birth) : "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-gray-500">Age</dt>
-                  <dd className="text-gray-900">{client.date_of_birth ? `${calculateAge(client.date_of_birth)} years` : "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Age</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.date_of_birth ? `${calculateAge(client.date_of_birth)} years` : "—"}</dd>
                 </div>
               </div>
               <div>
-                <dt className="text-sm text-gray-500">Email</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Email</dt>
                 <dd><a href={`mailto:${client.email}`} className="text-brand-600 hover:underline">{client.email}</a></dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-500">Phone</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Phone</dt>
                 <dd>{client.phone ? <a href={`tel:${client.phone}`} className="text-brand-600 hover:underline">{client.phone}</a> : "—"}</dd>
               </div>
             </dl>
@@ -1897,36 +1897,36 @@ export default function ClientDetailPage() {
 
           {/* Address */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Address</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Address</h3>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-gray-500">Street Address</dt>
-                <dd className="text-gray-900">{client.address_line1 || "—"}</dd>
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Street Address</dt>
+                <dd className="text-gray-900 dark:text-gray-100">{client.address_line1 || "—"}</dd>
               </div>
               {client.address_line2 && (
                 <div>
-                  <dt className="text-sm text-gray-500">Address Line 2</dt>
-                  <dd className="text-gray-900">{client.address_line2}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Address Line 2</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.address_line2}</dd>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-gray-500">City</dt>
-                  <dd className="text-gray-900">{client.city || "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">City</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.city || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-gray-500">State</dt>
-                  <dd className="text-gray-900">{client.state || "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">State</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.state || "—"}</dd>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-gray-500">Postcode</dt>
-                  <dd className="text-gray-900">{client.postcode || "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Postcode</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.postcode || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-gray-500">Country</dt>
-                  <dd className="text-gray-900">{client.country || "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Country</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.country || "—"}</dd>
                 </div>
               </div>
             </dl>
@@ -1934,26 +1934,26 @@ export default function ClientDetailPage() {
 
           {/* Physical Stats */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Physical Stats</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Physical Stats</h3>
             <dl className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-gray-500">Height</dt>
-                  <dd className="text-gray-900">{client.height_cm ? `${client.height_cm} cm` : "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Height</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.height_cm ? `${client.height_cm} cm` : "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-gray-500">Current Weight</dt>
-                  <dd className="text-gray-900">{client.weight_kg ? `${client.weight_kg} kg` : "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Current Weight</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.weight_kg ? `${client.weight_kg} kg` : "—"}</dd>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-gray-500">Target Weight</dt>
-                  <dd className="text-gray-900">{client.target_weight_kg ? `${client.target_weight_kg} kg` : "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Target Weight</dt>
+                  <dd className="text-gray-900 dark:text-gray-100">{client.target_weight_kg ? `${client.target_weight_kg} kg` : "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-gray-500">Experience Level</dt>
-                  <dd className="text-gray-900 capitalize">{client.experience_level || "—"}</dd>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Experience Level</dt>
+                  <dd className="text-gray-900 dark:text-gray-100 capitalize">{client.experience_level || "—"}</dd>
                 </div>
               </div>
             </dl>
@@ -1961,10 +1961,10 @@ export default function ClientDetailPage() {
 
           {/* Training Preferences */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Training Preferences</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Training Preferences</h3>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-gray-500 mb-2">Goals</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400 mb-2">Goals</dt>
                 <dd>
                   {client.goals && client.goals.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
@@ -1973,38 +1973,38 @@ export default function ClientDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-500">—</span>
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
                   )}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-500 mb-2">Preferred Training Days</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400 mb-2">Preferred Training Days</dt>
                 <dd>
                   {client.preferred_training_days && client.preferred_training_days.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {client.preferred_training_days.map((day: string, i: number) => (
-                        <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm capitalize">{day}</span>
+                        <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-sm capitalize">{day}</span>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-500">—</span>
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
                   )}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-500 mb-2">Preferred Time Windows</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400 mb-2">Preferred Time Windows</dt>
                 <dd>
                   {client.preferred_time_windows && client.preferred_time_windows.length > 0 ? (
                     <div className="space-y-1">
                       {client.preferred_time_windows.map((window: { day: string; start: string; end: string }, i: number) => (
                         <div key={i} className="flex items-center gap-2 text-sm">
-                          <span className="font-medium text-gray-700 capitalize w-24">{window.day}</span>
-                          <span className="text-gray-600">{window.start} - {window.end}</span>
+                          <span className="font-medium text-gray-700 dark:text-gray-300 capitalize w-24">{window.day}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{window.start} - {window.end}</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-500">—</span>
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
                   )}
                 </dd>
               </div>
@@ -2013,14 +2013,14 @@ export default function ClientDetailPage() {
 
           {/* Emergency Contact */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Emergency Contact</h3>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm text-gray-500">Contact Name</dt>
-                <dd className="text-gray-900">{client.emergency_contact_name || "—"}</dd>
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Contact Name</dt>
+                <dd className="text-gray-900 dark:text-gray-100">{client.emergency_contact_name || "—"}</dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-500">Contact Phone</dt>
+                <dt className="text-sm text-gray-500 dark:text-gray-400">Contact Phone</dt>
                 <dd>
                   {client.emergency_contact_phone ? (
                     <a href={`tel:${client.emergency_contact_phone}`} className="text-brand-600 hover:underline">
@@ -2034,8 +2034,8 @@ export default function ClientDetailPage() {
 
           {/* Notes */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Notes</h3>
-            <p className="text-gray-700 whitespace-pre-wrap">{client.notes || "No notes"}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Notes</h3>
+            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{client.notes || "No notes"}</p>
           </div>
         </div>
           )}
@@ -2046,69 +2046,69 @@ export default function ClientDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Health Conditions */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Health Conditions</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Health Conditions</h3>
             {client.health_conditions && client.health_conditions.length > 0 ? (
               <ul className="space-y-2">
                 {client.health_conditions.map((condition: string, i: number) => (
                   <li key={i} className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-                    <span className="text-gray-700">{condition}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{condition}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">None reported</p>
+              <p className="text-gray-500 dark:text-gray-400">None reported</p>
             )}
           </div>
 
           {/* Injuries */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Injuries</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Injuries</h3>
             {client.injuries && client.injuries.length > 0 ? (
               <ul className="space-y-2">
                 {client.injuries.map((injury: string, i: number) => (
                   <li key={i} className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                    <span className="text-gray-700">{injury}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{injury}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">None reported</p>
+              <p className="text-gray-500 dark:text-gray-400">None reported</p>
             )}
           </div>
 
           {/* Medications */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Medications</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Medications</h3>
             {client.medications && client.medications.length > 0 ? (
               <ul className="space-y-2">
                 {client.medications.map((med: string, i: number) => (
                   <li key={i} className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                    <span className="text-gray-700">{med}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{med}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">None reported</p>
+              <p className="text-gray-500 dark:text-gray-400">None reported</p>
             )}
           </div>
 
           {/* Dietary Restrictions */}
           <div className="card p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Dietary Restrictions</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Dietary Restrictions</h3>
             {client.dietary_restrictions && client.dietary_restrictions.length > 0 ? (
               <ul className="space-y-2">
                 {client.dietary_restrictions.map((restriction: string, i: number) => (
                   <li key={i} className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                    <span className="text-gray-700">{restriction}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{restriction}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">None reported</p>
+              <p className="text-gray-500 dark:text-gray-400">None reported</p>
             )}
           </div>
         </div>
@@ -2118,7 +2118,7 @@ export default function ClientDetailPage() {
         <div className="space-y-6">
           {/* Header */}
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Communications Log</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Communications Log</h2>
             <button
               onClick={() => setShowCommsForm(true)}
               className="btn-primary"
@@ -2130,7 +2130,7 @@ export default function ClientDetailPage() {
           {/* Add Communication Form */}
           {showCommsForm && (
             <div className="card p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Log Communication</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Log Communication</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -2231,7 +2231,7 @@ export default function ClientDetailPage() {
                       <span className="text-2xl">{typeIcons[comm.type] || "📝"}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
                             {typeLabels[comm.type] || comm.type}
                           </span>
                           <span className={clsx(
@@ -2247,11 +2247,11 @@ export default function ClientDetailPage() {
                           </span>
                         </div>
                         {comm.subject && (
-                          <p className="text-sm font-medium text-gray-700 mb-1">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             {comm.subject}
                           </p>
                         )}
-                        <p className="text-gray-600 whitespace-pre-wrap">{comm.content}</p>
+                        <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{comm.content}</p>
                       </div>
                     </div>
                   </div>
@@ -2261,7 +2261,7 @@ export default function ClientDetailPage() {
           ) : (
             !showCommsForm && (
               <div className="card p-12 text-center">
-                <p className="text-gray-500 mb-4">No communications logged yet</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No communications logged yet</p>
                 <button onClick={() => setShowCommsForm(true)} className="btn-primary">
                   Log First Communication
                 </button>
@@ -2273,8 +2273,8 @@ export default function ClientDetailPage() {
 
       {activeTab === "activity" && (
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Activity History</h3>
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Activity History</h3>
           </div>
           <div className="divide-y divide-gray-200">
             {activities.length > 0 ? (
@@ -2282,8 +2282,8 @@ export default function ClientDetailPage() {
                 <div key={activity.id} className="px-6 py-4 flex items-start gap-3">
                   <span className="text-xl">{activityIcons[activity.type as ActivityType]}</span>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 capitalize">{activity.type}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 capitalize">{activity.type}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {activity.type === "weight" && `${activity.payload?.value} ${activity.payload?.unit ?? "kg"}`}
                       {activity.type === "habit" && activity.payload?.habit_name}
                       {activity.type === "workout" && "Completed workout"}
@@ -2294,7 +2294,7 @@ export default function ClientDetailPage() {
                 </div>
               ))
             ) : (
-              <p className="px-6 py-12 text-center text-gray-500">No activity recorded yet</p>
+              <p className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No activity recorded yet</p>
             )}
           </div>
         </div>
