@@ -93,16 +93,16 @@ export default async function ClientsPage() {
               const subStatus = subscription?.status ?? "none";
 
               return (
-                <tr key={client.id} className="hover:bg-gray-50">
+                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/clients/${client.id}`}
                       className="block"
                     >
-                      <p className="font-medium text-gray-900 hover:text-brand-600">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600">
                         {client.full_name}
                       </p>
-                      <p className="text-sm text-gray-500">{client.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{client.email}</p>
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -113,7 +113,7 @@ export default async function ClientsPage() {
                       {subStatus.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {formatRelativeTime(client.created_at)}
                   </td>
                 </tr>
@@ -121,7 +121,7 @@ export default async function ClientsPage() {
             })}
             {(!clients || clients.length === 0) && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                   No clients yet. Add your first client to get started.
                 </td>
               </tr>
