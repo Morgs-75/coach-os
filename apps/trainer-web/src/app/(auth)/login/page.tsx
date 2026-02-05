@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,10 +8,19 @@ import Link from "next/link";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // Load remembered email on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,6 +38,13 @@ export default function LoginPage() {
       return;
     }
 
+    // Save or clear remembered email
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", email);
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
+
     router.push("/dashboard");
     router.refresh();
   }
@@ -42,7 +58,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md">
+          <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm p-3 rounded-md">
             {error}
           </div>
         )}
@@ -73,6 +89,21 @@ export default function LoginPage() {
             className="input"
             required
           />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500"
+            />
+            <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
+          </label>
+          <Link href="/forgot-password" className="text-sm text-brand-600 hover:text-brand-700">
+            Forgot password?
+          </Link>
         </div>
 
         <button type="submit" className="btn-primary w-full" disabled={loading}>
