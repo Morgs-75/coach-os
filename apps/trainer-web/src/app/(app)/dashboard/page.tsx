@@ -21,6 +21,7 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData>({
     activeClients: 0,
     totalClients: 0,
@@ -42,16 +43,25 @@ export default function DashboardPage() {
   }, []);
 
   async function loadDashboard() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Not authenticated");
+        setLoading(false);
+        return;
+      }
 
-    const { data: membership } = await supabase
-      .from("org_members")
-      .select("org_id")
-      .eq("user_id", user.id)
-      .single();
+      const { data: membership } = await supabase
+        .from("org_members")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .single();
 
-    if (!membership) return;
+      if (!membership) {
+        setError("No organization found. Please complete your account setup.");
+        setLoading(false);
+        return;
+      }
     const orgId = membership.org_id;
 
     const { data: org } = await supabase
@@ -119,6 +129,11 @@ export default function DashboardPage() {
     });
 
     setLoading(false);
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+      setError("Failed to load dashboard");
+      setLoading(false);
+    }
   }
 
   const formatCurrency = (cents: number) => {
@@ -152,6 +167,24 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            loadDashboard();
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
