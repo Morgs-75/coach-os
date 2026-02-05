@@ -188,11 +188,11 @@ export default function NewClientPage() {
 
   return (
     <div className="max-w-xl">
-      <Link href="/clients" className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">
+      <Link href="/clients" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 mb-4 inline-block">
         ← Back to Clients
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add Client</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Add Client</h1>
 
       <form onSubmit={handleSubmit}>
         {error && (
@@ -252,7 +252,7 @@ export default function NewClientPage() {
           <button
             type="button"
             onClick={() => setShowMoreOptions(!showMoreOptions)}
-            className="w-full text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1"
+            className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 flex items-center justify-center gap-1"
           >
             {showMoreOptions ? "Hide" : "Show"} additional details
             <svg
@@ -271,7 +271,7 @@ export default function NewClientPage() {
           <div className="mt-4 space-y-4">
             {/* Personal Details */}
             <div className="card p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Personal Details</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Personal Details</h2>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -359,7 +359,7 @@ export default function NewClientPage() {
 
             {/* Physical & Training */}
             <div className="card p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Physical & Training</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Physical & Training</h2>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -418,7 +418,7 @@ export default function NewClientPage() {
                       className={`px-3 py-1.5 rounded-full text-sm ${
                         selectedGoals.includes(goal)
                           ? "bg-brand-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
                       }`}
                     >
                       {goal}
@@ -438,7 +438,7 @@ export default function NewClientPage() {
                       className={`px-3 py-1.5 rounded-full text-sm ${
                         preferredDays.includes(day)
                           ? "bg-brand-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
                       }`}
                     >
                       {day.slice(0, 3)}
@@ -449,15 +449,15 @@ export default function NewClientPage() {
 
               <div>
                 <label className="label">Preferred Time Windows</label>
-                <p className="text-xs text-gray-500 mb-2">Add specific times the client prefers to train</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Add specific times the client prefers to train</p>
 
                 {/* Existing time windows */}
                 {timeWindows.length > 0 && (
                   <div className="space-y-2 mb-3">
                     {timeWindows.map((tw, i) => (
                       <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
-                        <span className="capitalize font-medium text-sm text-gray-700 w-20">{tw.day}</span>
-                        <span className="text-sm text-gray-600">{tw.start} - {tw.end}</span>
+                        <span className="capitalize font-medium text-sm text-gray-700 dark:text-gray-300 w-20">{tw.day}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{tw.start} - {tw.end}</span>
                         <button
                           type="button"
                           onClick={() => removeTimeWindow(i)}
@@ -491,7 +491,7 @@ export default function NewClientPage() {
                       className="input text-sm py-1.5"
                     />
                   </div>
-                  <span className="text-gray-500 pb-2">to</span>
+                  <span className="text-gray-500 dark:text-gray-400 pb-2">to</span>
                   <div>
                     <input
                       type="time"
@@ -513,7 +513,7 @@ export default function NewClientPage() {
 
             {/* Health */}
             <div className="card p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Health Information</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Health Information</h2>
 
               <div>
                 <label className="label">Health Conditions</label>
@@ -526,7 +526,7 @@ export default function NewClientPage() {
                       className={`px-3 py-1.5 rounded-full text-sm ${
                         selectedConditions.includes(condition)
                           ? "bg-amber-500 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
                       }`}
                     >
                       {condition}
@@ -544,7 +544,7 @@ export default function NewClientPage() {
                   className="input"
                   placeholder="e.g., ACL tear 2020, shoulder impingement"
                 />
-                <p className="text-xs text-gray-500 mt-1">Separate multiple with commas</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Separate multiple with commas</p>
               </div>
 
               <div>
@@ -556,7 +556,7 @@ export default function NewClientPage() {
                   className="input"
                   placeholder="e.g., Metformin, Ventolin"
                 />
-                <p className="text-xs text-gray-500 mt-1">Separate multiple with commas</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Separate multiple with commas</p>
               </div>
 
               <div>
@@ -568,13 +568,13 @@ export default function NewClientPage() {
                   className="input"
                   placeholder="e.g., Vegetarian, Gluten-free, Nut allergy"
                 />
-                <p className="text-xs text-gray-500 mt-1">Separate multiple with commas</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Separate multiple with commas</p>
               </div>
             </div>
 
             {/* Emergency & Notes */}
             <div className="card p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Emergency Contact & Notes</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Emergency Contact & Notes</h2>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
