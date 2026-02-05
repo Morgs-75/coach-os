@@ -64,7 +64,10 @@
       "WebFetch(domain:vercel.com)",
       "Bash(vercel env:*)",
       "Bash(xargs sed -i 's|from \"\"@coach-os/shared\"\"|from \"\"@/types\"\"|g')",
-      "Bash(xargs sed -i \"s|from ''@coach-os/shared''|from ''@/types''|g\")"
+      "Bash(xargs sed -i \"s|from ''@coach-os/shared''|from ''@/types''|g\")",
+      "Bash(vercel deploy:*)",
+      "Bash(for i in 1 2 3 4)",
+      "Bash(do curl -s -o /dev/null -w \"Test $i: %{time_starttransfer}s\\\\n\" https://coach-os-uve6.vercel.app/)"
     ]
   }
 }

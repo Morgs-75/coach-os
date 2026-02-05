@@ -174,7 +174,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
-        <p className="text-gray-600 mb-4">{error}</p>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
         <button
           onClick={() => {
             setError(null);
@@ -193,7 +193,7 @@ export default function DashboardPage() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">{orgName || "Dashboard"}</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{orgName || "Dashboard"}</h1>
         <div className="flex gap-2">
           <Link
             href="/calendar"
@@ -203,7 +203,7 @@ export default function DashboardPage() {
           </Link>
           <Link
             href="/clients"
-            className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-xs font-medium"
+            className="inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-xs font-medium"
           >
             + Client
           </Link>
@@ -212,40 +212,40 @@ export default function DashboardPage() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-          <p className="text-xs text-gray-500">MRR</p>
-          <p className="text-lg font-semibold text-gray-900">{formatCurrency(data.mrr)}</p>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">MRR</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(data.mrr)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-          <p className="text-xs text-gray-500">Active Clients</p>
-          <p className="text-lg font-semibold text-gray-900">{data.activeClients}</p>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Active Clients</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{data.activeClients}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-          <p className="text-xs text-gray-500">Subscriptions</p>
-          <p className="text-lg font-semibold text-gray-900">{data.activeSubscriptions}</p>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Subscriptions</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{data.activeSubscriptions}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-          <p className="text-xs text-gray-500">Today</p>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Today</p>
           <p className="text-lg font-semibold text-blue-600">{data.sessionsToday} sessions</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-          <p className="text-xs text-gray-500">This Week</p>
-          <p className="text-lg font-semibold text-gray-900">{data.sessionsThisWeek} sessions</p>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">This Week</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{data.sessionsThisWeek} sessions</p>
         </div>
         <div className={clsx(
           "rounded-lg border p-3 text-center",
-          data.pastDueCount > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-200"
+          data.pastDueCount > 0 ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
         )}>
-          <p className="text-xs text-gray-500">Past Due</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Past Due</p>
           <p className={clsx("text-lg font-semibold", data.pastDueCount > 0 ? "text-red-600" : "text-gray-900")}>
             {data.pastDueCount}
           </p>
         </div>
         <div className={clsx(
           "rounded-lg border p-3 text-center",
-          data.riskClients.length > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-200"
+          data.riskClients.length > 0 ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
         )}>
-          <p className="text-xs text-gray-500">At Risk</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">At Risk</p>
           <p className={clsx("text-lg font-semibold", data.riskClients.length > 0 ? "text-amber-600" : "text-gray-900")}>
             {data.riskClients.length}
           </p>
@@ -255,33 +255,33 @@ export default function DashboardPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Upcoming Sessions */}
-        <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-900">Upcoming Sessions</h2>
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100">Upcoming Sessions</h2>
             <Link href="/calendar" className="text-xs text-blue-600 hover:text-blue-700">
               View all
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {data.upcomingBookings.length > 0 ? (
               data.upcomingBookings.map((booking: any) => (
-                <div key={booking.id} className="px-4 py-2.5 flex items-center justify-between hover:bg-gray-50">
+                <div key={booking.id} className="px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400">
                       {booking.clients?.full_name?.charAt(0) || "?"}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {booking.clients?.full_name || "Client"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {booking.session_type.replace("_", " ")}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{formatTime(booking.start_time)}</p>
-                    <p className="text-xs text-gray-500">{formatDate(booking.start_time)}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatTime(booking.start_time)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(booking.start_time)}</p>
                   </div>
                 </div>
               ))
@@ -296,20 +296,20 @@ export default function DashboardPage() {
         {/* Right Column */}
         <div className="space-y-5">
           {/* At Risk */}
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="text-sm font-medium text-gray-900">Needs Attention</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100">Needs Attention</h2>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {data.riskClients.length > 0 ? (
                 data.riskClients.map((risk: any) => (
                   <Link
                     key={risk.client_id}
                     href={`/clients/${risk.client_id}`}
-                    className="block px-4 py-2.5 hover:bg-gray-50"
+                    className="block px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                         {risk.clients?.full_name || "Unknown"}
                       </p>
                       <span className={clsx(
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                         {risk.tier}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
                       {risk.reasons?.[0] || "At risk"}
                     </p>
                   </Link>
