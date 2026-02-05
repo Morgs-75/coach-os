@@ -252,8 +252,8 @@ export default function SessionTypesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Session Types</h1>
-          <p className="text-sm text-gray-500">Configure the types of sessions you offer</p>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Session Types</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Configure the types of sessions you offer</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -264,8 +264,8 @@ export default function SessionTypesPage() {
       </div>
 
       {sessionTypes.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-sm text-gray-500 mb-4">No session types configured yet</p>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No session types configured yet</p>
           <button
             onClick={openCreateModal}
             className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -274,19 +274,19 @@ export default function SessionTypesPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Session Type</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Duration</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Price</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Online Booking</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Status</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Actions</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Session Type</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Duration</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Price</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Online Booking</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {sessionTypes.map((st) => (
                 <tr key={st.id} className={clsx(!st.is_active && "opacity-50")}>
                   <td className="px-4 py-3">
@@ -296,17 +296,17 @@ export default function SessionTypesPage() {
                         style={{ backgroundColor: st.color }}
                       ></div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{st.name}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{st.name}</p>
                         {st.description && (
-                          <p className="text-xs text-gray-500 truncate max-w-[200px]">{st.description}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{st.description}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-center text-sm text-gray-700">
+                  <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
                     {formatDuration(st.duration_mins)}
                   </td>
-                  <td className="px-4 py-3 text-center text-sm text-gray-700">
+                  <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
                     {formatPrice(st.price_cents)}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -359,16 +359,16 @@ export default function SessionTypesPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {editing ? "Edit Session Type" : "New Session Type"}
               </h2>
             </div>
 
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
                 <input
                   type="text"
                   value={form.name}
@@ -379,29 +379,29 @@ export default function SessionTypesPage() {
                       slug: editing ? form.slug : generateSlug(e.target.value),
                     });
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="e.g., PT Session"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <input
                   type="text"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="Optional description for clients"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Duration *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration *</label>
                   <select
                     value={form.duration_mins}
                     onChange={(e) => setForm({ ...form, duration_mins: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     {DURATIONS.map((d) => (
                       <option key={d} value={d}>
@@ -412,14 +412,14 @@ export default function SessionTypesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (AUD)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (AUD)</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-gray-500 text-sm">$</span>
+                    <span className="absolute left-3 top-2 text-gray-500 dark:text-gray-400 text-sm">$</span>
                     <input
                       type="number"
                       value={(form.price_cents || 0) / 100}
                       onChange={(e) => setForm({ ...form, price_cents: Math.round(parseFloat(e.target.value || "0") * 100) })}
-                      className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg pl-7 pr-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                       placeholder="0"
                       min="0"
                       step="5"
@@ -429,7 +429,7 @@ export default function SessionTypesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
                 <div className="flex flex-wrap gap-2">
                   {COLORS.map((c) => (
                     <button
@@ -438,7 +438,7 @@ export default function SessionTypesPage() {
                       onClick={() => setForm({ ...form, color: c.value })}
                       className={clsx(
                         "w-8 h-8 rounded-full border-2 transition-all",
-                        form.color === c.value ? "border-gray-900 scale-110" : "border-transparent"
+                        form.color === c.value ? "border-gray-900 dark:border-white scale-110" : "border-transparent"
                       )}
                       style={{ backgroundColor: c.value }}
                       title={c.name}
@@ -449,11 +449,11 @@ export default function SessionTypesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Buffer Before</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buffer Before</label>
                   <select
                     value={form.buffer_before_mins}
                     onChange={(e) => setForm({ ...form, buffer_before_mins: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     <option value={0}>None</option>
                     <option value={5}>5 min</option>
@@ -464,11 +464,11 @@ export default function SessionTypesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Buffer After</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buffer After</label>
                   <select
                     value={form.buffer_after_mins}
                     onChange={(e) => setForm({ ...form, buffer_after_mins: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     <option value={0}>None</option>
                     <option value={5}>5 min</option>
@@ -480,12 +480,12 @@ export default function SessionTypesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max per Day</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max per Day</label>
                 <input
                   type="number"
                   value={form.max_per_day ?? ""}
                   onChange={(e) => setForm({ ...form, max_per_day: e.target.value ? parseInt(e.target.value) : null })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="No limit"
                   min="1"
                 />
@@ -499,7 +499,7 @@ export default function SessionTypesPage() {
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
                     className="rounded"
                   />
-                  <span className="text-sm text-gray-700">Active</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -508,12 +508,12 @@ export default function SessionTypesPage() {
                     onChange={(e) => setForm({ ...form, allow_online_booking: e.target.checked })}
                     className="rounded"
                   />
-                  <span className="text-sm text-gray-700">Allow Online Booking</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Allow Online Booking</span>
                 </label>
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               {error && (
                 <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
                   {error}
@@ -525,7 +525,7 @@ export default function SessionTypesPage() {
                     setShowModal(false);
                     setError(null);
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
                 >
                   Cancel
                 </button>
