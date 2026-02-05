@@ -395,15 +395,15 @@ export default function PricingPage() {
   };
 
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pricing & Offers</h1>
-          <p className="text-gray-500">Configure your services and pricing for clients</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pricing & Offers</h1>
+          <p className="text-gray-500 dark:text-gray-400">Configure your services and pricing for clients</p>
         </div>
         <button
           onClick={() => {
@@ -419,9 +419,9 @@ export default function PricingPage() {
       {/* Offer Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100">
                 {editingOffer ? "Edit Offer" : "Create New Offer"}
               </h2>
             </div>
@@ -444,11 +444,11 @@ export default function PricingPage() {
                         "p-4 rounded-lg border-2 text-left transition-colors",
                         formData.offer_type === type.value
                           ? "border-brand-600 bg-brand-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                       )}
                     >
-                      <p className="font-medium text-gray-900">{type.label}</p>
-                      <p className="text-xs text-gray-500">{type.desc}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{type.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{type.desc}</p>
                     </button>
                   ))}
                 </div>
@@ -513,7 +513,7 @@ export default function PricingPage() {
                   <button
                     type="button"
                     onClick={addIncludedItem}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 text-sm font-medium"
                   >
                     Add
                   </button>
@@ -523,7 +523,7 @@ export default function PricingPage() {
                     {formData.included_items.map((item, index) => (
                       <li
                         key={index}
-                        className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg text-sm"
+                        className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm"
                       >
                         <span className="flex items-center gap-2">
                           <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -544,7 +544,7 @@ export default function PricingPage() {
                     ))}
                   </ul>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Press Enter or click Add to add each item</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Press Enter or click Add to add each item</p>
               </div>
 
               {/* Subscription Options */}
@@ -588,7 +588,7 @@ export default function PricingPage() {
                         className="input"
                         placeholder="0"
                       />
-                      <p className="text-xs text-gray-500 mt-1">e.g., "1" for buy 10 get 1 free</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">e.g., "1" for buy 10 get 1 free</p>
                     </div>
                     <div>
                       <label className="label">Valid for (days)</label>
@@ -600,14 +600,14 @@ export default function PricingPage() {
                         className="input"
                         placeholder="90"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Leave blank for no expiry</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave blank for no expiry</p>
                     </div>
                   </div>
 
                   {/* Preview */}
                   {formData.sessions_included && formData.price && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         <strong>Preview:</strong>{" "}
                         {parseInt(formData.sessions_included) + parseInt(formData.bonus_sessions || "0")} sessions
                         {formData.bonus_sessions && parseInt(formData.bonus_sessions) > 0
@@ -653,7 +653,7 @@ export default function PricingPage() {
                     onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
                     className="rounded text-brand-600"
                   />
-                  <span className="text-sm text-gray-700">Featured (highlight this offer)</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Featured (highlight this offer)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -662,12 +662,12 @@ export default function PricingPage() {
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     className="rounded text-brand-600"
                   />
-                  <span className="text-sm text-gray-700">Active (visible to clients)</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Active (visible to clients)</span>
                 </label>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" className="btn-primary" disabled={saving}>
                   {saving ? "Saving..." : editingOffer ? "Update Offer" : "Create Offer"}
                 </button>
@@ -707,7 +707,7 @@ export default function PricingPage() {
 
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{offer.name}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">{offer.name}</h3>
                   <span className={clsx(
                     "inline-block px-2 py-0.5 rounded text-xs font-medium mt-1",
                     offer.offer_type === "subscription" ? "bg-purple-100 text-purple-700" :
@@ -720,38 +720,38 @@ export default function PricingPage() {
                   </span>
                 </div>
                 {!offer.is_active && (
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded">
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-500 dark:text-gray-400 text-xs rounded">
                     Inactive
                   </span>
                 )}
               </div>
 
               <div className="mb-4">
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {formatPrice(offer.price_cents)}
                 </p>
                 {offer.offer_type === "subscription" && (
-                  <p className="text-sm text-gray-500">/{formatBillingPeriod(offer.billing_period)?.toLowerCase()}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">/{formatBillingPeriod(offer.billing_period)?.toLowerCase()}</p>
                 )}
                 {offer.offer_type === "session_pack" && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {(offer.sessions_included || 0) + (offer.bonus_sessions || 0)} sessions
                     {offer.bonus_sessions ? ` (${offer.bonus_sessions} bonus)` : ""}
                   </p>
                 )}
                 {offer.offer_type === "single_session" && (
-                  <p className="text-sm text-gray-500">{offer.session_duration_mins} min session</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{offer.session_duration_mins} min session</p>
                 )}
               </div>
 
               {offer.description && (
-                <p className="text-sm text-gray-600 mb-3">{offer.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{offer.description}</p>
               )}
 
               {offer.included_items && offer.included_items.length > 0 && (
                 <ul className="space-y-1.5 mb-4">
                   {offer.included_items.map((item, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                    <li key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -767,7 +767,7 @@ export default function PricingPage() {
                 </p>
               )}
 
-              <div className="flex gap-2 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <button
                   onClick={() => editOffer(offer)}
                   className="text-sm text-brand-600 hover:text-brand-700"
@@ -776,7 +776,7 @@ export default function PricingPage() {
                 </button>
                 <button
                   onClick={() => toggleActive(offer)}
-                  className="text-sm text-gray-600 hover:text-gray-700"
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700"
                 >
                   {offer.is_active ? "Deactivate" : "Activate"}
                 </button>
@@ -792,8 +792,8 @@ export default function PricingPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No offers yet</h3>
-          <p className="text-gray-500 mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No offers yet</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
             Create your first offer to start accepting payments from clients.
           </p>
           <button
@@ -813,7 +813,7 @@ export default function PricingPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Promo Codes</h2>
-            <p className="text-gray-500 text-sm">Create discount codes for special offers</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Create discount codes for special offers</p>
           </div>
           <button
             onClick={() => {
@@ -829,7 +829,7 @@ export default function PricingPage() {
         {/* Promo Code Form */}
         {showPromoForm && (
           <div className="card p-6 mb-6">
-            <h3 className="font-semibold text-gray-900 mb-4">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
               {editingPromo ? "Edit Promo Code" : "Create Promo Code"}
             </h3>
             <form onSubmit={savePromoCode} className="space-y-4">
@@ -907,7 +907,7 @@ export default function PricingPage() {
                 />
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-gray-200">
+              <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" disabled={saving} className="btn-primary">
                   {saving ? "Saving..." : editingPromo ? "Update Code" : "Create Code"}
                 </button>
@@ -930,31 +930,31 @@ export default function PricingPage() {
         {promoCodes.length > 0 ? (
           <div className="card overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valid Period</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usage</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Code</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Discount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valid Period</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Usage</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {promoCodes.map((promo) => {
                   const isExpired = promo.valid_until && new Date(promo.valid_until) < new Date();
                   const isExhausted = promo.max_uses && promo.times_used >= promo.max_uses;
                   return (
-                    <tr key={promo.id} className={clsx(!promo.is_active && "bg-gray-50")}>
+                    <tr key={promo.id} className={clsx(!promo.is_active && "bg-gray-50 dark:bg-gray-800")}>
                       <td className="px-4 py-3">
-                        <span className="font-mono font-medium text-gray-900">{promo.code}</span>
+                        <span className="font-mono font-medium text-gray-900 dark:text-gray-100">{promo.code}</span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                         {promo.discount_type === "percentage"
                           ? `${promo.discount_value}% off`
                           : `$${promo.discount_value} off`}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                         {promo.valid_from || promo.valid_until ? (
                           <>
                             {promo.valid_from && new Date(promo.valid_from).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
@@ -965,16 +965,16 @@ export default function PricingPage() {
                           "No expiry"
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {promo.times_used}{promo.max_uses ? ` / ${promo.max_uses}` : ""}
                       </td>
                       <td className="px-4 py-3">
                         <span className={clsx(
                           "px-2 py-0.5 rounded text-xs font-medium",
                           isExpired ? "bg-red-100 text-red-700" :
-                          isExhausted ? "bg-gray-100 text-gray-500" :
+                          isExhausted ? "bg-gray-100 text-gray-500 dark:text-gray-400" :
                           promo.is_active ? "bg-green-100 text-green-700" :
-                          "bg-gray-100 text-gray-500"
+                          "bg-gray-100 text-gray-500 dark:text-gray-400"
                         )}>
                           {isExpired ? "Expired" : isExhausted ? "Exhausted" : promo.is_active ? "Active" : "Inactive"}
                         </span>
@@ -983,7 +983,7 @@ export default function PricingPage() {
                         <button onClick={() => editPromoCode(promo)} className="text-sm text-brand-600 hover:text-brand-700 mr-3">
                           Edit
                         </button>
-                        <button onClick={() => togglePromoActive(promo)} className="text-sm text-gray-600 hover:text-gray-700 mr-3">
+                        <button onClick={() => togglePromoActive(promo)} className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 mr-3">
                           {promo.is_active ? "Disable" : "Enable"}
                         </button>
                         <button onClick={() => deletePromoCode(promo)} className="text-sm text-red-600 hover:text-red-700">
@@ -998,7 +998,7 @@ export default function PricingPage() {
           </div>
         ) : !showPromoForm && (
           <div className="card p-8 text-center">
-            <p className="text-gray-500 mb-4">No promo codes yet</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No promo codes yet</p>
             <button
               onClick={() => {
                 resetPromoForm();
@@ -1013,19 +1013,19 @@ export default function PricingPage() {
       </div>
 
       {/* Help Text */}
-      <div className="mt-8 card p-6 bg-gray-50">
-        <h3 className="font-semibold text-gray-900 mb-2">Offer Types Explained</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+      <div className="mt-8 card p-6 bg-gray-50 dark:bg-gray-800">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Offer Types Explained</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div>
-            <p className="font-medium text-gray-700">Subscription</p>
+            <p className="font-medium text-gray-700 dark:text-gray-300">Subscription</p>
             <p>Recurring payments (weekly, monthly, etc.). Best for ongoing coaching relationships.</p>
           </div>
           <div>
-            <p className="font-medium text-gray-700">Session Pack</p>
+            <p className="font-medium text-gray-700 dark:text-gray-300">Session Pack</p>
             <p>Bulk sessions at a discount. Add bonus sessions for "buy X get Y free" deals.</p>
           </div>
           <div>
-            <p className="font-medium text-gray-700">Single Session</p>
+            <p className="font-medium text-gray-700 dark:text-gray-300">Single Session</p>
             <p>One-time purchases for casual clients or trial sessions.</p>
           </div>
         </div>
