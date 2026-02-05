@@ -35,16 +35,23 @@ export function Sidebar() {
   }, []);
 
   async function checkPlatformAdmin() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data } = await supabase
-      .from("platform_admins")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("platform_admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-    setIsPlatformAdmin(!!data);
+      // Silently fail if table doesn't exist (406) or user not admin
+      if (!error && data) {
+        setIsPlatformAdmin(true);
+      }
+    } catch {
+      // Table may not exist yet - that's fine
+    }
   }
 
   return (
