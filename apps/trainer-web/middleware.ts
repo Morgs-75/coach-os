@@ -2,8 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Public routes that don't need auth checks
-// TEMP: Added /dashboard to test if middleware is causing hang
-const publicRoutes = ["/", "/login", "/signup", "/api/", "/dashboard"];
+const publicRoutes = ["/", "/login", "/signup", "/api/"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;

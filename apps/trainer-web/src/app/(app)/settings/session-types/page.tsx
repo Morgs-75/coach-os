@@ -73,13 +73,12 @@ export default function SessionTypesPage() {
     max_per_day: null as number | null,
   });
 
-  const supabase = createClient();
-
   useEffect(() => {
     loadSessionTypes();
   }, []);
 
   async function loadSessionTypes() {
+    const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -151,6 +150,7 @@ export default function SessionTypesPage() {
     if (!orgId || !form.name) return;
     setSaving(true);
     setError(null);
+    const supabase = createClient();
 
     const slug = form.slug || generateSlug(form.name);
 
@@ -213,11 +213,13 @@ export default function SessionTypesPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this session type?")) return;
+    const supabase = createClient();
     await supabase.from("session_types").delete().eq("id", id);
     loadSessionTypes();
   }
 
   async function handleToggleActive(st: SessionType) {
+    const supabase = createClient();
     await supabase
       .from("session_types")
       .update({ is_active: !st.is_active })

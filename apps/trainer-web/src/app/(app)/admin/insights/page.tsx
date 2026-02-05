@@ -40,7 +40,6 @@ export default function AdminInsightsPage() {
   const [selectedInsight, setSelectedInsight] = useState<ScannedInsight | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("pending");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const supabase = createClient();
 
   useEffect(() => {
     loadData();
@@ -48,6 +47,7 @@ export default function AdminInsightsPage() {
 
   async function loadData() {
     setLoading(true);
+    const supabase = createClient();
 
     // Load stats
     const statsResponse = await fetch("/api/insights/scan");
@@ -99,6 +99,7 @@ export default function AdminInsightsPage() {
   }
 
   async function approveInsight(id: string) {
+    const supabase = createClient();
     await supabase
       .from("scanned_insights")
       .update({ approved: true })
@@ -113,6 +114,7 @@ export default function AdminInsightsPage() {
   }
 
   async function rejectInsight(id: string) {
+    const supabase = createClient();
     await supabase.from("scanned_insights").delete().eq("id", id);
     setInsights((prev) => prev.filter((i) => i.id !== id));
     if (selectedInsight?.id === id) {
@@ -121,6 +123,7 @@ export default function AdminInsightsPage() {
   }
 
   async function editInsight(id: string, updates: Partial<ScannedInsight>) {
+    const supabase = createClient();
     await supabase.from("scanned_insights").update(updates).eq("id", id);
     setInsights((prev) =>
       prev.map((i) => (i.id === id ? { ...i, ...updates } : i))
