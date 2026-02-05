@@ -1,140 +1,76 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
+import { getOrg } from "@/lib/get-org";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { redirect } from "next/navigation";
 
-interface DashboardData {
-  activeClients: number;
-  totalClients: number;
-  activeSubscriptions: number;
-  pastDueCount: number;
-  mrr: number;
-  revenueAtRisk: number;
-  sessionsToday: number;
-  sessionsThisWeek: number;
-  riskClients: any[];
-  upcomingBookings: any[];
-  recentPayments: any[];
-}
+// Server Component - data fetched before HTML sent to browser
+export default async function DashboardPage() {
+  const org = await getOrg();
 
-export default function DashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<DashboardData>({
-    activeClients: 0,
-    totalClients: 0,
-    activeSubscriptions: 0,
-    pastDueCount: 0,
-    mrr: 0,
-    revenueAtRisk: 0,
-    sessionsToday: 0,
-    sessionsThisWeek: 0,
-    riskClients: [],
-    upcomingBookings: [],
-    recentPayments: [],
-  });
-  const [orgName, setOrgName] = useState("");
-  const supabase = createClient();
-
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  async function loadDashboard() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setError("Not authenticated");
-        setLoading(false);
-        return;
-      }
-
-      const { data: membership } = await supabase
-        .from("org_members")
-        .select("org_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!membership) {
-        setError("No organization found. Please complete your account setup.");
-        setLoading(false);
-        return;
-      }
-    const orgId = membership.org_id;
-
-    const { data: org } = await supabase
-      .from("orgs")
-      .select("name")
-      .eq("id", orgId)
-      .single();
-    if (org) setOrgName(org.name);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-
-    const [
-      clientsResult,
-      activeClientsResult,
-      subscriptionsResult,
-      bookingsResult,
-      riskResult,
-    ] = await Promise.all([
-      supabase.from("clients").select("id", { count: "exact" }).eq("org_id", orgId),
-      supabase.from("clients").select("id", { count: "exact" }).eq("org_id", orgId).eq("status", "active"),
-      supabase.from("subscriptions").select("status, price_cents").eq("org_id", orgId),
-      supabase.from("bookings")
-        .select(`*, clients(full_name)`)
-        .eq("org_id", orgId)
-        .gte("start_time", today.toISOString())
-        .lte("start_time", weekEnd.toISOString())
-        .neq("status", "cancelled")
-        .order("start_time", { ascending: true })
-        .limit(8),
-      supabase.from("client_risk")
-        .select("client_id, tier, score, reasons, clients(full_name)")
-        .eq("org_id", orgId)
-        .in("tier", ["amber", "red"])
-        .order("score", { ascending: false })
-        .limit(5),
-    ]);
-
-    const activeSubscriptions = subscriptionsResult.data?.filter(s => s.status === "active") || [];
-    const pastDueSubscriptions = subscriptionsResult.data?.filter(s => s.status === "past_due") || [];
-    const mrr = activeSubscriptions.reduce((sum, s) => sum + (s.price_cents || 0), 0);
-    const avgRevenue = activeSubscriptions.length > 0 ? mrr / activeSubscriptions.length : 0;
-
-    const todayEnd = new Date(today);
-    todayEnd.setDate(todayEnd.getDate() + 1);
-    const sessionsToday = bookingsResult.data?.filter(b => {
-      const bookingDate = new Date(b.start_time);
-      return bookingDate >= today && bookingDate < todayEnd;
-    }).length || 0;
-
-    setData({
-      totalClients: clientsResult.count || 0,
-      activeClients: activeClientsResult.count || 0,
-      activeSubscriptions: activeSubscriptions.length,
-      pastDueCount: pastDueSubscriptions.length,
-      mrr,
-      revenueAtRisk: pastDueSubscriptions.length * avgRevenue,
-      sessionsToday,
-      sessionsThisWeek: bookingsResult.data?.length || 0,
-      riskClients: riskResult.data || [],
-      upcomingBookings: bookingsResult.data || [],
-      recentPayments: [],
-    });
-
-    setLoading(false);
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-      setError("Failed to load dashboard");
-      setLoading(false);
-    }
+  if (!org) {
+    redirect("/login");
   }
+
+  const supabase = await createClient();
+  const { orgId, orgName } = org;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(today);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  // All queries in parallel - much faster than sequential
+  const [
+    clientsResult,
+    activeClientsResult,
+    subscriptionsResult,
+    bookingsResult,
+    riskResult,
+  ] = await Promise.all([
+    supabase.from("clients").select("id", { count: "exact" }).eq("org_id", orgId),
+    supabase.from("clients").select("id", { count: "exact" }).eq("org_id", orgId).eq("status", "active"),
+    supabase.from("subscriptions").select("status, price_cents").eq("org_id", orgId),
+    supabase.from("bookings")
+      .select(`*, clients(full_name)`)
+      .eq("org_id", orgId)
+      .gte("start_time", today.toISOString())
+      .lte("start_time", weekEnd.toISOString())
+      .neq("status", "cancelled")
+      .order("start_time", { ascending: true })
+      .limit(8),
+    supabase.from("client_risk")
+      .select("client_id, tier, score, reasons, clients(full_name)")
+      .eq("org_id", orgId)
+      .in("tier", ["amber", "red"])
+      .order("score", { ascending: false })
+      .limit(5),
+  ]);
+
+  const activeSubscriptions = subscriptionsResult.data?.filter(s => s.status === "active") || [];
+  const pastDueSubscriptions = subscriptionsResult.data?.filter(s => s.status === "past_due") || [];
+  const mrr = activeSubscriptions.reduce((sum, s) => sum + (s.price_cents || 0), 0);
+  const avgRevenue = activeSubscriptions.length > 0 ? mrr / activeSubscriptions.length : 0;
+
+  const todayEnd = new Date(today);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+  const sessionsToday = bookingsResult.data?.filter(b => {
+    const bookingDate = new Date(b.start_time);
+    return bookingDate >= today && bookingDate < todayEnd;
+  }).length || 0;
+
+  const data = {
+    totalClients: clientsResult.count || 0,
+    activeClients: activeClientsResult.count || 0,
+    activeSubscriptions: activeSubscriptions.length,
+    pastDueCount: pastDueSubscriptions.length,
+    mrr,
+    revenueAtRisk: pastDueSubscriptions.length * avgRevenue,
+    sessionsToday,
+    sessionsThisWeek: bookingsResult.data?.length || 0,
+    riskClients: riskResult.data || [],
+    upcomingBookings: bookingsResult.data || [],
+  };
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat("en-AU", {
@@ -154,40 +90,14 @@ export default function DashboardPage() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const today = new Date();
-    const tomorrow = new Date(today);
+    const now = new Date();
+    const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === now.toDateString()) return "Today";
     if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
     return date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" });
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
-        <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-        <button
-          onClick={() => {
-            setError(null);
-            setLoading(true);
-            loadDashboard();
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-5">
@@ -202,7 +112,7 @@ export default function DashboardPage() {
             + Booking
           </Link>
           <Link
-            href="/clients"
+            href="/clients/new"
             className="inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-xs font-medium"
           >
             + Client
@@ -237,7 +147,7 @@ export default function DashboardPage() {
           data.pastDueCount > 0 ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
         )}>
           <p className="text-xs text-gray-500 dark:text-gray-400">Past Due</p>
-          <p className={clsx("text-lg font-semibold", data.pastDueCount > 0 ? "text-red-600" : "text-gray-900")}>
+          <p className={clsx("text-lg font-semibold", data.pastDueCount > 0 ? "text-red-600" : "text-gray-900 dark:text-gray-100")}>
             {data.pastDueCount}
           </p>
         </div>
@@ -246,7 +156,7 @@ export default function DashboardPage() {
           data.riskClients.length > 0 ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
         )}>
           <p className="text-xs text-gray-500 dark:text-gray-400">At Risk</p>
-          <p className={clsx("text-lg font-semibold", data.riskClients.length > 0 ? "text-amber-600" : "text-gray-900")}>
+          <p className={clsx("text-lg font-semibold", data.riskClients.length > 0 ? "text-amber-600" : "text-gray-900 dark:text-gray-100")}>
             {data.riskClients.length}
           </p>
         </div>
@@ -275,7 +185,7 @@ export default function DashboardPage() {
                         {booking.clients?.full_name || "Client"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {booking.session_type.replace("_", " ")}
+                        {booking.session_type?.replace("_", " ") || "Session"}
                       </p>
                     </div>
                   </div>
@@ -286,7 +196,7 @@ export default function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                 No upcoming sessions
               </div>
             )}
@@ -314,7 +224,7 @@ export default function DashboardPage() {
                       </p>
                       <span className={clsx(
                         "px-1.5 py-0.5 rounded text-xs font-medium",
-                        risk.tier === "red" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                        risk.tier === "red" ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
                       )}>
                         {risk.tier}
                       </span>
