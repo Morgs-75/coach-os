@@ -224,7 +224,7 @@ export default function OrgDetailPage() {
   if (!isAdmin || !org) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Access Denied</h1>
         <Link href="/admin" className="btn-primary inline-block mt-4">
           Back to Admin
         </Link>
@@ -245,7 +245,7 @@ export default function OrgDetailPage() {
       <div className="mb-6">
         <Link
           href="/admin"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+          className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 mb-4"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -254,8 +254,8 @@ export default function OrgDetailPage() {
         </Link>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
-            <p className="text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{org.name}</h1>
+            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
               Joined {new Date(org.created_at).toLocaleDateString("en-AU")} · {commissionRate}% commission
             </p>
           </div>
@@ -271,35 +271,35 @@ export default function OrgDetailPage() {
 
       {/* Earnings Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Gross Earnings</p>
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Gross Earnings</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {formatCurrency(earnings?.gross_earnings_cents || 0)}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Commission ({commissionRate}%)</p>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Commission ({commissionRate}%)</p>
           <p className="text-2xl font-bold text-purple-600">
             {formatCurrency(earnings?.commission_cents || 0)}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Net Earnings</p>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Net Earnings</p>
           <p className="text-2xl font-bold text-green-600">
             {formatCurrency(earnings?.net_earnings_cents || 0)}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Paid Out</p>
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Paid Out</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {formatCurrency(earnings?.paid_out_cents || 0)}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Pending Payout</p>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Pending Payout</p>
           <p className={clsx(
             "text-2xl font-bold",
-            (earnings?.pending_payout_cents || 0) > 0 ? "text-amber-600" : "text-gray-400"
+            (earnings?.pending_payout_cents || 0) > 0 ? "text-amber-600" : "text-gray-400 dark:text-gray-500"
           )}>
             {formatCurrency(earnings?.pending_payout_cents || 0)}
           </p>
@@ -307,7 +307,7 @@ export default function OrgDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
         <div className="flex gap-8">
           {tabs.map((tab) => (
             <button
@@ -317,7 +317,7 @@ export default function OrgDetailPage() {
                 "pb-4 text-sm font-medium border-b-2 transition-colors",
                 activeTab === tab.id
                   ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  : "border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300"
               )}
             >
               {tab.label}
@@ -330,29 +330,29 @@ export default function OrgDetailPage() {
       {activeTab === "overview" && (
         <div className="space-y-6">
           {/* Team Members */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Team Members</h2>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {members.map((member) => (
                 <div key={member.id} className="px-6 py-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{member.email}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{member.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       Joined {new Date(member.created_at).toLocaleDateString("en-AU")}
                     </p>
                   </div>
                   <span className={clsx(
                     "px-2.5 py-0.5 rounded-full text-xs font-medium",
-                    member.role === "owner" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"
+                    member.role === "owner" ? "bg-purple-100 text-purple-800" : "bg-gray-100 dark:bg-gray-700 text-gray-800"
                   )}>
                     {member.role}
                   </span>
                 </div>
               ))}
               {members.length === 0 && (
-                <div className="px-6 py-8 text-center text-gray-500">
+                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   No team members yet
                 </div>
               )}
@@ -360,9 +360,9 @@ export default function OrgDetailPage() {
           </div>
 
           {/* Recent Clients */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Clients</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Clients</h2>
               <button
                 onClick={() => setActiveTab("clients")}
                 className="text-sm text-blue-600 hover:text-blue-700"
@@ -370,23 +370,23 @@ export default function OrgDetailPage() {
                 View all
               </button>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {clients.slice(0, 5).map((client) => (
                 <div key={client.id} className="px-6 py-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{client.full_name}</p>
-                    <p className="text-sm text-gray-500">{client.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{client.full_name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{client.email}</p>
                   </div>
                   <span className={clsx(
                     "px-2.5 py-0.5 rounded-full text-xs font-medium",
-                    client.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                    client.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 dark:bg-gray-700 text-gray-800"
                   )}>
                     {client.status}
                   </span>
                 </div>
               ))}
               {clients.length === 0 && (
-                <div className="px-6 py-8 text-center text-gray-500">
+                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   No clients yet
                 </div>
               )}
@@ -396,32 +396,32 @@ export default function OrgDetailPage() {
       )}
 
       {activeTab === "clients" && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {clients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">{client.full_name}</td>
-                  <td className="px-6 py-4 text-gray-500">{client.email}</td>
-                  <td className="px-6 py-4 text-gray-500">{client.phone || "-"}</td>
+                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{client.full_name}</td>
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500">{client.email}</td>
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500">{client.phone || "-"}</td>
                   <td className="px-6 py-4">
                     <span className={clsx(
                       "px-2.5 py-0.5 rounded-full text-xs font-medium",
-                      client.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                      client.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 dark:bg-gray-700 text-gray-800"
                     )}>
                       {client.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     {new Date(client.created_at).toLocaleDateString("en-AU")}
                   </td>
                 </tr>
@@ -432,33 +432,33 @@ export default function OrgDetailPage() {
       )}
 
       {activeTab === "payouts" && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gross</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commission</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Net</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Period</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Gross</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Commission</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Net</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {payouts.map((payout) => (
-                <tr key={payout.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-gray-900">
+                <tr key={payout.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                  <td className="px-6 py-4 text-gray-900 dark:text-gray-100">
                     {new Date(payout.period_start).toLocaleDateString("en-AU")} - {new Date(payout.period_end).toLocaleDateString("en-AU")}
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{formatCurrency(payout.gross_amount_cents)}</td>
-                  <td className="px-6 py-4 text-gray-500">{formatCurrency(payout.commission_cents)}</td>
+                  <td className="px-6 py-4 text-gray-900 dark:text-gray-100">{formatCurrency(payout.gross_amount_cents)}</td>
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatCurrency(payout.commission_cents)}</td>
                   <td className="px-6 py-4 font-medium text-green-600">{formatCurrency(payout.net_amount_cents)}</td>
                   <td className="px-6 py-4">
                     <span className={clsx(
                       "px-2.5 py-0.5 rounded-full text-xs font-medium",
                       payout.status === "paid" ? "bg-green-100 text-green-800" :
                       payout.status === "processing" ? "bg-amber-100 text-amber-800" :
-                      "bg-gray-100 text-gray-800"
+                      "bg-gray-100 dark:bg-gray-700 text-gray-800"
                     )}>
                       {payout.status}
                     </span>
@@ -477,7 +477,7 @@ export default function OrgDetailPage() {
               ))}
               {payouts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     No payouts yet
                   </td>
                 </tr>
@@ -488,12 +488,12 @@ export default function OrgDetailPage() {
       )}
 
       {activeTab === "settings" && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-xl">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Business Settings</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 max-w-xl">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Business Settings</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Commission Rate (%)
               </label>
               <input
@@ -505,7 +505,7 @@ export default function OrgDetailPage() {
                 max={100}
                 step={0.5}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
                 Platform fee charged on all transactions
               </p>
             </div>
@@ -524,17 +524,17 @@ export default function OrgDetailPage() {
       {/* Payout Modal */}
       {showPayoutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Create Payout</h2>
-              <p className="text-sm text-gray-500 mt-1">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Create Payout</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
                 Pending balance: {formatCurrency(earnings?.pending_payout_cents || 0)}
               </p>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Payout Amount ($)
                 </label>
                 <input
@@ -549,7 +549,7 @@ export default function OrgDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Reference (optional)
                 </label>
                 <input
@@ -561,7 +561,7 @@ export default function OrgDetailPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setShowPayoutModal(false)}
                   className="btn-secondary"

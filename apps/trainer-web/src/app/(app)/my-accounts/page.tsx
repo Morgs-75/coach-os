@@ -77,15 +77,15 @@ export default async function MyAccountsOverview() {
       <div className="card p-12 text-center">
         <div className="max-w-md mx-auto">
           <div className="text-5xl mb-4">🏦</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Connect Your Bank Account
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             Connect your business bank account to automatically import transactions.
             We'll help you categorize them and generate P&L reports.
           </p>
           <ConnectBankButton />
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
             Powered by Basiq. Bank-level security. Read-only access.
           </p>
         </div>
@@ -147,24 +147,24 @@ export default async function MyAccountsOverview() {
         {/* Bank Accounts */}
         <div className="lg:col-span-1">
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Bank Accounts</h2>
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Bank Accounts</h2>
               <ConnectBankButton variant="small" />
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {bankAccounts?.map((account: any) => (
                 <div key={account.id} className="px-6 py-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{account.account_name}</p>
-                      <p className="text-sm text-gray-500">{account.institution_name}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{account.account_name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{account.institution_name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">
                         {formatCurrency(account.current_balance_cents ?? 0)}
                       </p>
                       {account.last_sync_at && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Synced {formatDate(account.last_sync_at)}
                         </p>
                       )}
@@ -173,7 +173,7 @@ export default async function MyAccountsOverview() {
                 </div>
               ))}
               {(!bankAccounts || bankAccounts.length === 0) && (
-                <div className="px-6 py-8 text-center text-gray-500">
+                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   No bank accounts connected
                 </div>
               )}
@@ -184,30 +184,30 @@ export default async function MyAccountsOverview() {
         {/* Recent Transactions */}
         <div className="lg:col-span-2">
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Transactions</h2>
               <Link href="/my-accounts/transactions" className="text-sm text-brand-600 hover:text-brand-700">
                 View All
               </Link>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {recentTransactions?.map((tx: any) => (
-                    <tr key={tx.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {formatDate(tx.transaction_date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-xs">
                           {tx.merchant_name || tx.description}
                         </p>
                       </td>
@@ -221,7 +221,7 @@ export default async function MyAccountsOverview() {
                             AI Suggested
                           </span>
                         ) : tx.status === "excluded" ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400">
                             Excluded
                           </span>
                         ) : (
@@ -232,7 +232,7 @@ export default async function MyAccountsOverview() {
                       </td>
                       <td className={clsx(
                         "px-6 py-4 text-sm font-medium text-right whitespace-nowrap",
-                        tx.direction === "credit" ? "text-green-600" : "text-gray-900"
+                        tx.direction === "credit" ? "text-green-600" : "text-gray-900 dark:text-gray-100"
                       )}>
                         {tx.direction === "credit" ? "+" : "-"}{formatCurrency(tx.amount_cents)}
                       </td>
@@ -240,7 +240,7 @@ export default async function MyAccountsOverview() {
                   ))}
                   {(!recentTransactions || recentTransactions.length === 0) && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         No transactions yet. Sync your bank to get started.
                       </td>
                     </tr>

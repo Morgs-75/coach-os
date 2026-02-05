@@ -192,8 +192,8 @@ export default function AdminDashboard() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-        <p className="text-gray-500 mb-4">You don't have platform admin access.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Access Denied</h1>
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-4">You don't have platform admin access.</p>
         <Link href="/dashboard" className="btn-primary inline-block">
           Go to Dashboard
         </Link>
@@ -206,8 +206,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Platform Admin</h1>
-          <p className="text-gray-500">Manage all Coach OS businesses</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Platform Admin</h1>
+          <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Manage all Coach OS businesses</p>
         </div>
         <div className="flex gap-3">
           <Link
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-white/20 rounded-lg">
+            <div className="p-2 bg-white dark:bg-gray-900/20 rounded-lg">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
 
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-white/20 rounded-lg">
+            <div className="p-2 bg-white dark:bg-gray-900/20 rounded-lg">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
 
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-white/20 rounded-lg">
+            <div className="p-2 bg-white dark:bg-gray-900/20 rounded-lg">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
               </svg>
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
 
         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-white/20 rounded-lg">
+            <div className="p-2 bg-white dark:bg-gray-900/20 rounded-lg">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -283,32 +283,32 @@ export default function AdminDashboard() {
       </div>
 
       {/* Businesses Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">All Businesses</h2>
-          <span className="text-sm text-gray-500">{orgs.length} businesses</span>
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Businesses</h2>
+          <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{orgs.length} businesses</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clients</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscriptions</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Payout</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commission</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Business</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Clients</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Subscriptions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Revenue</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Pending Payout</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Commission</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Joined</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {orgs.map((org) => (
-                <tr key={org.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={org.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-900">{org.name}</p>
-                      <p className="text-xs text-gray-400 font-mono">{org.id.slice(0, 8)}...</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{org.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{org.id.slice(0, 8)}...</p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -321,21 +321,21 @@ export default function AdminDashboard() {
                       {org.active_subs}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">
+                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
                     {formatCurrency(org.gross_earnings_cents)}
                   </td>
                   <td className="px-6 py-4">
                     <span className={clsx(
                       "font-medium",
-                      org.pending_payout_cents > 0 ? "text-amber-600" : "text-gray-400"
+                      org.pending_payout_cents > 0 ? "text-amber-600" : "text-gray-400 dark:text-gray-500"
                     )}>
                       {formatCurrency(org.pending_payout_cents)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     {(org.commission_rate * 100).toFixed(0)}%
                   </td>
-                  <td className="px-6 py-4 text-gray-500 text-sm">
+                  <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">
                     {new Date(org.created_at).toLocaleDateString("en-AU")}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -354,12 +354,12 @@ export default function AdminDashboard() {
               {orgs.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
-                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
+                      <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 mb-2">No businesses yet</p>
+                    <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-2">No businesses yet</p>
                     <button
                       onClick={() => setShowNewOrgModal(true)}
                       className="text-blue-600 hover:text-blue-700 font-medium"
@@ -377,15 +377,15 @@ export default function AdminDashboard() {
       {/* New Business Modal */}
       {showNewOrgModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Add New Business</h2>
-              <p className="text-sm text-gray-500 mt-1">Create a new PT business on the platform</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Add New Business</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Create a new PT business on the platform</p>
             </div>
 
             <form onSubmit={handleCreateOrg} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Business Name *</label>
                 <input
                   type="text"
                   value={newOrgForm.name}
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Owner Name *</label>
                 <input
                   type="text"
                   value={newOrgForm.owner_name}
@@ -409,7 +409,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Owner Email *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Owner Email *</label>
                 <input
                   type="email"
                   value={newOrgForm.owner_email}
@@ -418,13 +418,13 @@ export default function AdminDashboard() {
                   placeholder="john@example.com"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
                   They'll receive an invite to claim their account
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Commission Rate (%)</label>
                 <input
                   type="number"
                   value={newOrgForm.commission_rate}
@@ -434,7 +434,7 @@ export default function AdminDashboard() {
                   max={100}
                   step={0.5}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
                   Default is 5%. You can offer custom rates for special deals.
                 </p>
               </div>
@@ -450,7 +450,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => {

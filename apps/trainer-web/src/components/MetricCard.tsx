@@ -17,14 +17,14 @@ export function MetricCard({
 }: MetricCardProps) {
   return (
     <div className="card p-6">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
       <p
         className={clsx(
           "mt-2 text-3xl font-semibold",
           variant === "danger" && "text-red-600",
           variant === "warning" && "text-amber-600",
           variant === "success" && "text-green-600",
-          variant === "default" && "text-gray-900"
+          variant === "default" && "text-gray-900 dark:text-gray-100"
         )}
       >
         {value}
@@ -35,7 +35,7 @@ export function MetricCard({
             "mt-1 text-sm",
             trend === "up" && "text-green-600",
             trend === "down" && "text-red-600",
-            !trend && "text-gray-500"
+            !trend && "text-gray-500 dark:text-gray-400"
           )}
         >
           {trend === "up" && "↑ "}

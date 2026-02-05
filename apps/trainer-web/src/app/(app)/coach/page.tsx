@@ -560,12 +560,12 @@ What specific area would you like advice on?`;
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)]">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">AI Business Coach</h1>
-        <p className="text-gray-500">Get personalized advice to grow your PT business</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">AI Business Coach</h1>
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Get personalized advice to grow your PT business</p>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
@@ -573,10 +573,10 @@ What specific area would you like advice on?`;
               <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🧠</span>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Welcome to your AI Business Coach
               </h2>
-              <p className="text-gray-500 mb-6 max-w-md mx-auto">
+              <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-6 max-w-md mx-auto">
                 I'm here to help you grow your personal training business. Ask me anything about
                 marketing, pricing, client retention, and more.
               </p>
@@ -587,7 +587,7 @@ What specific area would you like advice on?`;
                   <button
                     key={topic}
                     onClick={() => sendMessage(topic)}
-                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-full text-sm text-gray-700 dark:text-gray-300 transition-colors"
                   >
                     {topic}
                   </button>
@@ -608,7 +608,7 @@ What specific area would you like advice on?`;
                     "max-w-[80%] rounded-2xl px-4 py-3",
                     message.role === "user"
                       ? "bg-brand-600 text-white"
-                      : "bg-gray-100 text-gray-900"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   )}
                 >
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -638,7 +638,7 @@ What specific area would you like advice on?`;
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-2xl px-4 py-3">
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
@@ -652,7 +652,7 @@ What specific area would you like advice on?`;
         </div>
 
         {/* Input */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
           <div className="flex gap-3">
             <input
               type="text"
@@ -660,7 +660,7 @@ What specific area would you like advice on?`;
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask me anything about growing your business..."
-              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               disabled={loading}
             />
             <button
@@ -678,20 +678,20 @@ What specific area would you like advice on?`;
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Your Stats */}
         {context && (
-          <div className="p-4 bg-white rounded-xl border border-gray-200">
-            <p className="text-sm font-medium text-gray-900 mb-3">Your Business</p>
+          <div className="p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Your Business</p>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="text-2xl font-bold text-brand-600">{context.activeClientCount}</p>
-                <p className="text-xs text-gray-500">Active Clients</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Active Clients</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-amber-600">{context.leadCount}</p>
-                <p className="text-xs text-gray-500">Pipeline Leads</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Pipeline Leads</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{context.servicesOffered.length}</p>
-                <p className="text-xs text-gray-500">Services</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{context.servicesOffered.length}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Services</p>
               </div>
             </div>
           </div>
@@ -700,11 +700,11 @@ What specific area would you like advice on?`;
         {/* Platform Benchmarks */}
         {insights && (
           <div className="p-4 bg-gradient-to-br from-brand-50 to-purple-50 rounded-xl border border-brand-100">
-            <p className="text-sm font-medium text-gray-900 mb-3">Platform Insights</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Platform Insights</p>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="text-2xl font-bold text-brand-600">{insights.avgClientsPerTrainer}</p>
-                <p className="text-xs text-gray-500">Avg Clients</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Clients</p>
                 {context && (
                   <p className={clsx(
                     "text-xs font-medium mt-1",
@@ -716,11 +716,11 @@ What specific area would you like advice on?`;
               </div>
               <div>
                 <p className="text-2xl font-bold text-purple-600">{insights.avgRetentionRate}%</p>
-                <p className="text-xs text-gray-500">Retention Rate</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Retention Rate</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-green-600">{insights.avgLeadConversionRate}%</p>
-                <p className="text-xs text-gray-500">Lead Conv.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Lead Conv.</p>
               </div>
             </div>
           </div>

@@ -39,7 +39,7 @@ const statusConfig: Record<InquiryStatus, { label: string; bg: string; text: str
   CONTACTED: { label: "Contacted", bg: "bg-purple-100", text: "text-purple-700" },
   BOOKED: { label: "Booked", bg: "bg-amber-100", text: "text-amber-700" },
   WON: { label: "Won", bg: "bg-green-100", text: "text-green-700" },
-  LOST: { label: "Lost", bg: "bg-gray-100", text: "text-gray-500" },
+  LOST: { label: "Lost", bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-500 dark:text-gray-400 dark:text-gray-500" },
 };
 
 const pipelineOrder: InquiryStatus[] = ["NEW", "CONTACTED", "BOOKED", "WON", "LOST"];
@@ -202,7 +202,7 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Leads & Referrals</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Leads & Referrals</h1>
           <div className="flex items-center gap-4 mt-1">
             {overdueFollowUps > 0 && (
               <span className="text-sm text-red-600 font-medium">
@@ -215,7 +215,7 @@ export default function LeadsPage() {
               </span>
             )}
             {overdueFollowUps === 0 && todayFollowUps === 0 && (
-              <span className="text-gray-500 text-sm">{inquiries.length} leads in pipeline</span>
+              <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">{inquiries.length} leads in pipeline</span>
             )}
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
         <div className="flex gap-8">
           <button
             onClick={() => setActiveTab("leads")}
@@ -258,7 +258,7 @@ export default function LeadsPage() {
               "pb-4 text-sm font-medium border-b-2 transition-colors",
               activeTab === "leads"
                 ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300"
             )}
           >
             Leads ({inquiries.length})
@@ -269,7 +269,7 @@ export default function LeadsPage() {
               "pb-4 text-sm font-medium border-b-2 transition-colors",
               activeTab === "referrals"
                 ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300"
             )}
           >
             Referral Links ({referralLinks.length})
@@ -291,7 +291,7 @@ export default function LeadsPage() {
                     <span className={clsx("px-2 py-0.5 rounded text-xs font-medium", config.bg, config.text)}>
                       {config.label}
                     </span>
-                    <span className="text-sm text-gray-400">{items.length}</span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500">{items.length}</span>
                   </div>
 
                   <div className="space-y-3">
@@ -302,21 +302,21 @@ export default function LeadsPage() {
                           key={inquiry.id}
                           href={`/leads/${inquiry.id}`}
                           className={clsx(
-                            "bg-white rounded-xl border p-4 block hover:shadow-md transition-shadow",
+                            "bg-white dark:bg-gray-900 rounded-xl border p-4 block hover:shadow-md transition-shadow",
                             followUpStatus === "overdue" ? "border-red-300 bg-red-50" :
                             followUpStatus === "today" ? "border-amber-300 bg-amber-50" :
-                            "border-gray-200"
+                            "border-gray-200 dark:border-gray-700"
                           )}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <p className="font-medium text-gray-900">{inquiry.name}</p>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{inquiry.name}</p>
                             {followUpStatus && (
                               <span className={clsx(
                                 "text-xs px-1.5 py-0.5 rounded flex-shrink-0",
                                 followUpStatus === "overdue" ? "bg-red-100 text-red-700" :
                                 followUpStatus === "today" ? "bg-amber-100 text-amber-700" :
                                 followUpStatus === "soon" ? "bg-blue-100 text-blue-700" :
-                                "bg-gray-100 text-gray-600"
+                                "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                               )}>
                                 {followUpStatus === "overdue" ? "Overdue" :
                                  followUpStatus === "today" ? "Today" :
@@ -325,7 +325,7 @@ export default function LeadsPage() {
                             )}
                           </div>
                           {inquiry.email && (
-                            <p className="text-sm text-gray-500 truncate">{inquiry.email}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 truncate">{inquiry.email}</p>
                           )}
                           {inquiry.services_interested && inquiry.services_interested.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
@@ -335,13 +335,13 @@ export default function LeadsPage() {
                                 </span>
                               ))}
                               {inquiry.services_interested.length > 2 && (
-                                <span className="text-xs text-gray-400">+{inquiry.services_interested.length - 2}</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">+{inquiry.services_interested.length - 2}</span>
                               )}
                             </div>
                           )}
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-gray-400">{inquiry.source}</span>
-                            <span className="text-xs text-gray-400">{formatDate(inquiry.created_at)}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{inquiry.source}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(inquiry.created_at)}</span>
                             {inquiry.referral_code && (
                               <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
                                 Referral
@@ -353,7 +353,7 @@ export default function LeadsPage() {
                     })}
 
                     {items.length === 0 && (
-                      <div className="bg-white rounded-xl border border-gray-200 p-4 text-center text-gray-400 text-sm">
+                      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center text-gray-400 dark:text-gray-500 text-sm">
                         No leads
                       </div>
                     )}
@@ -365,53 +365,53 @@ export default function LeadsPage() {
             {/* Won/Lost Summary */}
             <div className="flex-shrink-0 w-72">
               <div className="mb-3">
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                   Closed
                 </span>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-green-600 font-medium">Won</span>
-                  <span className="text-sm text-gray-900">{grouped.WON.length}</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{grouped.WON.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500 font-medium">Lost</span>
-                  <span className="text-sm text-gray-900">{grouped.LOST.length}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 font-medium">Lost</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{grouped.LOST.length}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* All Leads Table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">All Leads</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Leads</h2>
             </div>
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Services Enquired</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Follow Up</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Source</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Services Enquired</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Follow Up</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">Date</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {inquiries.map((inquiry) => {
                   const config = statusConfig[inquiry.status];
                   const followUpStatus = getFollowUpStatus(inquiry.follow_up_date);
                   return (
                     <tr key={inquiry.id} className={clsx(
-                      "hover:bg-gray-50",
+                      "hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800",
                       followUpStatus === "overdue" && "bg-red-50",
                       followUpStatus === "today" && "bg-amber-50"
                     )}>
                       <td className="px-6 py-4">
                         <Link href={`/leads/${inquiry.id}`} className="hover:text-blue-600">
-                          <p className="font-medium text-gray-900">{inquiry.name}</p>
-                          <p className="text-sm text-gray-500">{inquiry.email}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{inquiry.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{inquiry.email}</p>
                         </Link>
                       </td>
                       <td className="px-6 py-4">
@@ -419,7 +419,7 @@ export default function LeadsPage() {
                           {config.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                         {inquiry.source}
                         {inquiry.referral_code && (
                           <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
@@ -437,7 +437,7 @@ export default function LeadsPage() {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400 dark:text-gray-500">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -447,17 +447,17 @@ export default function LeadsPage() {
                             followUpStatus === "overdue" ? "bg-red-100 text-red-700" :
                             followUpStatus === "today" ? "bg-amber-100 text-amber-700" :
                             followUpStatus === "soon" ? "bg-blue-100 text-blue-700" :
-                            "bg-gray-100 text-gray-600"
+                            "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                           )}>
                             {followUpStatus === "overdue" ? "Overdue" :
                              followUpStatus === "today" ? "Today" :
                              formatDate(inquiry.follow_up_date)}
                           </span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400 dark:text-gray-500">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{formatDate(inquiry.created_at)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(inquiry.created_at)}</td>
                     </tr>
                   );
                 })}
@@ -471,24 +471,24 @@ export default function LeadsPage() {
         <div className="space-y-6">
           {/* Referral Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Total Links</p>
-              <p className="text-2xl font-bold text-gray-900">{referralLinks.length}</p>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Total Links</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{referralLinks.length}</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Total Clicks</p>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Total Clicks</p>
               <p className="text-2xl font-bold text-blue-600">
                 {referralLinks.reduce((sum, l) => sum + l.clicks, 0)}
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Signups</p>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Signups</p>
               <p className="text-2xl font-bold text-purple-600">
                 {referralLinks.reduce((sum, l) => sum + l.signups, 0)}
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Conversions</p>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Conversions</p>
               <p className="text-2xl font-bold text-green-600">
                 {referralLinks.reduce((sum, l) => sum + l.conversions, 0)}
               </p>
@@ -496,20 +496,20 @@ export default function LeadsPage() {
           </div>
 
           {/* Referral Links */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Your Referral Links</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Your Referral Links</h2>
             </div>
             {referralLinks.length > 0 ? (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {referralLinks.map((link) => (
                   <div key={link.id} className="px-6 py-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <h3 className="font-medium text-gray-900">{link.name}</h3>
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">{link.name}</h3>
                         <span className={clsx(
                           "px-2 py-0.5 rounded text-xs font-medium",
-                          link.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                          link.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 dark:text-gray-500"
                         )}>
                           {link.is_active ? "Active" : "Paused"}
                         </span>
@@ -523,7 +523,7 @@ export default function LeadsPage() {
                         </button>
                         <button
                           onClick={() => toggleReferralActive(link.id, link.is_active)}
-                          className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors"
                         >
                           {link.is_active ? "Pause" : "Activate"}
                         </button>
@@ -531,20 +531,20 @@ export default function LeadsPage() {
                     </div>
 
                     {link.description && (
-                      <p className="text-sm text-gray-500 mb-3">{link.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-3">{link.description}</p>
                     )}
 
                     <div className="flex items-center gap-6 text-sm">
-                      <div className="flex items-center gap-4 bg-gray-50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
                         <code className="text-blue-600 font-mono">{link.code}</code>
                       </div>
-                      <div className="text-gray-500">
+                      <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
                         {link.clicks} clicks
                       </div>
-                      <div className="text-gray-500">
+                      <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
                         {link.signups} signups
                       </div>
-                      <div className="text-gray-500">
+                      <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
                         {link.conversions} conversions
                       </div>
                       {link.reward_type !== "none" && (
@@ -565,8 +565,8 @@ export default function LeadsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
                 </div>
-                <p className="text-gray-900 font-medium mb-1">No referral links yet</p>
-                <p className="text-sm text-gray-500 mb-4">Create your first referral link to start tracking</p>
+                <p className="text-gray-900 dark:text-gray-100 font-medium mb-1">No referral links yet</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-4">Create your first referral link to start tracking</p>
                 <button
                   onClick={() => setShowReferralModal(true)}
                   className="btn-primary"
@@ -582,15 +582,15 @@ export default function LeadsPage() {
       {/* Create Referral Modal */}
       {showReferralModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Create Referral Link</h2>
-              <p className="text-sm text-gray-500 mt-1">Track where your referrals come from</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Create Referral Link</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Track where your referrals come from</p>
             </div>
 
             <form onSubmit={handleCreateReferralLink} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Link Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link Name *</label>
                 <input
                   type="text"
                   value={referralForm.name}
@@ -602,7 +602,7 @@ export default function LeadsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <input
                   type="text"
                   value={referralForm.description}
@@ -613,7 +613,7 @@ export default function LeadsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Referral Reward</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Referral Reward</label>
                 <select
                   value={referralForm.reward_type}
                   onChange={(e) => setReferralForm({ ...referralForm, reward_type: e.target.value })}
@@ -628,7 +628,7 @@ export default function LeadsPage() {
 
               {referralForm.reward_type !== "none" && referralForm.reward_type !== "free_session" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {referralForm.reward_type === "discount" ? "Discount %" : "Credit Amount ($)"}
                   </label>
                   <input
@@ -642,7 +642,7 @@ export default function LeadsPage() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => setShowReferralModal(false)}

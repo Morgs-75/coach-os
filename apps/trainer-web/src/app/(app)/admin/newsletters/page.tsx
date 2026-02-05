@@ -115,7 +115,7 @@ export default function AdminNewslettersPage() {
     });
 
   const statusColors = {
-    draft: "bg-gray-100 text-gray-700",
+    draft: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
     approved: "bg-green-100 text-green-700",
     sent: "bg-blue-100 text-blue-700",
   };
@@ -124,21 +124,21 @@ export default function AdminNewslettersPage() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Newsletter Generator</h1>
-          <p className="text-gray-500">AI-generated newsletters for PT business coaching</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Newsletter Generator</h1>
+          <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">AI-generated newsletters for PT business coaching</p>
         </div>
-        <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href="/admin" className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300">
           ← Back to Admin
         </Link>
       </div>
 
       {/* Generation Panel */}
       <div className="bg-gradient-to-br from-brand-50 to-purple-50 rounded-xl border border-brand-100 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Generate New Newsletter</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Generate New Newsletter</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Theme</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
             <select
               value={genTheme}
               onChange={(e) => setGenTheme(e.target.value as ContentTheme | "auto")}
@@ -154,7 +154,7 @@ export default function AdminNewslettersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Audience</label>
             <select
               value={genAudience}
               onChange={(e) => setGenAudience(e.target.value as AudienceLevel)}
@@ -169,7 +169,7 @@ export default function AdminNewslettersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
             <select
               value={genFrequency}
               onChange={(e) => setGenFrequency(e.target.value as NewsletterFrequency)}
@@ -191,7 +191,7 @@ export default function AdminNewslettersPage() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
           Uses Claude Sonnet + approved insights from the repository. Cost: ~$0.02-0.05 per generation.
         </p>
       </div>
@@ -206,7 +206,7 @@ export default function AdminNewslettersPage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               filter === f
                 ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
             )}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -218,9 +218,9 @@ export default function AdminNewslettersPage() {
         {/* Newsletter List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Loading...</div>
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">Loading...</div>
           ) : newsletters.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">
               No newsletters yet. Generate your first one above.
             </div>
           ) : (
@@ -229,23 +229,23 @@ export default function AdminNewslettersPage() {
                 key={newsletter.id}
                 onClick={() => setSelectedNewsletter(newsletter)}
                 className={clsx(
-                  "bg-white rounded-xl border p-4 cursor-pointer transition-all",
+                  "bg-white dark:bg-gray-900 rounded-xl border p-4 cursor-pointer transition-all",
                   selectedNewsletter?.id === newsletter.id
                     ? "border-brand-500 ring-2 ring-brand-100"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 )}
               >
                 <div className="flex items-start justify-between mb-2">
                   <span className={clsx("px-2 py-0.5 rounded text-xs font-medium", statusColors[newsletter.status])}>
                     {newsletter.status}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
                     {formatDate(newsletter.generated_at)}
                   </span>
                 </div>
 
-                <h3 className="font-semibold text-gray-900 mb-1">{newsletter.subject}</h3>
-                <p className="text-sm text-gray-500 mb-2">{newsletter.preheader}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{newsletter.subject}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-2">{newsletter.preheader}</p>
 
                 <div className="flex flex-wrap gap-2">
                   <span className="px-2 py-0.5 bg-brand-100 text-brand-700 rounded text-xs">
@@ -254,7 +254,7 @@ export default function AdminNewslettersPage() {
                   <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
                     {AUDIENCE_TONES[newsletter.audience_level]?.name || newsletter.audience_level}
                   </span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                  <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 dark:text-gray-500 rounded text-xs">
                     {newsletter.frequency}
                   </span>
                 </div>
@@ -265,7 +265,7 @@ export default function AdminNewslettersPage() {
 
         {/* Preview Panel */}
         {selectedNewsletter && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 sticky top-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
               <span className={clsx("px-2 py-0.5 rounded text-xs font-medium", statusColors[selectedNewsletter.status])}>
                 {selectedNewsletter.status}
@@ -297,14 +297,14 @@ export default function AdminNewslettersPage() {
             </div>
 
             {/* Email Preview */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               {/* Email Header */}
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <p className="text-sm">
-                  <span className="text-gray-500">Subject:</span>{" "}
-                  <span className="font-medium text-gray-900">{selectedNewsletter.subject}</span>
+                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Subject:</span>{" "}
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{selectedNewsletter.subject}</span>
                 </p>
-                <p className="text-xs text-gray-400 mt-1">{selectedNewsletter.preheader}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{selectedNewsletter.preheader}</p>
               </div>
 
               {/* Email Body */}
@@ -312,14 +312,14 @@ export default function AdminNewslettersPage() {
                 {selectedNewsletter.sections.map((section, idx) => (
                   <div key={idx}>
                     {section.type === "headline" && (
-                      <div className="text-xl font-bold text-gray-900">{section.content}</div>
+                      <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{section.content}</div>
                     )}
                     {section.type === "insight" && (
                       <div>
                         {section.title && (
-                          <h3 className="font-semibold text-gray-900 mb-2">{section.title}</h3>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{section.title}</h3>
                         )}
-                        <p className="text-gray-700 leading-relaxed">{section.content}</p>
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{section.content}</p>
                       </div>
                     )}
                     {section.type === "tip" && (
@@ -331,7 +331,7 @@ export default function AdminNewslettersPage() {
                       </div>
                     )}
                     {section.type === "quote" && (
-                      <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600">
+                      <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 dark:text-gray-400 dark:text-gray-500">
                         {section.content}
                       </blockquote>
                     )}
@@ -344,17 +344,17 @@ export default function AdminNewslettersPage() {
                       </div>
                     )}
                     {section.type === "story" && (
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                         {section.title && (
-                          <p className="font-semibold text-gray-900 mb-2">{section.title}</p>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{section.title}</p>
                         )}
-                        <p className="text-gray-700">{section.content}</p>
+                        <p className="text-gray-700 dark:text-gray-300">{section.content}</p>
                       </div>
                     )}
                     {section.type === "stat" && (
                       <div className="text-center py-4">
                         <p className="text-3xl font-bold text-brand-600">{section.title}</p>
-                        <p className="text-gray-600">{section.content}</p>
+                        <p className="text-gray-600 dark:text-gray-400 dark:text-gray-500">{section.content}</p>
                       </div>
                     )}
                   </div>
@@ -362,11 +362,11 @@ export default function AdminNewslettersPage() {
 
                 {/* CTA */}
                 {selectedNewsletter.call_to_action && (
-                  <div className="text-center pt-6 border-t border-gray-200">
-                    <p className="font-semibold text-gray-900 mb-1">
+                  <div className="text-center pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                       {selectedNewsletter.call_to_action.text}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       {selectedNewsletter.call_to_action.subtext}
                     </p>
                   </div>
@@ -375,8 +375,8 @@ export default function AdminNewslettersPage() {
             </div>
 
             {/* Meta Info */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                 Theme: {CONTENT_THEMES[selectedNewsletter.theme]?.name} •
                 Angle: {selectedNewsletter.angle_used} •
                 Audience: {AUDIENCE_TONES[selectedNewsletter.audience_level]?.name}

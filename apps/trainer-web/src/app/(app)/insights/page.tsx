@@ -229,26 +229,26 @@ export default function InsightsPage() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Market Insights</h1>
-          <p className="text-gray-500">Daily intelligence to grow your business</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Market Insights</h1>
+          <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Daily intelligence to grow your business</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-gray-400">Last updated</p>
-          <p className="text-sm text-gray-600">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Last updated</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
         </div>
       </div>
 
       {/* Business Health Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {metrics.map((metric) => (
-          <div key={metric.label} className="bg-white rounded-xl border border-gray-200 p-4">
+          <div key={metric.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">{metric.label}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{metric.label}</p>
               <span className={clsx(
                 "text-xs px-2 py-0.5 rounded-full",
                 metric.trend === "up" && "bg-green-100 text-green-700",
                 metric.trend === "down" && "bg-red-100 text-red-700",
-                metric.trend === "stable" && "bg-gray-100 text-gray-600"
+                metric.trend === "stable" && "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
               )}>
                 {metric.trend === "up" && "↑"}
                 {metric.trend === "down" && "↓"}
@@ -257,29 +257,29 @@ export default function InsightsPage() {
             </div>
             <div className="flex items-end gap-4">
               <div>
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {metric.label.includes("%") || metric.label.includes("Conversion") ? `${metric.current}%` : metric.current}
                 </p>
-                <p className="text-xs text-gray-400">Current</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Current</p>
               </div>
               <div className="text-right">
                 <p className="text-lg font-semibold text-brand-600">{metric.target}</p>
-                <p className="text-xs text-gray-400">Target</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Target</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-semibold text-gray-400">{metric.benchmark}</p>
-                <p className="text-xs text-gray-400">Avg</p>
+                <p className="text-lg font-semibold text-gray-400 dark:text-gray-500">{metric.benchmark}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Avg</p>
               </div>
             </div>
             {/* Progress bar */}
             <div className="mt-3">
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-brand-500 rounded-full transition-all"
                   style={{ width: `${Math.min((metric.current / metric.target) * 100, 100)}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1">{Math.round((metric.current / metric.target) * 100)}% to target</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{Math.round((metric.current / metric.target) * 100)}% to target</p>
             </div>
           </div>
         ))}
@@ -293,7 +293,7 @@ export default function InsightsPage() {
             "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
             selectedCategory === "all"
               ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
           )}
         >
           All Insights
@@ -306,7 +306,7 @@ export default function InsightsPage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2",
               selectedCategory === key
                 ? `${config.bg} ${config.text}`
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
             )}
           >
             <span>{config.icon}</span>
@@ -320,18 +320,18 @@ export default function InsightsPage() {
         {filteredInsights.map((insight) => {
           const config = categoryConfig[insight.category];
           return (
-            <div key={insight.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div key={insight.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <span className={clsx("px-2 py-1 rounded text-xs font-medium", config.bg, config.text)}>
                   {config.icon} {config.label}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 dark:text-gray-500">
                   Relevance: {insight.relevance_score}%
                 </span>
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{insight.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">{insight.content}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{insight.title}</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{insight.content}</p>
 
               {insight.actionable && (
                 <div className="bg-brand-50 rounded-lg p-3 mb-3">
@@ -341,7 +341,7 @@ export default function InsightsPage() {
               )}
 
               {insight.source && (
-                <p className="text-xs text-gray-400">Source: {insight.source}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Source: {insight.source}</p>
               )}
             </div>
           );
@@ -350,14 +350,14 @@ export default function InsightsPage() {
 
       {/* Personalized Recommendations */}
       <div className="mt-8 bg-gradient-to-br from-brand-50 to-purple-50 rounded-xl p-6 border border-brand-100">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Top 3 Priorities This Week</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Top 3 Priorities This Week</h2>
         <div className="space-y-4">
           {metrics[0] && metrics[0].current < metrics[0].benchmark && (
             <div className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 bg-brand-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
               <div>
-                <p className="font-medium text-gray-900">Increase Client Base</p>
-                <p className="text-sm text-gray-600">You're below platform average. Focus on converting your leads and launching your referral program.</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">Increase Client Base</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">You're below platform average. Focus on converting your leads and launching your referral program.</p>
               </div>
             </div>
           )}
@@ -365,23 +365,23 @@ export default function InsightsPage() {
             <div className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 bg-brand-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
               <div>
-                <p className="font-medium text-gray-900">Focus on Retention</p>
-                <p className="text-sm text-gray-600">Your client base is strong. Now focus on keeping them engaged and reducing churn.</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">Focus on Retention</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Your client base is strong. Now focus on keeping them engaged and reducing churn.</p>
               </div>
             </div>
           )}
           <div className="flex items-start gap-3">
             <span className="flex-shrink-0 w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
             <div>
-              <p className="font-medium text-gray-900">Create Video Content</p>
-              <p className="text-sm text-gray-600">Short-form video is proven to drive inquiries. Post 3-5 clips this week.</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Create Video Content</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Short-form video is proven to drive inquiries. Post 3-5 clips this week.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
             <div>
-              <p className="font-medium text-gray-900">Follow Up Within 5 Minutes</p>
-              <p className="text-sm text-gray-600">Speed is critical. Set up notifications to respond to new leads immediately.</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Follow Up Within 5 Minutes</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Speed is critical. Set up notifications to respond to new leads immediately.</p>
             </div>
           </div>
         </div>

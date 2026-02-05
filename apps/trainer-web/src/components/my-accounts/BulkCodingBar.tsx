@@ -25,13 +25,13 @@ export function BulkCodingBar({
           <span className="bg-brand-500 text-white text-sm font-bold px-2 py-0.5 rounded">
             {selectedCount}
           </span>
-          <span className="text-gray-300">selected</span>
+          <span className="text-gray-300 dark:text-gray-400 dark:text-gray-500">selected</span>
         </div>
 
         <div className="h-6 w-px bg-gray-700" />
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">Bulk code as:</span>
+          <span className="text-sm text-gray-400 dark:text-gray-500">Bulk code as:</span>
           <div className="w-48">
             <AccountPicker
               accounts={accounts}
@@ -54,7 +54,7 @@ export function BulkCodingBar({
 
         <button
           onClick={onClearSelection}
-          className="text-gray-400 hover:text-white text-sm"
+          className="text-gray-400 dark:text-gray-500 hover:text-white text-sm"
         >
           Clear
         </button>

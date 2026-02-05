@@ -218,30 +218,30 @@ export default function EmailPage() {
   }
 
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
   }
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Email Distribution</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Email Distribution</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recipients */}
         <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Recipients</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Recipients</h2>
 
           {clients.length === 0 ? (
-            <p className="text-gray-500 text-sm">No clients with email addresses found.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No clients with email addresses found.</p>
           ) : (
             <>
-              <label className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
+              <label className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
                 <input
                   type="checkbox"
                   checked={selectAll}
                   onChange={handleSelectAll}
                   className="w-4 h-4 rounded text-brand-600"
                 />
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 dark:text-gray-100">
                   Select All ({clients.length})
                 </span>
               </label>
@@ -250,7 +250,7 @@ export default function EmailPage() {
                 {clients.map((client) => (
                   <label
                     key={client.id}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -259,10 +259,10 @@ export default function EmailPage() {
                       className="w-4 h-4 rounded text-brand-600"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                         {client.full_name}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {client.email}
                       </p>
                     </div>
@@ -270,8 +270,8 @@ export default function EmailPage() {
                 ))}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="font-medium">{selectedClients.length}</span> selected
                 </p>
               </div>
@@ -283,7 +283,7 @@ export default function EmailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Template Selection */}
           <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Template</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Template</h2>
             <div className="flex flex-wrap gap-2">
               {defaultTemplates.map((template) => (
                 <button
@@ -293,7 +293,7 @@ export default function EmailPage() {
                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                     selectedTemplate === template.id
                       ? "bg-brand-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
                   )}
                 >
                   {template.name}
@@ -304,7 +304,7 @@ export default function EmailPage() {
 
           {/* Email Content */}
           <div className="card p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Compose Email</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Compose Email</h2>
 
             <div>
               <label className="label">Subject</label>
@@ -326,13 +326,13 @@ export default function EmailPage() {
                 rows={12}
                 placeholder="Your email message..."
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Use {"{first_name}"} for client's first name, {"{trainer_name}"} for your name
               </p>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-              <div className="text-sm text-gray-500">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Sending as: <span className="font-medium">{trainerName || "Unknown"}</span>
               </div>
               <button
@@ -348,13 +348,13 @@ export default function EmailPage() {
           {/* Preview */}
           {selectedClients.length > 0 && (
             <div className="card p-6">
-              <h2 className="font-semibold text-gray-900 mb-4">Preview</h2>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500 mb-2">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Preview</h2>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                   <span className="font-medium">Subject:</span> {subject}
                 </p>
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                  <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans">
                     {getPreviewBody(clients.find(c => c.id === selectedClients[0]))}
                   </pre>
                 </div>

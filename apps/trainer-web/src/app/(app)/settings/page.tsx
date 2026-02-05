@@ -172,7 +172,7 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
   }
 
   const formatCurrency = (cents: number) =>
@@ -180,44 +180,44 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">Settings</h1>
 
       {/* Earnings Overview */}
       {earnings && (
         <div className="card p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Earnings</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Earnings</h2>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
-              <p className="text-sm text-gray-500">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Earnings</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(earnings.gross_earnings_cents || 0)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Platform Fee (5%)</p>
-              <p className="text-2xl font-bold text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Platform Fee (5%)</p>
+              <p className="text-2xl font-bold text-gray-500 dark:text-gray-400">
                 -{formatCurrency(earnings.commission_cents || 0)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Net Earnings</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Net Earnings</p>
               <p className="text-2xl font-bold text-green-600">
                 {formatCurrency(earnings.net_earnings_cents || 0)}
               </p>
             </div>
           </div>
-          <div className="flex gap-8 pt-4 border-t border-gray-200">
+          <div className="flex gap-8 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div>
-              <p className="text-sm text-gray-500">Paid Out</p>
-              <p className="font-semibold text-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Paid Out</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">
                 {formatCurrency(earnings.paid_out_cents || 0)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Pending Payout</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pending Payout</p>
               <p className={clsx(
                 "font-semibold",
-                (earnings.pending_payout_cents || 0) > 0 ? "text-amber-600" : "text-gray-900"
+                (earnings.pending_payout_cents || 0) > 0 ? "text-amber-600" : "text-gray-900 dark:text-gray-100"
               )}>
                 {formatCurrency(earnings.pending_payout_cents || 0)}
               </p>
@@ -229,7 +229,7 @@ export default function SettingsPage() {
       <form onSubmit={handleSave} className="space-y-8">
         {/* Branding */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Branding</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Branding</h2>
 
           <div className="space-y-4">
             <div>
@@ -293,8 +293,8 @@ export default function SettingsPage() {
       {/* Payout Settings */}
       <form onSubmit={handleSavePayout} className="space-y-8 mt-8">
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Payout Settings</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Payout Settings</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Configure how you want to receive your earnings (minus 5% platform fee).
           </p>
 
@@ -389,7 +389,7 @@ export default function SettingsPage() {
                 <option value="fortnightly">Fortnightly</option>
                 <option value="monthly">Monthly</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Minimum payout: $50. Amounts under $50 roll over to next period.
               </p>
             </div>
@@ -411,17 +411,17 @@ export default function SettingsPage() {
       {/* Recent Payouts */}
       {recentPayouts.length > 0 && (
         <div className="card mt-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Payouts</h2>
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Payouts</h2>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {recentPayouts.map((payout) => (
               <div key={payout.id} className="px-6 py-4 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
                     {new Date(payout.period_start).toLocaleDateString("en-AU")} - {new Date(payout.period_end).toLocaleDateString("en-AU")}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Gross: {formatCurrency(payout.gross_amount_cents)} | Fee: {formatCurrency(payout.commission_cents)}
                   </p>
                 </div>

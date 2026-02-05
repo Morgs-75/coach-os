@@ -102,7 +102,7 @@ export function PhotoUpload({
         className={clsx(
           sizeClasses[size],
           shape === "circle" ? "rounded-full" : "rounded-lg",
-          "flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 hover:border-brand-500 transition-colors bg-gray-50 hover:bg-gray-100",
+          "flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-brand-500 transition-colors bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700",
           uploading && "opacity-50 cursor-wait"
         )}
       >
@@ -115,7 +115,7 @@ export function PhotoUpload({
         ) : (
           <div className="text-center">
             <svg
-              className="mx-auto h-8 w-8 text-gray-400"
+              className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -127,7 +127,7 @@ export function PhotoUpload({
                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
               {uploading ? "Uploading..." : "Upload"}
             </p>
           </div>
@@ -261,23 +261,23 @@ export function MultiPhotoUpload({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-brand-500 hover:bg-gray-50 transition-colors"
+            className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-gray-50 dark:bg-gray-800 transition-colors"
           >
             {uploading ? (
-              <span className="text-sm text-gray-500">Uploading...</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Uploading...</span>
             ) : (
               <>
-                <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span className="text-sm text-gray-500 mt-1">Add Photo</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Add Photo</span>
               </>
             )}
           </button>
         )}
       </div>
 
-      <p className="text-xs text-gray-500 mt-2">
+      <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-2">
         {photos.length}/{maxPhotos} photos • Max 5MB each
       </p>
     </div>

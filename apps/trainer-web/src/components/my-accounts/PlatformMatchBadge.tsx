@@ -27,7 +27,7 @@ export function PlatformMatchBadge({ matchType }: PlatformMatchBadgeProps) {
     },
   }[matchType] || {
     label: "Matched",
-    color: "bg-gray-100 text-gray-700",
+    color: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
     icon: "•",
   };
 

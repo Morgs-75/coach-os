@@ -249,15 +249,15 @@ export default function ProductsPage() {
   }, 0);
 
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">myProducts</h1>
-          <p className="text-gray-500">Manage your inventory and products</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">myProducts</h1>
+          <p className="text-gray-500 dark:text-gray-400">Manage your inventory and products</p>
         </div>
         <button
           onClick={() => {
@@ -273,24 +273,24 @@ export default function ProductsPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Total Products</p>
-          <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Products</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{products.length}</p>
         </div>
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Active</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Active</p>
           <p className="text-2xl font-bold text-green-600">
             {products.filter((p) => p.is_active).length}
           </p>
         </div>
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Low Stock (&lt;5)</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock (&lt;5)</p>
           <p className="text-2xl font-bold text-amber-600">
             {products.filter((p) => p.stock_quantity !== null && p.stock_quantity < 5).length}
           </p>
         </div>
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Inventory Value</p>
-          <p className="text-2xl font-bold text-gray-900">{formatPrice(totalValue)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Inventory Value</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(totalValue)}</p>
         </div>
       </div>
 
@@ -302,7 +302,7 @@ export default function ProductsPage() {
             "px-3 py-1.5 rounded-lg text-sm font-medium",
             filterCategory === "all"
               ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
           )}
         >
           All
@@ -315,7 +315,7 @@ export default function ProductsPage() {
               "px-3 py-1.5 rounded-lg text-sm font-medium",
               filterCategory === cat.value
                 ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
             )}
           >
             {cat.label}
@@ -326,9 +326,9 @@ export default function ProductsPage() {
       {/* Product Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {editingProduct ? "Edit Product" : "Add Product"}
               </h2>
             </div>
@@ -429,10 +429,10 @@ export default function ProductsPage() {
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="rounded text-brand-600"
                 />
-                <span className="text-sm text-gray-700">Active (available for sale)</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Active (available for sale)</span>
               </label>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button type="submit" className="btn-primary" disabled={saving}>
                   {saving ? "Saving..." : editingProduct ? "Update Product" : "Add Product"}
                 </button>
@@ -456,19 +456,19 @@ export default function ProductsPage() {
       {filteredProducts.length > 0 ? (
         <div className="card overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cost</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Margin</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Stock</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Product</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Price</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cost</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Margin</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Stock</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredProducts.map((product) => {
                 const margin = product.cost_cents
                   ? ((product.price_cents - product.cost_cents) / product.price_cents) * 100
@@ -476,22 +476,22 @@ export default function ProductsPage() {
                 const lowStock = product.stock_quantity !== null && product.stock_quantity < 5;
 
                 return (
-                  <tr key={product.id} className={clsx(!product.is_active && "bg-gray-50 opacity-60")}>
+                  <tr key={product.id} className={clsx(!product.is_active && "bg-gray-50 dark:bg-gray-800 opacity-60")}>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        {product.sku && <p className="text-xs text-gray-500">SKU: {product.sku}</p>}
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{product.name}</p>
+                        {product.sku && <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {product.sku}</p>}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium">
                         {categories.find((c) => c.value === product.category)?.label || product.category}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-100">
                       {formatPrice(product.price_cents)}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500">
+                    <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">
                       {product.cost_cents ? formatPrice(product.cost_cents) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -508,7 +508,7 @@ export default function ProductsPage() {
                       {product.stock_quantity !== null ? (
                         <span className={clsx(
                           "font-medium",
-                          lowStock ? "text-red-600" : "text-gray-900"
+                          lowStock ? "text-red-600" : "text-gray-900 dark:text-gray-100"
                         )}>
                           {product.stock_quantity}
                           {lowStock && " ⚠️"}
@@ -522,7 +522,7 @@ export default function ProductsPage() {
                           "px-2 py-1 rounded text-xs font-medium",
                           product.is_active
                             ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                         )}
                       >
                         {product.is_active ? "Active" : "Inactive"}
@@ -550,8 +550,8 @@ export default function ProductsPage() {
         </div>
       ) : (
         <div className="card p-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-          <p className="text-gray-500 mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No products yet</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
             Add products to track inventory and sell to clients.
           </p>
           <button

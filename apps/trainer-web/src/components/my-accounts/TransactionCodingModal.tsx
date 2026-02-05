@@ -157,13 +157,13 @@ export function TransactionCodingModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Code Transaction</h2>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Code Transaction</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -172,16 +172,16 @@ export function TransactionCodingModal({
         </div>
 
         {/* Transaction Details */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-gray-900 dark:text-gray-100">
                 {transaction.merchant_name || transaction.description}
               </p>
               {transaction.merchant_name && (
-                <p className="text-sm text-gray-500">{transaction.description}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{transaction.description}</p>
               )}
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
                 {formatDate(transaction.transaction_date)}
                 {transaction.bank_account && (
                   <> &bull; {transaction.bank_account.account_name}</>
@@ -197,13 +197,13 @@ export function TransactionCodingModal({
               <p
                 className={clsx(
                   "text-2xl font-bold",
-                  transaction.direction === "credit" ? "text-green-600" : "text-gray-900"
+                  transaction.direction === "credit" ? "text-green-600" : "text-gray-900 dark:text-gray-100"
                 )}
               >
                 {transaction.direction === "credit" ? "+" : "-"}
                 {formatCurrency(transaction.amount_cents)}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                 {transaction.direction === "credit" ? "Money In" : "Money Out"}
               </p>
             </div>
@@ -253,10 +253,10 @@ export function TransactionCodingModal({
         <div className="px-6 py-6 space-y-4">
           {/* Split Toggle - only show for credits (income) */}
           {transaction.direction === "credit" && (
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
               <div>
-                <p className="text-sm font-medium text-gray-700">Split Transaction</p>
-                <p className="text-xs text-gray-500">Record gross revenue and payment fees separately</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Split Transaction</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Record gross revenue and payment fees separately</p>
               </div>
               <div className="flex items-center gap-2">
                 {!isSplit && (
@@ -290,7 +290,7 @@ export function TransactionCodingModal({
                 >
                   <span
                     className={clsx(
-                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      "inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform",
                       isSplit ? "translate-x-6" : "translate-x-1"
                     )}
                   />
@@ -302,12 +302,12 @@ export function TransactionCodingModal({
           {isSplit ? (
             /* Split Transaction UI */
             <div className="space-y-4">
-              <p className="text-sm font-medium text-gray-700">Transaction Splits</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Transaction Splits</p>
 
               {splits.map((split, index) => (
-                <div key={split.id} className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <div key={split.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
                       Split {index + 1}
                     </span>
                     {splits.length > 1 && (
@@ -339,7 +339,7 @@ export function TransactionCodingModal({
                     <div>
                       <label className="label text-xs">Amount</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-500">$</span>
                         <input
                           type="number"
                           step="0.01"
@@ -388,7 +388,7 @@ export function TransactionCodingModal({
                   + Add Another Split
                 </button>
                 <div className="text-sm">
-                  <span className="text-gray-500">Total: </span>
+                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Total: </span>
                   <span className={clsx(
                     "font-medium",
                     Math.abs(splitTotal - transaction.amount_cents) <= 1
@@ -397,7 +397,7 @@ export function TransactionCodingModal({
                   )}>
                     {formatCurrency(splitTotal)}
                   </span>
-                  <span className="text-gray-400"> / {formatCurrency(transaction.amount_cents)}</span>
+                  <span className="text-gray-400 dark:text-gray-500"> / {formatCurrency(transaction.amount_cents)}</span>
                 </div>
               </div>
 
@@ -439,7 +439,7 @@ export function TransactionCodingModal({
                   <option value="bas_excluded">BAS Excluded</option>
                 </select>
                 {taxTreatment === "gst" && (
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
                     GST: {formatCurrency(Math.round(transaction.amount_cents / 11))}
                   </p>
                 )}
@@ -459,7 +459,7 @@ export function TransactionCodingModal({
           </div>
 
           {/* Remember This Transaction */}
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -468,8 +468,8 @@ export function TransactionCodingModal({
                 className="mt-0.5 rounded text-brand-600"
               />
               <div>
-                <p className="text-sm font-medium text-gray-700">Remember this for future transactions</p>
-                <p className="text-xs text-gray-500">Automatically code similar transactions the same way</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Remember this for future transactions</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Automatically code similar transactions the same way</p>
               </div>
             </label>
 
@@ -486,7 +486,7 @@ export function TransactionCodingModal({
                       onChange={() => setMatchField("merchant")}
                       className="text-brand-600"
                     />
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
                       Merchant: <span className="font-medium">{transaction.merchant_name || transaction.description}</span>
                     </span>
                   </label>
@@ -499,7 +499,7 @@ export function TransactionCodingModal({
                       onChange={() => setMatchField("description")}
                       className="text-brand-600"
                     />
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
                       Description pattern
                     </span>
                   </label>
@@ -510,11 +510,11 @@ export function TransactionCodingModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
           <button
             onClick={handleExclude}
             disabled={saving}
-            className="text-sm text-gray-600 hover:text-gray-800"
+            className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:text-gray-800"
           >
             Exclude from Reports
           </button>

@@ -105,11 +105,11 @@ export default function NewLeadPage() {
 
   return (
     <div className="max-w-lg">
-      <Link href="/leads" className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">
+      <Link href="/leads" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 mb-4 inline-block">
         ← Back to Leads
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Add Lead</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">Add Lead</h1>
 
       <form onSubmit={handleSubmit} className="card p-6 space-y-6">
         {error && (
@@ -183,7 +183,7 @@ export default function NewLeadPage() {
               {offers.map((offer) => (
                 <label
                   key={offer.id}
-                  className="flex items-center gap-3 p-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
+                  className="flex items-center gap-3 p-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   <input
                     type="checkbox"
@@ -191,7 +191,7 @@ export default function NewLeadPage() {
                     onChange={() => toggleService(offer.name)}
                     className="w-4 h-4 rounded text-brand-600"
                   />
-                  <span className="text-gray-900">{offer.name}</span>
+                  <span className="text-gray-900 dark:text-gray-100">{offer.name}</span>
                 </label>
               ))}
             </div>

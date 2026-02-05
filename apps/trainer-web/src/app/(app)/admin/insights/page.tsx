@@ -142,8 +142,8 @@ export default function AdminInsightsPage() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Insight Repository</h1>
-          <p className="text-gray-500">Manage AI-scanned business insights for PT coaching</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Insight Repository</h1>
+          <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Manage AI-scanned business insights for PT coaching</p>
         </div>
         <button
           onClick={runScan}
@@ -157,24 +157,24 @@ export default function AdminInsightsPage() {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-sm text-gray-500">Total Insights</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Total Insights</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-sm text-gray-500">Approved</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Approved</p>
             <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-sm text-gray-500">Pending Review</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Pending Review</p>
             <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-sm text-gray-500">Avg Confidence</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Confidence</p>
             <p className="text-2xl font-bold text-brand-600">{stats.avgConfidence}%</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-sm text-gray-500">Categories</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Categories</p>
             <p className="text-2xl font-bold text-purple-600">{Object.keys(stats.byCategory).length}</p>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function AdminInsightsPage() {
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 filter === f
                   ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
               )}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -217,9 +217,9 @@ export default function AdminInsightsPage() {
         {/* Insights List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Loading...</div>
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">Loading...</div>
           ) : insights.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">
               No insights found. Run a scan to populate the repository.
             </div>
           ) : (
@@ -228,10 +228,10 @@ export default function AdminInsightsPage() {
                 key={insight.id}
                 onClick={() => setSelectedInsight(insight)}
                 className={clsx(
-                  "bg-white rounded-xl border p-4 cursor-pointer transition-all",
+                  "bg-white dark:bg-gray-900 rounded-xl border p-4 cursor-pointer transition-all",
                   selectedInsight?.id === insight.id
                     ? "border-brand-500 ring-2 ring-brand-100"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 )}
               >
                 <div className="flex items-start justify-between mb-2">
@@ -245,12 +245,12 @@ export default function AdminInsightsPage() {
                   >
                     {insight.approved ? "Approved" : "Pending"}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
                     {formatDate(insight.scanned_at)}
                   </span>
                 </div>
 
-                <p className="font-medium text-gray-900 mb-2 line-clamp-2">
+                <p className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
                   {insight.extracted_insight}
                 </p>
 
@@ -258,12 +258,12 @@ export default function AdminInsightsPage() {
                   <span className="px-2 py-0.5 bg-brand-100 text-brand-700 rounded text-xs">
                     {INSIGHT_CATEGORIES[insight.category as keyof typeof INSIGHT_CATEGORIES]?.label || insight.category}
                   </span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                  <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 dark:text-gray-500 rounded text-xs">
                     {insight.sub_category}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   <span>Confidence: {insight.confidence_score}%</span>
                   <span>Novelty: {insight.novelty_score}%</span>
                   <span>{insight.source}</span>
@@ -275,7 +275,7 @@ export default function AdminInsightsPage() {
 
         {/* Detail Panel */}
         {selectedInsight && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 sticky top-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <span
@@ -288,7 +288,7 @@ export default function AdminInsightsPage() {
                 >
                   {selectedInsight.approved ? "Approved" : "Pending Review"}
                 </span>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                   {formatDate(selectedInsight.scanned_at)}
                 </p>
               </div>
@@ -312,42 +312,42 @@ export default function AdminInsightsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-500 uppercase tracking-wider">
+                <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Extracted Insight
                 </label>
-                <p className="text-lg font-semibold text-gray-900 mt-1">
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1">
                   {selectedInsight.extracted_insight}
                 </p>
               </div>
 
               <div className="flex gap-4">
                 <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     Category
                   </label>
-                  <p className="text-gray-900 mt-1">
+                  <p className="text-gray-900 dark:text-gray-100 mt-1">
                     {INSIGHT_CATEGORIES[selectedInsight.category as keyof typeof INSIGHT_CATEGORIES]?.label}
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     Sub-Category
                   </label>
-                  <p className="text-gray-900 mt-1">{selectedInsight.sub_category}</p>
+                  <p className="text-gray-900 dark:text-gray-100 mt-1">{selectedInsight.sub_category}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     Evidence
                   </label>
-                  <p className="text-gray-900 mt-1 capitalize">{selectedInsight.evidence_type.replace("_", " ")}</p>
+                  <p className="text-gray-900 dark:text-gray-100 mt-1 capitalize">{selectedInsight.evidence_type.replace("_", " ")}</p>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-gray-500 uppercase tracking-wider">
+                <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Deep Analysis
                 </label>
-                <p className="text-gray-700 mt-1 whitespace-pre-wrap">
+                <p className="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
                   {selectedInsight.deep_analysis}
                 </p>
               </div>
@@ -363,11 +363,11 @@ export default function AdminInsightsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     Confidence Score
                   </label>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-brand-500 rounded-full"
                         style={{ width: `${selectedInsight.confidence_score}%` }}
@@ -377,11 +377,11 @@ export default function AdminInsightsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     Novelty Score
                   </label>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500 rounded-full"
                         style={{ width: `${selectedInsight.novelty_score}%` }}
@@ -393,7 +393,7 @@ export default function AdminInsightsPage() {
               </div>
 
               <div>
-                <label className="text-xs text-gray-500 uppercase tracking-wider">
+                <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Source
                 </label>
                 <a
@@ -407,11 +407,11 @@ export default function AdminInsightsPage() {
               </div>
 
               <div>
-                <label className="text-xs text-gray-500 uppercase tracking-wider">
+                <label className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Raw Content
                 </label>
-                <div className="mt-1 bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 max-h-40 overflow-y-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 whitespace-pre-wrap">
                     {selectedInsight.raw_content}
                   </p>
                 </div>

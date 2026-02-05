@@ -12,7 +12,7 @@ const statusConfig: Record<InquiryStatus, { label: string; bg: string; text: str
   CONTACTED: { label: "Contacted", bg: "bg-purple-100", text: "text-purple-700" },
   BOOKED: { label: "Booked", bg: "bg-amber-100", text: "text-amber-700" },
   WON: { label: "Won", bg: "bg-green-100", text: "text-green-700" },
-  LOST: { label: "Lost", bg: "bg-gray-100", text: "text-gray-500" },
+  LOST: { label: "Lost", bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-500 dark:text-gray-400 dark:text-gray-500" },
 };
 
 const statusOrder: InquiryStatus[] = ["NEW", "CONTACTED", "BOOKED", "WON", "LOST"];
@@ -120,11 +120,11 @@ export default function LeadDetailPage() {
   }
 
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Loading...</div>;
   }
 
   if (!lead) {
-    return <div className="text-gray-500">Lead not found</div>;
+    return <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Lead not found</div>;
   }
 
   const currentStatus = lead.status as InquiryStatus;
@@ -132,20 +132,20 @@ export default function LeadDetailPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link href="/leads" className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">
+      <Link href="/leads" className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 mb-4 inline-block">
         ← Back to Leads
       </Link>
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{lead.name}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{lead.name}</h1>
           <span className={clsx("inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium", config.bg, config.text)}>
             {config.label}
           </span>
         </div>
         {lead.services_interested && lead.services_interested.length > 0 && (
           <div className="text-right">
-            <p className="text-sm text-gray-500">Interested In</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Interested In</p>
             <div className="flex flex-wrap justify-end gap-1 mt-1">
               {lead.services_interested.map((service: string, idx: number) => (
                 <span key={idx} className="text-sm bg-brand-100 text-brand-700 px-2 py-0.5 rounded">
@@ -162,8 +162,8 @@ export default function LeadDetailPage() {
         <div className="card p-4 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-700">Follow-up Reminder</p>
-              <p className="text-xs text-gray-500">Set a date to remind you to follow up</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Reminder</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Set a date to remind you to follow up</p>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -189,7 +189,7 @@ export default function LeadDetailPage() {
                       setLead({ ...lead, follow_up_date: null });
                     });
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500"
                 >
                   Clear
                 </button>
@@ -201,7 +201,7 @@ export default function LeadDetailPage() {
 
       {/* Status Pipeline */}
       <div className="card p-4 mb-6">
-        <p className="text-sm text-gray-500 mb-3">Move to:</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-3">Move to:</p>
         <div className="flex flex-wrap gap-2">
           {statusOrder.map((status) => {
             const cfg = statusConfig[status];
@@ -215,7 +215,7 @@ export default function LeadDetailPage() {
                   "px-4 py-2 rounded-md text-sm font-medium transition-colors",
                   isActive
                     ? `${cfg.bg} ${cfg.text} cursor-default`
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-200"
                 )}
               >
                 {cfg.label}
@@ -227,12 +227,12 @@ export default function LeadDetailPage() {
 
       {/* Contact Info */}
       <div className="card p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Contact Information</h2>
         <dl className="space-y-3">
           {lead.email && (
             <div>
-              <dt className="text-sm text-gray-500">Email</dt>
-              <dd className="text-gray-900">
+              <dt className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Email</dt>
+              <dd className="text-gray-900 dark:text-gray-100">
                 <a href={`mailto:${lead.email}`} className="text-brand-600 hover:underline">
                   {lead.email}
                 </a>
@@ -241,8 +241,8 @@ export default function LeadDetailPage() {
           )}
           {lead.phone && (
             <div>
-              <dt className="text-sm text-gray-500">Phone</dt>
-              <dd className="text-gray-900">
+              <dt className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Phone</dt>
+              <dd className="text-gray-900 dark:text-gray-100">
                 <a href={`tel:${lead.phone}`} className="text-brand-600 hover:underline">
                   {lead.phone}
                 </a>
@@ -250,12 +250,12 @@ export default function LeadDetailPage() {
             </div>
           )}
           <div>
-            <dt className="text-sm text-gray-500">Source</dt>
-            <dd className="text-gray-900 capitalize">{lead.source}</dd>
+            <dt className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Source</dt>
+            <dd className="text-gray-900 dark:text-gray-100 capitalize">{lead.source}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-500">Created</dt>
-            <dd className="text-gray-900">
+            <dt className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Created</dt>
+            <dd className="text-gray-900 dark:text-gray-100">
               {new Date(lead.created_at).toLocaleDateString("en-AU", {
                 day: "numeric",
                 month: "long",
@@ -269,8 +269,8 @@ export default function LeadDetailPage() {
       {/* Notes */}
       {lead.message && (
         <div className="card p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Notes</h2>
-          <p className="text-gray-700 whitespace-pre-wrap">{lead.message}</p>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Notes</h2>
+          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{lead.message}</p>
         </div>
       )}
 

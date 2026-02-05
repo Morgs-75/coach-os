@@ -109,11 +109,11 @@ export default function NewAutomationPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link href="/automations" className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">
+      <Link href="/automations" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 mb-4 inline-block">
         ← Back to Automations
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Automation</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">Create Automation</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
@@ -140,7 +140,7 @@ export default function NewAutomationPage() {
 
         {/* Trigger */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">When to trigger</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">When to trigger</h2>
 
           <div className="space-y-4">
             <div>
@@ -188,7 +188,7 @@ export default function NewAutomationPage() {
 
         {/* Action */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">What to do</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">What to do</h2>
 
           <div className="space-y-4">
             <div>
@@ -212,7 +212,7 @@ export default function NewAutomationPage() {
                 className="input"
                 rows={3}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Variables: {"{{name}}"}, {"{{first_name}}"}, {"{{days_inactive}}"}
               </p>
             </div>
@@ -221,7 +221,7 @@ export default function NewAutomationPage() {
 
         {/* Guardrails */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Guardrails</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Guardrails</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
