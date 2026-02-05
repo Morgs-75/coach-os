@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDate } from "@/lib/utils";
-import type { BasiqConnection, CodingRule, ChartOfAccount } from "@coach-os/shared";
+import type { BasiqConnection, CodingRule, ChartOfAccount } from "@/types";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);

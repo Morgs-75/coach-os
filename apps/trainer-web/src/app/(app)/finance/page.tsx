@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { MetricCard } from "@/components/MetricCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { MoneyEventType } from "@coach-os/shared";
+import type { MoneyEventType } from "@/types";
 import { clsx } from "clsx";
 
 async function getOrgId(supabase: Awaited<ReturnType<typeof createClient>>) {

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { clsx } from "clsx";
-import type { RiskTier, ActivityType } from "@coach-os/shared";
+import type { RiskTier, ActivityType } from "@/types";
 
 const activityIcons: Record<ActivityType, string> = {
   weight: "⚖️",

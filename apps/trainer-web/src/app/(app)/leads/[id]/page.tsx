@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { clsx } from "clsx";
-import type { InquiryStatus } from "@coach-os/shared";
+import type { InquiryStatus } from "@/types";
 
 const statusConfig: Record<InquiryStatus, { label: string; bg: string; text: string }> = {
   NEW: { label: "New", bg: "bg-blue-100", text: "text-blue-700" },

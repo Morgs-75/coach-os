@@ -2,7 +2,7 @@
 
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { clsx } from "clsx";
-import type { BankTransactionWithRelations, ChartOfAccount } from "@coach-os/shared";
+import type { BankTransactionWithRelations, ChartOfAccount } from "@/types";
 import { AISuggestionBadge } from "./AISuggestionBadge";
 import { PlatformMatchBadge } from "./PlatformMatchBadge";
 import { AccountPicker } from "./AccountPicker";

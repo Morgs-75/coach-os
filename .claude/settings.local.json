@@ -62,7 +62,9 @@
       "Bash(vercel projects:*)",
       "Bash(vercel ls:*)",
       "WebFetch(domain:vercel.com)",
-      "Bash(vercel env:*)"
+      "Bash(vercel env:*)",
+      "Bash(xargs sed -i 's|from \"\"@coach-os/shared\"\"|from \"\"@/types\"\"|g')",
+      "Bash(xargs sed -i \"s|from ''@coach-os/shared''|from ''@/types''|g\")"
     ]
   }
 }

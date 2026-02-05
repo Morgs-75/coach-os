@@ -1,6 +1,6 @@
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { clsx } from "clsx";
-import type { CashbookLedger } from "@coach-os/shared";
+import type { CashbookLedger } from "@/types";
 
 interface LedgerEntry extends CashbookLedger {
   running_balance: number;

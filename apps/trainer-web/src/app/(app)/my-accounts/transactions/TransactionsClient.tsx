@@ -7,7 +7,7 @@ import { TransactionTable } from "@/components/my-accounts/TransactionTable";
 import { TransactionCodingModal } from "@/components/my-accounts/TransactionCodingModal";
 import { BulkCodingBar } from "@/components/my-accounts/BulkCodingBar";
 import { TransactionTableSkeleton } from "@/components/ui/Skeleton";
-import type { BankTransactionWithRelations, ChartOfAccount } from "@coach-os/shared";
+import type { BankTransactionWithRelations, ChartOfAccount } from "@/types";
 import { useSearchParams } from "next/navigation";
 
 type FilterStatus = "all" | "uncoded" | "ai_suggested" | "coded" | "excluded";

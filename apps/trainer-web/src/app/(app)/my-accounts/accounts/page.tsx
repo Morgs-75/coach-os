@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ChartOfAccount, TaxTreatment, AccountCategory } from "@coach-os/shared";
+import type { ChartOfAccount, TaxTreatment, AccountCategory } from "@/types";
 
 type EditData = { name: string; tax_treatment: TaxTreatment };
 type NewAccountData = { category: AccountCategory; name: string; tax_treatment: TaxTreatment };

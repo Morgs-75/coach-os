@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { RiskBadge } from "@/components/RiskBadge";
 import { formatRelativeTime } from "@/lib/utils";
 import Link from "next/link";
-import type { RiskTier, SubscriptionStatus } from "@coach-os/shared";
+import type { RiskTier, SubscriptionStatus } from "@/types";
 import { clsx } from "clsx";
 
 async function getOrgId(supabase: Awaited<ReturnType<typeof createClient>>) {

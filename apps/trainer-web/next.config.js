@@ -1,6 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  transpilePackages: ["@coach-os/shared"],
-};
+const nextConfig = {};
 
 module.exports = nextConfig;

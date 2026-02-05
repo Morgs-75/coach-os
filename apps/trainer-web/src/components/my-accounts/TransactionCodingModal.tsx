@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { BankTransactionWithRelations, ChartOfAccount } from "@coach-os/shared";
+import type { BankTransactionWithRelations, ChartOfAccount } from "@/types";
 import { AccountPicker } from "./AccountPicker";
 import { PlatformMatchBadge } from "./PlatformMatchBadge";
 import { clsx } from "clsx";

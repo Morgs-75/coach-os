@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import type { RiskTier } from "@coach-os/shared";
+import type { RiskTier } from "@/types";
 
 interface RiskBadgeProps {
   tier: RiskTier | null | undefined;

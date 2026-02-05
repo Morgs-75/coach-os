@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import type { ChartOfAccount, AccountCategory, TaxTreatment } from "@coach-os/shared";
+import type { ChartOfAccount, AccountCategory, TaxTreatment } from "@/types";
 import { clsx } from "clsx";
 
 interface AccountPickerProps {

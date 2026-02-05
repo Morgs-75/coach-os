@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChartOfAccount } from "@coach-os/shared";
+import type { ChartOfAccount } from "@/types";
 import { AccountPicker } from "./AccountPicker";
 
 interface BulkCodingBarProps {
