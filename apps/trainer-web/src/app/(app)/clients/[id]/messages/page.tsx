@@ -139,16 +139,16 @@ export default function ClientMessagesPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       <div className="mb-4">
-        <Link href={`/clients/${clientId}`} className="text-sm text-gray-500 hover:text-gray-700">
+        <Link href={`/clients/${clientId}`} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
           ← Back to {clientName || "Client"}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">Messages with {clientName}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-2">Messages with {clientName}</h1>
       </div>
 
       <div className="card flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No messages yet. Start the conversation!</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">No messages yet. Start the conversation!</p>
           ) : (
             messages.map((msg) => (
               <div
@@ -156,7 +156,7 @@ export default function ClientMessagesPage() {
                 className={clsx(
                   "max-w-[70%] p-3 rounded-lg",
                   msg.sender_type === "trainer" && "ml-auto bg-brand-500 text-white",
-                  msg.sender_type === "client" && "bg-gray-100 text-gray-900",
+                  msg.sender_type === "client" && "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100",
                   msg.sender_type === "system" && "mx-auto bg-purple-100 text-purple-700 text-sm"
                 )}
               >
@@ -173,7 +173,7 @@ export default function ClientMessagesPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={sendMessage} className="p-4 border-t border-gray-200 flex gap-2">
+        <form onSubmit={sendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
           <input
             type="text"
             value={newMessage}

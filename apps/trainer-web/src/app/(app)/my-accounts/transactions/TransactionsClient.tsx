@@ -275,7 +275,7 @@ export default function TransactionsClient() {
         <div className="flex flex-wrap items-center gap-4">
           {/* Status Filter */}
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Status:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
@@ -291,7 +291,7 @@ export default function TransactionsClient() {
 
           {/* Bank Account Filter */}
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Account:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account:</label>
             <select
               value={bankAccountFilter}
               onChange={(e) => setBankAccountFilter(e.target.value)}
@@ -308,7 +308,7 @@ export default function TransactionsClient() {
 
           {/* Date Range */}
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">From:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From:</label>
             <input
               type="date"
               value={dateRange.start}
@@ -317,7 +317,7 @@ export default function TransactionsClient() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">To:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To:</label>
             <input
               type="date"
               value={dateRange.end}
@@ -344,7 +344,7 @@ export default function TransactionsClient() {
         <TransactionTableSkeleton rows={10} />
       ) : transactions.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-gray-500 mb-4">No transactions found</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No transactions found</p>
           <button onClick={handleSync} className="btn-primary">
             Sync Transactions
           </button>

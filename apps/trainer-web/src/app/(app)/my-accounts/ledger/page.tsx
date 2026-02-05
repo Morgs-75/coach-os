@@ -75,7 +75,7 @@ export default async function LedgerPage({
       <div className="card p-4">
         <form className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Account:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account:</label>
             <select
               name="account"
               defaultValue={searchParams.account || ""}
@@ -107,7 +107,7 @@ export default async function LedgerPage({
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">From:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From:</label>
             <input
               type="date"
               name="start"
@@ -117,7 +117,7 @@ export default async function LedgerPage({
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">To:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To:</label>
             <input
               type="date"
               name="end"
@@ -141,15 +141,15 @@ export default async function LedgerPage({
       {/* Summary */}
       <div className="grid grid-cols-3 gap-6">
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Total Debits</p>
-          <p className="text-2xl font-semibold text-gray-900">{formatCurrency(totalDebits)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Debits</p>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(totalDebits)}</p>
         </div>
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Total Credits</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Credits</p>
           <p className="text-2xl font-semibold text-green-600">{formatCurrency(totalCredits)}</p>
         </div>
         <div className="card p-4">
-          <p className="text-sm text-gray-500">Net Movement</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Net Movement</p>
           <p className={`text-2xl font-semibold ${totalCredits - totalDebits >= 0 ? "text-green-600" : "text-red-600"}`}>
             {formatCurrency(totalCredits - totalDebits)}
           </p>
@@ -161,7 +161,7 @@ export default async function LedgerPage({
         <LedgerTable entries={ledgerWithBalance} />
       ) : (
         <div className="card p-12 text-center">
-          <p className="text-gray-500 mb-4">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
             No ledger entries found. Code your transactions to see them here.
           </p>
           <Link href="/my-accounts/transactions" className="btn-primary">

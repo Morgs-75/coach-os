@@ -81,8 +81,8 @@ export default function SignupPage() {
   return (
     <div className="card p-8">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Coach OS</h1>
-        <p className="text-gray-500 mt-2">Create your account</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Coach OS</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Create your account</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -134,7 +134,7 @@ export default function SignupPage() {
             minLength={8}
             required
           />
-          <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Minimum 8 characters</p>
         </div>
 
         <button type="submit" className="btn-primary w-full" disabled={loading}>
@@ -142,7 +142,7 @@ export default function SignupPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
         Already have an account?{" "}
         <Link href="/login" className="text-brand-600 hover:text-brand-700">
           Sign in

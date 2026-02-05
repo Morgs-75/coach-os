@@ -157,14 +157,14 @@ export function AccountPicker({
         {isOpen && typeof window !== "undefined" && createPortal(
           <div
             data-account-picker-dropdown
-            className="fixed z-[9999] w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-y-auto"
+            className="fixed z-[9999] w-64 bg-white dark:bg-gray-900 dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 dark:border-gray-700 overflow-y-auto"
             style={{
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               maxHeight: Math.min(DROPDOWN_HEIGHT, window.innerHeight - 40),
             }}
           >
-            <div className="sticky top-0 bg-white dark:bg-gray-900 p-2 border-b border-gray-100 dark:border-gray-700">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 dark:bg-gray-900 p-2 border-b border-gray-100 dark:border-gray-800 dark:border-gray-700">
               <input
                 ref={inputRef}
                 type="text"
@@ -235,7 +235,7 @@ export function AccountPicker({
       {isOpen && typeof window !== "undefined" && createPortal(
         <div
           data-account-picker-dropdown
-          className="fixed z-[9999] bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto"
+          className="fixed z-[9999] bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-y-auto"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,
@@ -243,7 +243,7 @@ export function AccountPicker({
             maxHeight: Math.min(DROPDOWN_HEIGHT, window.innerHeight - 40),
           }}
         >
-          <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
+          <div className="sticky top-0 bg-white dark:bg-gray-900 p-2 border-b border-gray-100 dark:border-gray-800">
             <input
               ref={inputRef}
               type="text"
@@ -337,7 +337,7 @@ function AccountGroup({
 }) {
   return (
     <div>
-      <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800">
+      <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-800 dark:bg-gray-800">
         {title}
       </div>
       {accounts.map((account) => (
@@ -345,7 +345,7 @@ function AccountGroup({
           key={account.id}
           onClick={() => onSelect(account.id)}
           className={clsx(
-            "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between dark:text-gray-200",
+            "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:bg-gray-800 flex items-center justify-between dark:text-gray-200",
             selectedId === account.id && "bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400"
           )}
         >
@@ -378,7 +378,7 @@ function QuickAddSection({
   saving: boolean;
 }) {
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700">
+    <div className="border-t border-gray-200 dark:border-gray-700 dark:border-gray-700">
       {!show ? (
         <button
           onClick={onToggle}
@@ -387,7 +387,7 @@ function QuickAddSection({
           + Add New Account
         </button>
       ) : (
-        <div className="p-3 bg-gray-50 dark:bg-gray-800 space-y-2">
+        <div className="p-3 bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 space-y-2">
           <input
             type="text"
             value={data.name}

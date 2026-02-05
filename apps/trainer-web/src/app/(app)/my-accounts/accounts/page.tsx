@@ -83,7 +83,7 @@ export default function AccountsPage() {
   const otherAccounts = accounts.filter(a => a.category === "other").sort((a, b) => a.name.localeCompare(b.name));
 
   if (loading) {
-    return <div className="text-center py-8 text-gray-500">Loading...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading...</div>;
   }
 
   return (
@@ -179,7 +179,7 @@ function AccountTable({
   const headerColors = {
     green: "bg-green-50 text-green-800",
     red: "bg-red-50 text-red-800",
-    gray: "bg-gray-100 text-gray-800",
+    gray: "bg-gray-100 dark:bg-gray-700 text-gray-800",
   };
 
   return (
@@ -196,9 +196,9 @@ function AccountTable({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
           {accounts.map((account) => (
-            <tr key={account.id} className="hover:bg-gray-50">
+            <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
               {editingId === account.id ? (
                 <>
                   <td className="px-3 py-1">
@@ -206,7 +206,7 @@ function AccountTable({
                       type="text"
                       value={editData.name}
                       onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                      className="w-full px-2 py-0.5 border border-gray-300 rounded"
+                      className="w-full px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded"
                       autoFocus
                     />
                   </td>
@@ -214,7 +214,7 @@ function AccountTable({
                     <select
                       value={editData.tax_treatment}
                       onChange={(e) => setEditData({ ...editData, tax_treatment: e.target.value as TaxTreatment })}
-                      className="px-1 py-0.5 border border-gray-300 rounded"
+                      className="px-1 py-0.5 border border-gray-300 dark:border-gray-600 rounded"
                     >
                       <option value="gst">Y</option>
                       <option value="gst_free">N</option>
@@ -223,13 +223,13 @@ function AccountTable({
                   </td>
                   <td className="px-3 py-1 text-right whitespace-nowrap">
                     <button onClick={() => onSave(account.id)} className="text-green-600 hover:text-green-800 mr-2">Save</button>
-                    <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">Cancel</button>
+                    <button onClick={onCancel} className="text-gray-500 dark:text-gray-400 hover:text-gray-700">Cancel</button>
                   </td>
                 </>
               ) : (
                 <>
-                  <td className="px-3 py-1 text-gray-900">{account.name}</td>
-                  <td className="px-3 py-1 text-center text-gray-600">
+                  <td className="px-3 py-1 text-gray-900 dark:text-gray-100">{account.name}</td>
+                  <td className="px-3 py-1 text-center text-gray-600 dark:text-gray-400">
                     {account.tax_treatment === "gst" ? "Y" : account.tax_treatment === "gst_free" ? "N" : "-"}
                   </td>
                   <td className="px-3 py-1 text-right whitespace-nowrap">
@@ -247,7 +247,7 @@ function AccountTable({
                   type="text"
                   value={newAccount.name}
                   onChange={(e) => onNewChange({ name: e.target.value })}
-                  className="w-full px-2 py-0.5 border border-gray-300 rounded"
+                  className="w-full px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded"
                   placeholder="Account name..."
                   autoFocus
                 />
@@ -256,7 +256,7 @@ function AccountTable({
                 <select
                   value={newAccount.tax_treatment}
                   onChange={(e) => onNewChange({ tax_treatment: e.target.value as TaxTreatment })}
-                  className="px-1 py-0.5 border border-gray-300 rounded"
+                  className="px-1 py-0.5 border border-gray-300 dark:border-gray-600 rounded"
                 >
                   <option value="gst">Y</option>
                   <option value="gst_free">N</option>
@@ -265,7 +265,7 @@ function AccountTable({
               </td>
               <td className="px-3 py-1 text-right whitespace-nowrap">
                 <button onClick={onSaveNew} className="text-green-600 hover:text-green-800 mr-2">Save</button>
-                <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">Cancel</button>
+                <button onClick={onCancel} className="text-gray-500 dark:text-gray-400 hover:text-gray-700">Cancel</button>
               </td>
             </tr>
           )}

@@ -168,7 +168,7 @@ export default function PnLPage() {
   }, [monthlyTotals]);
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading P&L data...</div>;
+    return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading P&L data...</div>;
   }
 
   return (
@@ -178,7 +178,7 @@ export default function PnLPage() {
         <div className="flex flex-wrap items-center gap-4">
           {/* Date Range */}
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">From:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From:</label>
             <input
               type="month"
               value={startDate.slice(0, 7)}
@@ -187,7 +187,7 @@ export default function PnLPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">To:</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To:</label>
             <input
               type="month"
               value={endDate.slice(0, 7)}
@@ -203,12 +203,12 @@ export default function PnLPage() {
           <div className="flex-1" />
 
           {/* View Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setViewMode("monthly")}
               className={clsx(
                 "px-3 py-1.5 text-sm rounded-md transition-colors",
-                viewMode === "monthly" ? "bg-white shadow text-gray-900" : "text-gray-600"
+                viewMode === "monthly" ? "bg-white dark:bg-gray-900 shadow text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400"
               )}
             >
               Monthly
@@ -217,7 +217,7 @@ export default function PnLPage() {
               onClick={() => setViewMode("summary")}
               className={clsx(
                 "px-3 py-1.5 text-sm rounded-md transition-colors",
-                viewMode === "summary" ? "bg-white shadow text-gray-900" : "text-gray-600"
+                viewMode === "summary" ? "bg-white dark:bg-gray-900 shadow text-gray-900 dark:text-gray-100" : "text-gray-600 dark:text-gray-400"
               )}
             >
               Summary
@@ -230,7 +230,7 @@ export default function PnLPage() {
 
       {pnlData.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-gray-500">No data for this period</p>
+          <p className="text-gray-500 dark:text-gray-400">No data for this period</p>
         </div>
       ) : viewMode === "monthly" ? (
         /* Monthly Columns View - Compact */
@@ -238,21 +238,21 @@ export default function PnLPage() {
           <div className="overflow-x-auto">
             <table className="min-w-full" style={{ fontSize: '8pt' }}>
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-900 sticky left-0 bg-gray-50 min-w-[140px]">
+                <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-2 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100 sticky left-0 bg-gray-50 dark:bg-gray-800 min-w-[140px]">
                     Account
                   </th>
                   {months.map(month => (
-                    <th key={month} className="px-2 py-1.5 text-right font-semibold text-gray-900 min-w-[75px]">
+                    <th key={month} className="px-2 py-1.5 text-right font-semibold text-gray-900 dark:text-gray-100 min-w-[75px]">
                       {formatMonth(month)}
                     </th>
                   ))}
-                  <th className="px-2 py-1.5 text-right font-bold text-gray-900 bg-gray-100 min-w-[80px]">
+                  <th className="px-2 py-1.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 min-w-[80px]">
                     Total
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                 {/* Income Section */}
                 <tr className="bg-green-50">
                   <td colSpan={months.length + 2} className="px-2 py-1 font-bold text-green-800 uppercase tracking-wide">
@@ -262,19 +262,19 @@ export default function PnLPage() {
                 {incomeAccounts.map(account => {
                   const rowTotal = months.reduce((sum, m) => sum + (dataMatrix[account.id]?.[m] || 0), 0);
                   return (
-                    <tr key={account.id} className="hover:bg-gray-50">
-                      <td className="px-2 py-1 text-gray-900 sticky left-0 bg-white">
+                    <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                      <td className="px-2 py-1 text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-900">
                         {account.name}
                       </td>
                       {months.map(month => (
-                        <td key={month} className="px-2 py-1 text-right text-gray-700 tabular-nums">
+                        <td key={month} className="px-2 py-1 text-right text-gray-700 dark:text-gray-300 tabular-nums">
                           {dataMatrix[account.id]?.[month]
                             ? formatCurrency(dataMatrix[account.id][month])
                             : <span className="text-gray-300">-</span>
                           }
                         </td>
                       ))}
-                      <td className="px-2 py-1 text-right font-medium text-gray-900 bg-gray-50 tabular-nums">
+                      <td className="px-2 py-1 text-right font-medium text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 tabular-nums">
                         {formatCurrency(rowTotal)}
                       </td>
                     </tr>
@@ -303,19 +303,19 @@ export default function PnLPage() {
                 {expenseAccounts.map(account => {
                   const rowTotal = months.reduce((sum, m) => sum + Math.abs(dataMatrix[account.id]?.[m] || 0), 0);
                   return (
-                    <tr key={account.id} className="hover:bg-gray-50">
-                      <td className="px-2 py-1 text-gray-900 sticky left-0 bg-white">
+                    <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                      <td className="px-2 py-1 text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-900">
                         {account.name}
                       </td>
                       {months.map(month => (
-                        <td key={month} className="px-2 py-1 text-right text-gray-700 tabular-nums">
+                        <td key={month} className="px-2 py-1 text-right text-gray-700 dark:text-gray-300 tabular-nums">
                           {dataMatrix[account.id]?.[month]
                             ? formatCurrency(Math.abs(dataMatrix[account.id][month]))
                             : <span className="text-gray-300">-</span>
                           }
                         </td>
                       ))}
-                      <td className="px-2 py-1 text-right font-medium text-gray-900 bg-gray-50 tabular-nums">
+                      <td className="px-2 py-1 text-right font-medium text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 tabular-nums">
                         {formatCurrency(rowTotal)}
                       </td>
                     </tr>
@@ -336,8 +336,8 @@ export default function PnLPage() {
                 </tr>
 
                 {/* Net Profit */}
-                <tr className="bg-gray-100 font-bold">
-                  <td className="px-2 py-1.5 text-gray-900 sticky left-0 bg-gray-100">
+                <tr className="bg-gray-100 dark:bg-gray-700 font-bold">
+                  <td className="px-2 py-1.5 text-gray-900 dark:text-gray-100 sticky left-0 bg-gray-100 dark:bg-gray-700">
                     Net Profit
                   </td>
                   {months.map(month => (
@@ -371,15 +371,15 @@ export default function PnLPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Income Card */}
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200 bg-green-50">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50">
               <h3 className="font-semibold text-green-800">Income</h3>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {incomeAccounts.map(account => {
                 const total = months.reduce((sum, m) => sum + (dataMatrix[account.id]?.[m] || 0), 0);
                 return (
                   <div key={account.id} className="px-6 py-3 flex justify-between">
-                    <span className="text-gray-700">{account.name}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{account.name}</span>
                     <span className="font-medium">{formatCurrency(total)}</span>
                   </div>
                 );
@@ -393,15 +393,15 @@ export default function PnLPage() {
 
           {/* Expenses Card */}
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50">
               <h3 className="font-semibold text-red-800">Expenses</h3>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {expenseAccounts.map(account => {
                 const total = months.reduce((sum, m) => sum + Math.abs(dataMatrix[account.id]?.[m] || 0), 0);
                 return (
                   <div key={account.id} className="px-6 py-3 flex justify-between">
-                    <span className="text-gray-700">{account.name}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{account.name}</span>
                     <span className="font-medium">{formatCurrency(total)}</span>
                   </div>
                 );
@@ -419,7 +419,7 @@ export default function PnLPage() {
               "px-6 py-6 flex justify-between items-center",
               grandTotals.net >= 0 ? "bg-green-50" : "bg-red-50"
             )}>
-              <span className="text-xl font-bold text-gray-900">Net Profit / (Loss)</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Net Profit / (Loss)</span>
               <span className={clsx(
                 "text-3xl font-bold",
                 grandTotals.net >= 0 ? "text-green-700" : "text-red-700"
@@ -436,26 +436,26 @@ export default function PnLPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2" style={{ fontSize: '8pt' }}>
         <div className="card p-2">
-          <p className="text-gray-500">Avg Monthly Income</p>
+          <p className="text-gray-500 dark:text-gray-400">Avg Monthly Income</p>
           <p className="font-bold text-green-600 tabular-nums">
             {formatCurrency(Math.round(grandTotals.income / Math.max(months.length, 1)))}
           </p>
         </div>
         <div className="card p-2">
-          <p className="text-gray-500">Avg Monthly Expenses</p>
+          <p className="text-gray-500 dark:text-gray-400">Avg Monthly Expenses</p>
           <p className="font-bold text-red-600 tabular-nums">
             {formatCurrency(Math.round(grandTotals.expense / Math.max(months.length, 1)))}
           </p>
         </div>
         <div className="card p-2">
-          <p className="text-gray-500">Avg Monthly Profit</p>
+          <p className="text-gray-500 dark:text-gray-400">Avg Monthly Profit</p>
           <p className={clsx("font-bold tabular-nums", grandTotals.net >= 0 ? "text-green-600" : "text-red-600")}>
             {formatCurrency(Math.round(grandTotals.net / Math.max(months.length, 1)))}
           </p>
         </div>
         <div className="card p-2">
-          <p className="text-gray-500">Profit Margin</p>
-          <p className="font-bold text-gray-900 tabular-nums">
+          <p className="text-gray-500 dark:text-gray-400">Profit Margin</p>
+          <p className="font-bold text-gray-900 dark:text-gray-100 tabular-nums">
             {grandTotals.income > 0 ? ((grandTotals.net / grandTotals.income) * 100).toFixed(1) : 0}%
           </p>
         </div>

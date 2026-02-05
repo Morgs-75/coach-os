@@ -114,15 +114,15 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading settings...</div>;
+    return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading settings...</div>;
   }
 
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Bank Connection */}
       <section className="card">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Bank Connection</h2>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Bank Connection</h2>
         </div>
         <div className="p-6">
           {connection?.consent_status === "active" ? (
@@ -133,7 +133,7 @@ export default function SettingsPage() {
                     Connected
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Last synced: {connection.last_sync_at ? formatDate(connection.last_sync_at) : "Never"}
                 </p>
               </div>
@@ -154,7 +154,7 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-gray-500 mb-4">No bank connected</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No bank connected</p>
               <a href="/my-accounts/connect" className="btn-primary">
                 Connect Bank
               </a>
@@ -165,10 +165,10 @@ export default function SettingsPage() {
 
       {/* Coding Rules */}
       <section className="card">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Coding Rules</h2>
-            <p className="text-sm text-gray-500">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Coding Rules</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Automatically code transactions based on patterns
             </p>
           </div>
@@ -176,9 +176,9 @@ export default function SettingsPage() {
             Add Rule
           </button>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {rules.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
+            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
               No coding rules yet. Add a rule to auto-code matching transactions.
             </div>
           ) : (
@@ -187,24 +187,24 @@ export default function SettingsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-gray-900">{rule.name}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100">{rule.name}</h3>
                       {rule.auto_apply && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                           Auto-apply
                         </span>
                       )}
                       {!rule.is_active && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                           Disabled
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {rule.match_description && `Description contains "${rule.match_description}"`}
                       {rule.match_merchant && ` | Merchant contains "${rule.match_merchant}"`}
                       {rule.match_direction && ` | ${rule.match_direction === "credit" ? "Credits only" : "Debits only"}`}
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Maps to: <span className="font-medium">{rule.account?.name || "Unknown"}</span>
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -218,7 +218,7 @@ export default function SettingsPage() {
                         setEditingRule(rule);
                         setShowRuleForm(true);
                       }}
-                      className="text-sm text-gray-600 hover:text-gray-900"
+                      className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100"
                     >
                       Edit
                     </button>
@@ -238,10 +238,10 @@ export default function SettingsPage() {
 
       {/* Chart of Accounts */}
       <section className="card">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Chart of Accounts</h2>
-            <p className="text-sm text-gray-500">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Chart of Accounts</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Categories for coding transactions
             </p>
           </div>
@@ -250,31 +250,31 @@ export default function SettingsPage() {
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tax</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Code</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tax</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {accounts.map((account) => (
-                <tr key={account.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-mono text-gray-900">{account.code}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{account.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 capitalize">{account.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                  <td className="px-6 py-4 text-sm font-mono text-gray-900 dark:text-gray-100">{account.code}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{account.name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 capitalize">{account.category}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {account.tax_treatment === "gst" && "GST"}
                     {account.tax_treatment === "gst_free" && "GST Free"}
                     {account.tax_treatment === "bas_excluded" && "BAS Excluded"}
                   </td>
                   <td className="px-6 py-4">
                     {account.is_system ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                         System
                       </span>
                     ) : (
@@ -291,7 +291,7 @@ export default function SettingsPage() {
                             setEditingAccount(account);
                             setShowAccountForm(true);
                           }}
-                          className="text-sm text-gray-600 hover:text-gray-900"
+                          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100"
                         >
                           Edit
                         </button>
@@ -372,9 +372,9 @@ function RuleFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {rule ? "Edit Coding Rule" : "New Coding Rule"}
           </h2>
         </div>
@@ -465,18 +465,18 @@ function RuleFormModal({
                 type="checkbox"
                 checked={formData.auto_apply}
                 onChange={(e) => setFormData({ ...formData, auto_apply: e.target.checked })}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 dark:border-gray-600"
               />
-              <span className="text-sm text-gray-700">Auto-apply on sync</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Auto-apply on sync</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={formData.is_active}
                 onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 dark:border-gray-600"
               />
-              <span className="text-sm text-gray-700">Active</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
             </label>
           </div>
 
@@ -559,9 +559,9 @@ function AccountFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-lg w-full">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-lg w-full">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {account ? "Edit Account" : "Add New Account"}
           </h2>
         </div>
@@ -621,7 +621,7 @@ function AccountFormModal({
               <option value="gst_free">GST Free</option>
               <option value="bas_excluded">BAS Excluded</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {formData.tax_treatment === "gst" && "Standard GST rate applies"}
               {formData.tax_treatment === "gst_free" && "No GST (e.g., insurance, some food)"}
               {formData.tax_treatment === "bas_excluded" && "Not reported on BAS (e.g., wages, private expenses)"}

@@ -20,7 +20,7 @@ async function getOrgId(supabase: Awaited<ReturnType<typeof createClient>>) {
 const eventTypeConfig: Record<MoneyEventType, { label: string; color: string }> = {
   INCOME: { label: "Income", color: "text-green-600" },
   REFUND: { label: "Refund", color: "text-red-600" },
-  FEE: { label: "Stripe Fee", color: "text-gray-500" },
+  FEE: { label: "Stripe Fee", color: "text-gray-500 dark:text-gray-400" },
   PLATFORM_FEE: { label: "Platform Fee", color: "text-purple-600" },
   PAYOUT: { label: "Payout", color: "text-blue-600" },
   EXPENSE: { label: "Expense", color: "text-orange-600" },
@@ -71,7 +71,7 @@ export default async function FinancePage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Finance</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Finance</h1>
         <button className="btn-secondary">Export CSV</button>
       </div>
 
@@ -103,14 +103,14 @@ export default async function FinancePage() {
         {/* Monthly Breakdown */}
         <div className="lg:col-span-1">
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Monthly Summary</h2>
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Monthly Summary</h2>
             </div>
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {monthlyData?.slice(0, 6).map((month: any) => (
                 <div key={month.period} className="px-6 py-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">{month.period}</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{month.period}</span>
                     <span className={clsx(
                       "font-semibold",
                       month.net_cents >= 0 ? "text-green-600" : "text-red-600"
@@ -119,8 +119,8 @@ export default async function FinancePage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">In: {formatCurrency(month.cash_in_cents)}</span>
-                    <span className="text-gray-500">Out: {formatCurrency(Math.abs(month.cash_out_cents))}</span>
+                    <span className="text-gray-500 dark:text-gray-400">In: {formatCurrency(month.cash_in_cents)}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Out: {formatCurrency(Math.abs(month.cash_out_cents))}</span>
                   </div>
                 </div>
               ))}
@@ -131,25 +131,25 @@ export default async function FinancePage() {
         {/* Transactions */}
         <div className="lg:col-span-2">
           <div className="card">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Transactions</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Client</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {transactions?.map((tx: any) => {
                     const config = eventTypeConfig[tx.type as MoneyEventType];
                     return (
-                      <tr key={tx.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                      <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                           {formatDate(tx.event_date)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -157,7 +157,7 @@ export default async function FinancePage() {
                             {config.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {tx.clients?.full_name ?? "-"}
                         </td>
                         <td className={clsx(
