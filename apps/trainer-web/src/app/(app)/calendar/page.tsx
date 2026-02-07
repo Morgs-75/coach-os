@@ -961,11 +961,16 @@ export default function CalendarPage() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {editingBooking ? "Edit Booking" : selectedSlot ? "New Booking" : "Add Booking"}
               </h2>
-              {selectedSlot && !editingBooking && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedSlot.date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })} at {formatTime(selectedSlot.hour, selectedSlot.minute)}
-                </p>
-              )}
+              {selectedSlot && !editingBooking && (() => {
+                const endMins = selectedSlot.hour * 60 + selectedSlot.minute + bookingForm.duration;
+                const endHour = Math.floor(endMins / 60);
+                const endMinute = endMins % 60;
+                return (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {selectedSlot.date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })} | {formatTime(selectedSlot.hour, selectedSlot.minute)} – {formatTime(endHour, endMinute)} ({bookingForm.duration} min)
+                  </p>
+                );
+              })()}
               {editingBooking && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {editingBooking.client_name}
@@ -1072,7 +1077,7 @@ export default function CalendarPage() {
 
               {bookingForm.session_type_id && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Custom Duration</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (override)</label>
                   <select
                     value={bookingForm.duration}
                     onChange={(e) => setBookingForm({ ...bookingForm, duration: parseInt(e.target.value) })}
