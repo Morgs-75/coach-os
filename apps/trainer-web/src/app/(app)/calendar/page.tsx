@@ -339,6 +339,11 @@ export default function CalendarPage() {
   async function handleSaveBooking() {
     if (!orgId || !bookingForm.client_id) return;
 
+    if (!userId) {
+      alert("Not authenticated. Please refresh the page and try again.");
+      return;
+    }
+
     // Determine start time from slot or datetime picker
     let startTime: Date;
     if (selectedSlot) {
@@ -355,7 +360,7 @@ export default function CalendarPage() {
     const endTime = new Date(startTime.getTime() + bookingForm.duration * 60000);
     const selectedType = sessionTypes.find(st => st.id === bookingForm.session_type_id);
 
-    const { data: newBooking, error } = await supabase.from("bookings").insert({
+    const insertData: Record<string, any> = {
       org_id: orgId,
       client_id: bookingForm.client_id,
       start_time: startTime.toISOString(),
@@ -367,14 +372,31 @@ export default function CalendarPage() {
       booked_by: userId,
       booking_source: "trainer",
       notes: bookingForm.notes || null,
-      purchase_id: bookingForm.client_purchase_id || null,
-    }).select().single();
+    };
+
+    // Only include purchase_id if one was selected
+    if (bookingForm.client_purchase_id) {
+      insertData.purchase_id = bookingForm.client_purchase_id;
+    }
+
+    console.log("Inserting booking:", JSON.stringify(insertData, null, 2));
+
+    const { data: newBooking, error } = await supabase
+      .from("bookings")
+      .insert(insertData)
+      .select()
+      .single();
 
     setSaving(false);
 
     if (error) {
-      console.error("Booking error:", error);
-      alert("Error creating booking: " + (error.message || error.details || error.hint || JSON.stringify(error)));
+      console.error("Booking error - full object:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      console.error("Booking error code:", error.code);
+      console.error("Booking error message:", error.message);
+      console.error("Booking error details:", error.details);
+      console.error("Booking error hint:", error.hint);
+      const msg = error.message || error.details || error.hint || error.code || "Unknown error - check browser console";
+      alert("Error creating booking: " + msg);
       return;
     }
 
