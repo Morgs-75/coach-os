@@ -1604,6 +1604,23 @@ export default function ClientDetailPage() {
                         >
                           Paid Cash
                         </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Delete this pending package "${purchase.offers?.name || "Package"}"? This cannot be undone.`)) return;
+                            const { error } = await supabase
+                              .from("client_purchases")
+                              .delete()
+                              .eq("id", purchase.id);
+                            if (error) {
+                              alert("Error deleting package: " + (error.message || JSON.stringify(error)));
+                            } else {
+                              setClientPurchases(clientPurchases.filter(p => p.id !== purchase.id));
+                            }
+                          }}
+                          className="text-sm text-red-600 hover:text-red-700 font-medium ml-auto"
+                        >
+                          Delete
+                        </button>
                       </div>
                     )}
 

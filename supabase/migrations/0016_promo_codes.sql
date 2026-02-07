@@ -35,3 +35,6 @@ CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON public.promo_codes(org_id, co
 -- Link promo codes to purchases
 ALTER TABLE public.client_purchases ADD COLUMN IF NOT EXISTS promo_code_id uuid references public.promo_codes(id);
 ALTER TABLE public.client_purchases ADD COLUMN IF NOT EXISTS discount_cents int default 0;
+
+-- Add payment method tracking to purchases
+ALTER TABLE public.client_purchases ADD COLUMN IF NOT EXISTS payment_method text check (payment_method in ('cash', 'card', 'bank_transfer', 'stripe'));
