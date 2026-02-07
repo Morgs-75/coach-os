@@ -40,9 +40,16 @@ export function TransactionCodingModal({
   const [notes, setNotes] = useState(transaction.notes || "");
   const [saving, setSaving] = useState(false);
 
-  // Split transaction state
-  const [isSplit, setIsSplit] = useState(false);
-  const [splits, setSplits] = useState<Split[]>([]);
+  // Split transaction state - initialize from existing splits if present
+  const existingSplits = transaction.splits?.map(s => ({
+    id: s.id,
+    accountId: s.account_id,
+    amountCents: s.amount_cents,
+    taxTreatment: s.tax_treatment,
+    description: s.description || "",
+  })) || [];
+  const [isSplit, setIsSplit] = useState(existingSplits.length > 0);
+  const [splits, setSplits] = useState<Split[]>(existingSplits);
 
   // Remember rule state
   const [rememberThis, setRememberThis] = useState(false);
@@ -251,53 +258,55 @@ export function TransactionCodingModal({
 
         {/* Coding Form */}
         <div className="px-6 py-6 space-y-4">
-          {/* Split Toggle - only show for credits (income) */}
-          {transaction.direction === "credit" && (
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Split Transaction</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Record gross revenue and payment fees separately</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {!isSplit && (
-                  <button
-                    onClick={initializeFeeSplt}
-                    className="text-sm text-brand-600 hover:text-brand-700 font-medium"
-                  >
-                    Add 5% Fee Split
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    if (isSplit) {
-                      setIsSplit(false);
-                      setSplits([]);
-                    } else {
-                      setIsSplit(true);
-                      setSplits([{
-                        id: "split-1",
-                        accountId: accountId,
-                        amountCents: transaction.amount_cents,
-                        taxTreatment: taxTreatment,
-                        description: "",
-                      }]);
-                    }
-                  }}
-                  className={clsx(
-                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                    isSplit ? "bg-brand-600" : "bg-gray-200"
-                  )}
-                >
-                  <span
-                    className={clsx(
-                      "inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform",
-                      isSplit ? "translate-x-6" : "translate-x-1"
-                    )}
-                  />
-                </button>
-              </div>
+          {/* Split Toggle - available for all transactions */}
+          <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Split Transaction</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {transaction.direction === "credit"
+                  ? "Record gross revenue and payment fees separately"
+                  : "Allocate to multiple categories (e.g., fuel + personal items)"}
+              </p>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              {!isSplit && transaction.direction === "credit" && (
+                <button
+                  onClick={initializeFeeSplt}
+                  className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+                >
+                  Add 5% Fee Split
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (isSplit) {
+                    setIsSplit(false);
+                    setSplits([]);
+                  } else {
+                    setIsSplit(true);
+                    setSplits([{
+                      id: "split-1",
+                      accountId: accountId,
+                      amountCents: transaction.amount_cents,
+                      taxTreatment: taxTreatment,
+                      description: "",
+                    }]);
+                  }
+                }}
+                className={clsx(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                  isSplit ? "bg-brand-600" : "bg-gray-200"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-900 transition-transform",
+                    isSplit ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
+          </div>
 
           {isSplit ? (
             /* Split Transaction UI */
@@ -373,7 +382,7 @@ export function TransactionCodingModal({
                         value={split.description}
                         onChange={(e) => updateSplit(split.id, { description: e.target.value })}
                         className="input text-sm"
-                        placeholder="e.g., Payment fee"
+                        placeholder={transaction.direction === "credit" ? "e.g., Payment fee" : "e.g., Fuel, Snacks"}
                       />
                     </div>
                   </div>

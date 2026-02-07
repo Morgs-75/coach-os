@@ -7,6 +7,20 @@ export function formatCurrency(cents: number, currency = "AUD"): string {
   }).format(cents / 100);
 }
 
+// Format currency with 2 decimal places, negatives in brackets
+export function formatCurrencyLedger(cents: number, currency = "AUD"): string {
+  const isNegative = cents < 0;
+  const absValue = Math.abs(cents);
+  const formatted = new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(absValue / 100);
+
+  return isNegative ? `(${formatted})` : formatted;
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat("en-AU", {
     day: "numeric",

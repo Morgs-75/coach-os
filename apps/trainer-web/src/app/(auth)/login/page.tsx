@@ -27,16 +27,30 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Debug: Check if Supabase is configured
+    console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log("Attempting login for:", email);
 
-    if (error) {
-      setError(error.message);
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      console.log("Login response:", { error, data });
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Network error - check console");
       setLoading(false);
       return;
     }
+
+    alert("Login successful! Redirecting to dashboard...");
 
     // Save or clear remembered email
     if (rememberMe) {
@@ -45,8 +59,8 @@ export default function LoginPage() {
       localStorage.removeItem("rememberedEmail");
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    // Direct browser redirect
+    window.location.replace("/dashboard");
   }
 
   return (

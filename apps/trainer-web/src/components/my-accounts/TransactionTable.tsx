@@ -144,9 +144,16 @@ function TransactionRow({
       </td>
       <td className="px-4 py-3">
         {tx.status === "coded" && tx.account ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">
-            {tx.account.name}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">
+              {tx.account.name}
+            </span>
+            {tx.splits && tx.splits.length > 0 && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300" title={`Split into ${tx.splits.length} parts`}>
+                Split ({tx.splits.length})
+              </span>
+            )}
+          </div>
         ) : tx.status === "ai_suggested" && tx.ai_suggested_account ? (
           <div className="flex items-center gap-2">
             <AISuggestionBadge

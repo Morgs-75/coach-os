@@ -37,12 +37,15 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  console.log("Middleware auth check:", { user: user?.id, error: error?.message, path: request.nextUrl.pathname });
 
   // Redirect unauthenticated users to login for protected routes
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    console.log("Redirecting to login - no user found");
     return NextResponse.redirect(url);
   }
 

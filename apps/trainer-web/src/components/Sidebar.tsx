@@ -7,6 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
 import { ThemeToggle } from "./ThemeToggle";
 
+interface AuditSummary {
+  total_issues: number;
+  high_severity: number;
+}
+
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: "📊" },
   { name: "AI Coach", href: "/coach", icon: "🧠" },
@@ -19,6 +24,8 @@ const navigation = [
   { name: "Automations", href: "/automations", icon: "⚡" },
   { name: "myAccounts", href: "/my-accounts", icon: "💰" },
   { name: "myProducts", href: "/products", icon: "📦" },
+  { name: "myExecutiveAssistant", href: "/my-ea", icon: "🤖" },
+  { name: "myFitnessMBA", href: "/my-fitness-mba", icon: "🎓" },
 ];
 
 const settingsNav = [
@@ -29,11 +36,25 @@ const settingsNav = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [auditSummary, setAuditSummary] = useState<AuditSummary | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     checkPlatformAdmin();
+    fetchAuditSummary();
   }, []);
+
+  async function fetchAuditSummary() {
+    try {
+      const response = await fetch("/api/my-accounts/audit");
+      if (response.ok) {
+        const data = await response.json();
+        setAuditSummary(data.summary);
+      }
+    } catch {
+      // Silently fail
+    }
+  }
 
   async function checkPlatformAdmin() {
     try {
@@ -63,20 +84,59 @@ export function Sidebar() {
       <nav className="space-y-1 flex-1">
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
+          const isMyAccounts = item.href === "/my-accounts";
+          const hasIssues = isMyAccounts && auditSummary && auditSummary.total_issues > 0;
+
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={clsx(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+            <div key={item.name}>
+              <Link
+                href={item.href}
+                className={clsx(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                )}
+              >
+                <span>{item.icon}</span>
+                <span className="flex-1">{item.name}</span>
+                {hasIssues && (
+                  <span className={clsx(
+                    "px-1.5 py-0.5 rounded-full text-xs font-medium",
+                    auditSummary.high_severity > 0
+                      ? "bg-red-500 text-white"
+                      : "bg-amber-500 text-white"
+                  )}>
+                    {auditSummary.total_issues}
+                  </span>
+                )}
+              </Link>
+              {/* myAccountant Audit Link */}
+              {isMyAccounts && isActive && (
+                <Link
+                  href="/my-accounts/audit"
+                  className={clsx(
+                    "flex items-center gap-2 ml-6 px-3 py-1.5 rounded-md text-xs font-medium transition-colors mt-1",
+                    pathname === "/my-accounts/audit"
+                      ? "text-white bg-gray-700"
+                      : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+                  )}
+                >
+                  <span>🤖</span>
+                  myAccountant
+                  {hasIssues && (
+                    <span className={clsx(
+                      "px-1.5 py-0.5 rounded-full text-xs",
+                      auditSummary.high_severity > 0
+                        ? "bg-red-500 text-white"
+                        : "bg-amber-500 text-white"
+                    )}>
+                      {auditSummary.total_issues}
+                    </span>
+                  )}
+                </Link>
               )}
-            >
-              <span>{item.icon}</span>
-              {item.name}
-            </Link>
+            </div>
           );
         })}
 

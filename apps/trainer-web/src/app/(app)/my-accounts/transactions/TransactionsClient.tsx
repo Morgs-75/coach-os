@@ -8,7 +8,8 @@ import { TransactionCodingModal } from "@/components/my-accounts/TransactionCodi
 import { BulkCodingBar } from "@/components/my-accounts/BulkCodingBar";
 import { TransactionTableSkeleton } from "@/components/ui/Skeleton";
 import type { BankTransactionWithRelations, ChartOfAccount } from "@/types";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 type FilterStatus = "all" | "uncoded" | "ai_suggested" | "coded" | "excluded";
 
@@ -29,6 +30,10 @@ export default function TransactionsClient() {
   const initialLoadDone = useRef(false);
 
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const editTransactionId = searchParams.get("edit");
+  const fromPage = searchParams.get("from");
 
   useEffect(() => {
     const statusParam = searchParams.get("status");
@@ -36,6 +41,29 @@ export default function TransactionsClient() {
       setStatusFilter(statusParam as FilterStatus);
     }
   }, [searchParams]);
+
+  // Auto-open edit modal when edit param is present
+  const [transactionNotFound, setTransactionNotFound] = useState(false);
+
+  useEffect(() => {
+    if (editTransactionId && transactions.length > 0 && !editingTransaction) {
+      const txn = transactions.find(t => t.id === editTransactionId);
+      if (txn) {
+        setEditingTransaction(txn);
+        setTransactionNotFound(false);
+      } else {
+        setTransactionNotFound(true);
+      }
+    }
+  }, [editTransactionId, transactions, editingTransaction]);
+
+  // Clear URL params when modal closes
+  const handleCloseModal = () => {
+    setEditingTransaction(null);
+    if (editTransactionId) {
+      router.replace("/my-accounts/transactions");
+    }
+  };
 
   const loadAccounts = useCallback(async () => {
     try {
@@ -270,6 +298,42 @@ export default function TransactionsClient() {
 
   return (
     <div className="space-y-6">
+      {/* Back to Audit Button */}
+      {fromPage === "audit" && (
+        <div className="flex items-center gap-4">
+          <Link
+            href="/my-accounts/audit"
+            className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            <span>←</span>
+            Back to Audit
+          </Link>
+          {editTransactionId && !transactionNotFound && (
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Viewing transaction from audit review
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Transaction Not Found Alert */}
+      {transactionNotFound && fromPage === "audit" && (
+        <div className="card p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start gap-3">
+            <span className="text-amber-600 text-xl">⚠️</span>
+            <div>
+              <h3 className="font-medium text-amber-800 dark:text-amber-200">
+                Transaction Not Found
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                The transaction (ID: {editTransactionId}) referenced in the audit could not be found.
+                It may have been deleted or modified. Please return to the audit to review other issues.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="card p-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -379,7 +443,7 @@ export default function TransactionsClient() {
           transaction={editingTransaction}
           accounts={accounts}
           onSave={handleCodeTransaction}
-          onClose={() => setEditingTransaction(null)}
+          onClose={handleCloseModal}
         />
       )}
     </div>

@@ -63,8 +63,9 @@ export default function PnLPage() {
   useEffect(() => {
     const now = new Date();
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    setStartDate(`${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth() + 1).padStart(2, "0")}-01`);
-    setEndDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`);
+    const formatDate = (d: Date) => d.toISOString().split("T")[0];
+    setStartDate(formatDate(sixMonthsAgo));
+    setEndDate(formatDate(now));
   }, []);
 
   // Load P&L data
@@ -180,22 +181,18 @@ export default function PnLPage() {
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From:</label>
             <input
-              type="month"
-              value={startDate.slice(0, 7)}
-              onChange={(e) => setStartDate(e.target.value + "-01")}
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
               className="input py-1.5"
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To:</label>
             <input
-              type="month"
-              value={endDate.slice(0, 7)}
-              onChange={(e) => {
-                const [y, m] = e.target.value.split("-");
-                const lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
-                setEndDate(`${e.target.value}-${lastDay}`);
-              }}
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
               className="input py-1.5"
             />
           </div>
@@ -236,18 +233,18 @@ export default function PnLPage() {
         /* Monthly Columns View - Compact */
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full" style={{ fontSize: '8pt' }}>
+            <table className="table-fixed" style={{ fontSize: '8pt' }}>
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100 sticky left-0 bg-gray-50 dark:bg-gray-800 min-w-[140px]">
+                  <th className="px-2 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100 sticky left-0 bg-gray-50 dark:bg-gray-800" style={{ minWidth: '200px', maxWidth: '300px' }}>
                     Account
                   </th>
                   {months.map(month => (
-                    <th key={month} className="px-2 py-1.5 text-right font-semibold text-gray-900 dark:text-gray-100 min-w-[75px]">
+                    <th key={month} className="px-2 py-1.5 text-right font-semibold text-gray-900 dark:text-gray-100" style={{ minWidth: '100px', maxWidth: '150px' }}>
                       {formatMonth(month)}
                     </th>
                   ))}
-                  <th className="px-2 py-1.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 min-w-[80px]">
+                  <th className="px-2 py-1.5 text-right font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700" style={{ minWidth: '100px', maxWidth: '150px' }}>
                     Total
                   </th>
                 </tr>

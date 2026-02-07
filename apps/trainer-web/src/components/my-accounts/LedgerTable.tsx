@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrencyLedger, formatDate } from "@/lib/utils";
 import { clsx } from "clsx";
 import type { CashbookLedger } from "@/types";
 
@@ -8,9 +8,10 @@ interface LedgerEntry extends CashbookLedger {
 
 interface LedgerTableProps {
   entries: LedgerEntry[];
+  onEdit?: (entry: LedgerEntry) => void;
 }
 
-export function LedgerTable({ entries }: LedgerTableProps) {
+export function LedgerTable({ entries, onEdit }: LedgerTableProps) {
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
@@ -42,13 +43,23 @@ export function LedgerTable({ entries }: LedgerTableProps) {
           </thead>
           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {entries.map((entry) => (
-              <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
+              <tr
+                key={entry.id}
+                onClick={() => onEdit?.(entry)}
+                className={clsx(
+                  "dark:bg-gray-800",
+                  onEdit ? "hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer" : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                )}
+              >
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                   {formatDate(entry.transaction_date)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="max-w-xs">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <p className={clsx(
+                      "text-sm font-medium text-gray-900 dark:text-gray-100 truncate",
+                      onEdit && "hover:text-blue-600 hover:underline"
+                    )}>
                       {entry.merchant_name || entry.description}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{entry.bank_account_name}</p>
@@ -67,13 +78,13 @@ export function LedgerTable({ entries }: LedgerTableProps) {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                  {entry.direction === "debit" ? formatCurrency(entry.amount_cents) : "-"}
+                  {entry.direction === "debit" ? formatCurrencyLedger(entry.amount_cents) : "-"}
                 </td>
                 <td className="px-4 py-3 text-right text-sm text-green-600 whitespace-nowrap">
-                  {entry.direction === "credit" ? formatCurrency(entry.amount_cents) : "-"}
+                  {entry.direction === "credit" ? formatCurrencyLedger(entry.amount_cents) : "-"}
                 </td>
                 <td className="px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                  {entry.gst_cents > 0 ? formatCurrency(entry.gst_cents) : "-"}
+                  {entry.gst_cents > 0 ? formatCurrencyLedger(entry.gst_cents) : "-"}
                 </td>
                 <td
                   className={clsx(
@@ -81,7 +92,7 @@ export function LedgerTable({ entries }: LedgerTableProps) {
                     entry.running_balance >= 0 ? "text-gray-900 dark:text-gray-100" : "text-red-600"
                   )}
                 >
-                  {formatCurrency(entry.running_balance)}
+                  {formatCurrencyLedger(entry.running_balance)}
                 </td>
               </tr>
             ))}
