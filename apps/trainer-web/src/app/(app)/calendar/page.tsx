@@ -367,14 +367,14 @@ export default function CalendarPage() {
       booked_by: userId,
       booking_source: "trainer",
       notes: bookingForm.notes || null,
-      client_purchase_id: bookingForm.client_purchase_id || null,
+      purchase_id: bookingForm.client_purchase_id || null,
     }).select().single();
 
     setSaving(false);
 
     if (error) {
       console.error("Booking error:", error);
-      alert("Error creating booking: " + (error.message || JSON.stringify(error)));
+      alert("Error creating booking: " + (error.message || error.details || error.hint || JSON.stringify(error)));
       return;
     }
 
@@ -405,11 +405,11 @@ export default function CalendarPage() {
             }),
           });
 
-          // Update booking to mark that confirmation was sent
+          // Update booking to mark that reminder was sent
           if (requestConfirm) {
             await supabase
               .from("bookings")
-              .update({ confirmation_sent_at: new Date().toISOString() })
+              .update({ reminder_sent: true })
               .eq("id", newBooking.id);
           }
         } catch (err) {
