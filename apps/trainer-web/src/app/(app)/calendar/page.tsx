@@ -1076,22 +1076,9 @@ export default function CalendarPage() {
               </div>
 
               {bookingForm.session_type_id && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (override)</label>
-                  <select
-                    value={bookingForm.duration}
-                    onChange={(e) => setBookingForm({ ...bookingForm, duration: parseInt(e.target.value) })}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value={15}>15 min</option>
-                    <option value={30}>30 min</option>
-                    <option value={45}>45 min</option>
-                    <option value={60}>60 min</option>
-                    <option value={75}>75 min</option>
-                    <option value={90}>90 min</option>
-                    <option value={120}>2 hours</option>
-                  </select>
-                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Duration: <span className="font-medium text-gray-900 dark:text-gray-100">{bookingForm.duration} min</span> (set by session type)
+                </p>
               )}
 
               <div>
