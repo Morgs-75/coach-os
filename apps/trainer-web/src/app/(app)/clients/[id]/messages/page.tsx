@@ -33,6 +33,12 @@ export default function ClientMessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Mark thread as read when we have a threadId (on load and when new messages arrive)
+  useEffect(() => {
+    if (!threadId) return;
+    markAsRead();
+  }, [threadId, messages.length]);
+
   useEffect(() => {
     if (!threadId) return;
 
@@ -56,6 +62,14 @@ export default function ClientMessagesPage() {
       supabase.removeChannel(channel);
     };
   }, [threadId]);
+
+  async function markAsRead() {
+    if (!threadId) return;
+    await supabase
+      .from("message_threads")
+      .update({ trainer_last_read_at: new Date().toISOString() })
+      .eq("id", threadId);
+  }
 
   async function loadData() {
     // Get org_id
@@ -114,13 +128,21 @@ export default function ClientMessagesPage() {
     e.preventDefault();
     if (!newMessage.trim() || !threadId || !orgId) return;
 
+    const messageBody = newMessage.trim();
     setSending(true);
     await supabase.from("messages").insert({
       org_id: orgId,
       thread_id: threadId,
       sender_type: "trainer",
-      body: newMessage.trim(),
+      body: messageBody,
     });
+
+    // Send push notification to client (fire-and-forget)
+    fetch("/api/messages/send-push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId, message: messageBody }),
+    }).catch(() => {});
 
     setNewMessage("");
     setSending(false);

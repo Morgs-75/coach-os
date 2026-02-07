@@ -21,6 +21,7 @@ const navigation = [
   { name: "Leads", href: "/leads", icon: "📋" },
   { name: "Pricing", href: "/pricing", icon: "💵" },
   { name: "Email", href: "/email", icon: "📧" },
+  { name: "Messages", href: "/messages", icon: "💬" },
   { name: "Automations", href: "/automations", icon: "⚡" },
   { name: "myAccounts", href: "/my-accounts", icon: "💰" },
   { name: "myProducts", href: "/products", icon: "📦" },
@@ -37,12 +38,44 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [auditSummary, setAuditSummary] = useState<AuditSummary | null>(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
     checkPlatformAdmin();
     fetchAuditSummary();
+    fetchUnreadCount();
   }, []);
+
+  // Real-time: refresh unread count on new messages
+  useEffect(() => {
+    const channel = supabase
+      .channel("sidebar-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  async function fetchUnreadCount() {
+    try {
+      const response = await fetch("/api/messages/unread-count");
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadMessages(data.total_unread);
+      }
+    } catch {
+      // Silently fail
+    }
+  }
 
   async function fetchAuditSummary() {
     try {
@@ -85,7 +118,9 @@ export function Sidebar() {
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const isMyAccounts = item.href === "/my-accounts";
+          const isMessages = item.href === "/messages";
           const hasIssues = isMyAccounts && auditSummary && auditSummary.total_issues > 0;
+          const hasUnread = isMessages && unreadMessages > 0;
 
           return (
             <div key={item.name}>
@@ -108,6 +143,11 @@ export function Sidebar() {
                       : "bg-amber-500 text-white"
                   )}>
                     {auditSummary.total_issues}
+                  </span>
+                )}
+                {hasUnread && (
+                  <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                    {unreadMessages}
                   </span>
                 )}
               </Link>

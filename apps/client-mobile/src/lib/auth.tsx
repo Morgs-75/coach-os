@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { registerForPushNotifications } from "./notifications";
 
 interface AuthContextType {
   session: Session | null;
@@ -61,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (invite) {
       setClientId(invite.client_id);
       setOrgId(invite.org_id);
+      // Register for push notifications after we know the client
+      registerForPushNotifications(invite.client_id, invite.org_id).catch(
+        (err) => console.warn("Push registration failed:", err)
+      );
     }
     setLoading(false);
   }
