@@ -374,10 +374,10 @@ export default function CalendarPage() {
       notes: bookingForm.notes || null,
     };
 
-    // Only include purchase_id if one was selected
-    if (bookingForm.client_purchase_id) {
-      insertData.purchase_id = bookingForm.client_purchase_id;
-    }
+    // TODO: Link to purchase_id once column exists on bookings table
+    // if (bookingForm.client_purchase_id) {
+    //   insertData.purchase_id = bookingForm.client_purchase_id;
+    // }
 
     console.log("Inserting booking:", JSON.stringify(insertData, null, 2));
 
