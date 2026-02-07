@@ -500,7 +500,6 @@ export default function CalendarPage() {
         duration_mins: bookingForm.duration,
         session_type: selectedType?.slug || editingBooking.session_type,
         notes: bookingForm.notes || null,
-        client_purchase_id: bookingForm.client_purchase_id || null,
       })
       .eq("id", editingBooking.id);
 
