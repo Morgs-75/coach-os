@@ -1006,7 +1006,27 @@ export default function CalendarPage() {
                   {clientPackages.length > 0 ? (
                     <select
                       value={bookingForm.client_purchase_id}
-                      onChange={(e) => setBookingForm({ ...bookingForm, client_purchase_id: e.target.value })}
+                      onChange={(e) => {
+                        const purchaseId = e.target.value;
+                        const pkg = clientPackages.find(p => p.id === purchaseId);
+                        const offerName = pkg?.offers?.name || "";
+
+                        // Match offer name to session type
+                        const matchedType = sessionTypes.find(st =>
+                          st.name.toLowerCase() === offerName.toLowerCase() ||
+                          offerName.toLowerCase().includes(st.name.toLowerCase()) ||
+                          st.name.toLowerCase().includes(offerName.toLowerCase())
+                        );
+
+                        setBookingForm({
+                          ...bookingForm,
+                          client_purchase_id: purchaseId,
+                          ...(matchedType ? {
+                            session_type_id: matchedType.id,
+                            duration: matchedType.duration_mins,
+                          } : {}),
+                        });
+                      }}
                       className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="">No package (casual session)</option>
