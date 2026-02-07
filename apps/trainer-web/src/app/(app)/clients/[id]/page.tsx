@@ -1588,11 +1588,21 @@ export default function ClientDetailPage() {
                         <button
                           onClick={async () => {
                             if (!confirm("Mark this package as paid with cash?")) return;
-                            const { error } = await supabase
+                            // Try with payment_method first, fall back without it
+                            let result = await supabase
                               .from("client_purchases")
                               .update({ payment_status: "succeeded", payment_method: "cash" })
                               .eq("id", purchase.id);
-                            if (!error) {
+                            if (result.error) {
+                              // Fallback: update without payment_method in case column doesn't exist
+                              result = await supabase
+                                .from("client_purchases")
+                                .update({ payment_status: "succeeded" })
+                                .eq("id", purchase.id);
+                            }
+                            if (result.error) {
+                              alert("Error updating package: " + (result.error.message || JSON.stringify(result.error)));
+                            } else {
                               setClientPurchases(clientPurchases.map(p =>
                                 p.id === purchase.id
                                   ? { ...p, payment_status: "succeeded", payment_method: "cash" }
