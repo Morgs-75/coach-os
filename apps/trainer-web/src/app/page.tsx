@@ -47,14 +47,14 @@ export default function LandingPage() {
             <span className="text-sm text-gray-400">Now with AI-powered insights</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight" style={{ textShadow: '0 0 7px rgba(14,165,233,0.9), 0 0 30px rgba(14,165,233,0.7), 0 0 70px rgba(14,165,233,0.55), 0 0 130px rgba(14,165,233,0.45), 0 0 200px rgba(14,165,233,0.3), 0 0 300px rgba(14,165,233,0.2)' }}>
             Your PT Business
           </h1>
           <p className="text-lg md:text-xl text-gray-400 mb-4">
             Have your PT or online coaching business set up in 15 mins
           </p>
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent" style={{ filter: 'drop-shadow(0 0 7px rgba(14,165,233,0.9)) drop-shadow(0 0 30px rgba(14,165,233,0.8)) drop-shadow(0 0 70px rgba(14,165,233,0.6)) drop-shadow(0 0 140px rgba(6,182,212,0.45)) drop-shadow(0 0 220px rgba(6,182,212,0.3))' }}>
               Supercharged
             </span>
           </h2>

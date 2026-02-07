@@ -7,9 +7,9 @@
     @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
   }
 
-  /* Default heading colors */
+  /* Default heading colors - inherit when parent sets color */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-gray-900 dark:text-gray-100;
+    color: inherit;
   }
 }
 

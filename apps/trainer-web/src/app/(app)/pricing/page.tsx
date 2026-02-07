@@ -180,10 +180,12 @@ export default function PricingPage() {
         .eq("id", editingPromo.id);
 
       if (error) {
-        alert("Error updating promo code: " + error.message);
-      } else {
-        setPromoCodes(promoCodes.map(p => p.id === editingPromo.id ? { ...p, ...promoData } : p));
+        console.error("Promo update error:", error);
+        alert("Error updating promo code: " + (error.message || JSON.stringify(error)));
+        setSaving(false);
+        return;
       }
+      setPromoCodes(promoCodes.map(p => p.id === editingPromo.id ? { ...p, ...promoData } : p));
     } else {
       const { data, error } = await supabase
         .from("promo_codes")
@@ -192,8 +194,12 @@ export default function PricingPage() {
         .single();
 
       if (error) {
-        alert("Error creating promo code: " + error.message);
-      } else if (data) {
+        console.error("Promo create error:", error);
+        alert("Error creating promo code: " + (error.message || JSON.stringify(error)));
+        setSaving(false);
+        return;
+      }
+      if (data) {
         setPromoCodes([data, ...promoCodes]);
       }
     }

@@ -77,6 +77,12 @@ export default function ClientDetailPage() {
   const [selectedOffer, setSelectedOffer] = useState("");
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
 
+  // Promo code
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [validatedPromo, setValidatedPromo] = useState<any>(null);
+  const [promoError, setPromoError] = useState("");
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
   // Edit package
   const [editingPackage, setEditingPackage] = useState<any>(null);
   const [editPackageForm, setEditPackageForm] = useState({
@@ -551,6 +557,83 @@ export default function ClientDetailPage() {
     setSelectedOffer("");
   }
 
+  async function validatePromoCode() {
+    if (!promoCodeInput.trim()) return;
+    setValidatingPromo(true);
+    setPromoError("");
+    setValidatedPromo(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setValidatingPromo(false); return; }
+
+    const { data: membership } = await supabase
+      .from("org_members")
+      .select("org_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!membership) { setValidatingPromo(false); return; }
+
+    const { data: promo, error } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .eq("org_id", membership.org_id)
+      .eq("code", promoCodeInput.toUpperCase().trim())
+      .eq("is_active", true)
+      .single();
+
+    if (error || !promo) {
+      setPromoError("Invalid promo code");
+      setValidatingPromo(false);
+      return;
+    }
+
+    // Check expiry
+    if (promo.valid_until && new Date(promo.valid_until) < new Date()) {
+      setPromoError("This promo code has expired");
+      setValidatingPromo(false);
+      return;
+    }
+
+    // Check not started yet
+    if (promo.valid_from && new Date(promo.valid_from) > new Date()) {
+      setPromoError("This promo code is not yet active");
+      setValidatingPromo(false);
+      return;
+    }
+
+    // Check usage limit
+    if (promo.max_uses && promo.times_used >= promo.max_uses) {
+      setPromoError("This promo code has reached its usage limit");
+      setValidatingPromo(false);
+      return;
+    }
+
+    setValidatedPromo(promo);
+    setValidatingPromo(false);
+  }
+
+  function clearPromo() {
+    setPromoCodeInput("");
+    setValidatedPromo(null);
+    setPromoError("");
+  }
+
+  function calculateDiscount(priceCents: number) {
+    if (!validatedPromo) return 0;
+    if (validatedPromo.discount_type === "percentage") {
+      return Math.round(priceCents * (validatedPromo.discount_value / 100));
+    }
+    return Math.round(validatedPromo.discount_value * 100); // fixed amount stored as dollars
+  }
+
+  async function incrementPromoUsage(promoId: string) {
+    await supabase
+      .from("promo_codes")
+      .update({ times_used: (validatedPromo?.times_used || 0) + 1 })
+      .eq("id", promoId);
+  }
+
   async function savePackagePending() {
     if (!selectedOffer || !client) return;
     setSendingPaymentLink(true);
@@ -581,32 +664,45 @@ export default function ClientDetailPage() {
 
     const totalSessions = (offer.sessions_included || 0) + (offer.bonus_sessions || 0);
 
+    const discountCents = calculateDiscount(offer.price_cents);
+    const finalPrice = offer.price_cents - discountCents;
+
+    const insertData: any = {
+      org_id: membership.org_id,
+      client_id: clientId,
+      offer_id: selectedOffer,
+      amount_paid_cents: finalPrice,
+      currency: offer.currency || "aud",
+      sessions_total: totalSessions,
+      sessions_used: 0,
+      expires_at: expiresAt,
+      payment_status: "pending",
+    };
+
+    if (validatedPromo) {
+      insertData.promo_code_id = validatedPromo.id;
+      insertData.discount_cents = discountCents;
+    }
+
     const { data, error } = await supabase
       .from("client_purchases")
-      .insert({
-        org_id: membership.org_id,
-        client_id: clientId,
-        offer_id: selectedOffer,
-        amount_paid_cents: offer.price_cents,
-        currency: offer.currency || "aud",
-        sessions_total: totalSessions,
-        sessions_used: 0,
-        expires_at: expiresAt,
-        payment_status: "pending",
-      })
+      .insert(insertData)
       .select("*, offers(name, offer_type, sessions_included, bonus_sessions)")
       .single();
 
     if (error) {
       alert("Error saving package: " + (error.message || JSON.stringify(error)));
     } else if (data) {
+      if (validatedPromo) await incrementPromoUsage(validatedPromo.id);
       setClientPurchases([data, ...clientPurchases]);
-      alert(`${offer.name} saved for ${client.full_name}.\n\nStatus: Pending Payment`);
+      const discountMsg = discountCents > 0 ? `\nDiscount: -$${(discountCents / 100).toFixed(2)}` : "";
+      alert(`${offer.name} saved for ${client.full_name}.${discountMsg}\n\nStatus: Pending Payment`);
     }
 
     setSendingPaymentLink(false);
     setShowPackageForm(false);
     setSelectedOffer("");
+    clearPromo();
   }
 
   function openEditPackage(purchase: any) {
@@ -696,33 +792,46 @@ export default function ClientDetailPage() {
       bank_transfer: "Bank Transfer",
     };
 
+    const discountCents = calculateDiscount(offer.price_cents);
+    const finalPrice = offer.price_cents - discountCents;
+
+    const insertData: any = {
+      org_id: membership.org_id,
+      client_id: clientId,
+      offer_id: selectedOffer,
+      amount_paid_cents: finalPrice,
+      currency: offer.currency || "aud",
+      sessions_total: totalSessions,
+      sessions_used: 0,
+      expires_at: expiresAt,
+      payment_status: "succeeded",
+      payment_method: paymentMethod,
+    };
+
+    if (validatedPromo) {
+      insertData.promo_code_id = validatedPromo.id;
+      insertData.discount_cents = discountCents;
+    }
+
     const { data, error } = await supabase
       .from("client_purchases")
-      .insert({
-        org_id: membership.org_id,
-        client_id: clientId,
-        offer_id: selectedOffer,
-        amount_paid_cents: offer.price_cents,
-        currency: offer.currency || "aud",
-        sessions_total: totalSessions,
-        sessions_used: 0,
-        expires_at: expiresAt,
-        payment_status: "succeeded",
-        payment_method: paymentMethod,
-      })
+      .insert(insertData)
       .select("*, offers(name, offer_type, sessions_included, bonus_sessions)")
       .single();
 
     if (error) {
       alert("Error assigning package: " + (error.message || JSON.stringify(error)));
     } else if (data) {
+      if (validatedPromo) await incrementPromoUsage(validatedPromo.id);
       setClientPurchases([data, ...clientPurchases]);
-      alert(`${offer.name} assigned to ${client.full_name}!\n\nPayment: ${paymentLabels[paymentMethod]}`);
+      const discountMsg = discountCents > 0 ? `\nDiscount: -$${(discountCents / 100).toFixed(2)}` : "";
+      alert(`${offer.name} assigned to ${client.full_name}!${discountMsg}\n\nPayment: ${paymentLabels[paymentMethod]}`);
     }
 
     setSendingPaymentLink(false);
     setShowPackageForm(false);
     setSelectedOffer("");
+    clearPromo();
   }
 
   if (loading) {
@@ -1228,12 +1337,29 @@ export default function ClientDetailPage() {
                     {(() => {
                       const offer = offers.find(o => o.id === selectedOffer);
                       if (!offer) return null;
+                      const discountCents = calculateDiscount(offer.price_cents);
+                      const finalPrice = offer.price_cents - discountCents;
                       return (
                         <div className="space-y-2">
                           <p className="font-medium text-gray-900 dark:text-gray-100">{offer.name}</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                            ${(offer.price_cents / 100).toFixed(2)}
-                          </p>
+                          {discountCents > 0 ? (
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                                ${(offer.price_cents / 100).toFixed(2)}
+                              </p>
+                              <p className="text-2xl font-bold text-green-600">
+                                ${(finalPrice / 100).toFixed(2)}
+                              </p>
+                              <p className="text-sm text-green-600">
+                                You save ${(discountCents / 100).toFixed(2)}
+                                {validatedPromo?.discount_type === "percentage" && ` (${validatedPromo.discount_value}% off)`}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                              ${(offer.price_cents / 100).toFixed(2)}
+                            </p>
+                          )}
                           {offer.sessions_included && (
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               {offer.sessions_included + (offer.bonus_sessions || 0)} sessions
@@ -1263,6 +1389,63 @@ export default function ClientDetailPage() {
                         </div>
                       );
                     })()}
+                  </div>
+                )}
+
+                {/* Promo Code */}
+                {selectedOffer && (
+                  <div>
+                    <label className="label">Promo Code</label>
+                    {validatedPromo ? (
+                      <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="font-mono font-medium text-green-700 dark:text-green-400">{validatedPromo.code}</span>
+                        <span className="text-sm text-green-600 dark:text-green-400">
+                          {validatedPromo.discount_type === "percentage"
+                            ? `${validatedPromo.discount_value}% off`
+                            : `$${validatedPromo.discount_value} off`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={clearPromo}
+                          className="ml-auto text-sm text-gray-500 hover:text-red-500"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoCodeInput}
+                          onChange={(e) => {
+                            setPromoCodeInput(e.target.value.toUpperCase());
+                            setPromoError("");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              validatePromoCode();
+                            }
+                          }}
+                          className="input flex-1 font-mono"
+                          placeholder="Enter promo code"
+                        />
+                        <button
+                          type="button"
+                          onClick={validatePromoCode}
+                          disabled={!promoCodeInput.trim() || validatingPromo}
+                          className="btn-secondary"
+                        >
+                          {validatingPromo ? "Checking..." : "Apply"}
+                        </button>
+                      </div>
+                    )}
+                    {promoError && (
+                      <p className="text-sm text-red-600 mt-1">{promoError}</p>
+                    )}
                   </div>
                 )}
 
