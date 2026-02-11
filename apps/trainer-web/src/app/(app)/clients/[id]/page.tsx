@@ -1355,7 +1355,7 @@ ul { padding-left: 24px; }
                     Completed
                   </span>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {formatDate(client.onboarding_completed_at)}
+                    {formatDateTime(client.onboarding_completed_at)}
                   </p>
                 </div>
               ) : (
@@ -2874,7 +2874,7 @@ ul { padding-left: 24px; }
                       </span>
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {waiver.sent_at && <span>Sent {formatDate(waiver.sent_at)}</span>}
+                      {waiver.sent_at && <span>Sent {formatDateTime(waiver.sent_at)}</span>}
                       {waiver.signed_at && <span>Signed {formatDateTime(waiver.signed_at)}</span>}
                     </div>
                     {waiver.status === "signed" && (client?.phone || client?.email) && (
