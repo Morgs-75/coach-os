@@ -17,6 +17,11 @@ export default function SettingsPage() {
   const [paypalEmail, setPaypalEmail] = useState("");
   const [payoutFrequency, setPayoutFrequency] = useState("weekly");
 
+  // Waiver template
+  const [waiverTemplate, setWaiverTemplate] = useState("");
+  const [savingWaiver, setSavingWaiver] = useState(false);
+  const [waiverMessage, setWaiverMessage] = useState("");
+
   // Earnings
   const [earnings, setEarnings] = useState<any>(null);
   const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
@@ -47,7 +52,7 @@ export default function SettingsPage() {
     // Load org
     const { data: org } = await supabase
       .from("orgs")
-      .select("name, commission_rate")
+      .select("name, commission_rate, waiver_template")
       .eq("id", membership.org_id)
       .single();
 
@@ -80,7 +85,10 @@ export default function SettingsPage() {
       .order("created_at", { ascending: false })
       .limit(10);
 
-    if (org) setOrgName(org.name);
+    if (org) {
+      setOrgName(org.name);
+      setWaiverTemplate(org.waiver_template || "");
+    }
     if (branding) {
       setDisplayName(branding.display_name);
       setPrimaryColor(branding.primary_color);
@@ -169,6 +177,34 @@ export default function SettingsPage() {
       setPayoutMessage("Payout settings saved!");
     }
     setSavingPayout(false);
+  }
+
+  async function handleSaveWaiver() {
+    setSavingWaiver(true);
+    setWaiverMessage("");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSavingWaiver(false); return; }
+
+    const { data: membership } = await supabase
+      .from("org_members")
+      .select("org_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!membership) { setSavingWaiver(false); return; }
+
+    const { error } = await supabase
+      .from("orgs")
+      .update({ waiver_template: waiverTemplate })
+      .eq("id", membership.org_id);
+
+    if (error) {
+      setWaiverMessage("Failed to save waiver template");
+    } else {
+      setWaiverMessage("Waiver template saved!");
+    }
+    setSavingWaiver(false);
   }
 
   if (loading) {
@@ -289,6 +325,31 @@ export default function SettingsPage() {
           {message && <span className="text-green-600">{message}</span>}
         </div>
       </form>
+
+      {/* Waiver Template */}
+      <div className="card p-6 mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Waiver Template</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          This is your standard waiver that will be sent to clients for signing. Use placeholders: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{"{client_name}"}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{"{client_dob}"}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{"{client_address}"}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{"{business_name}"}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{"{date}"}</code>
+        </p>
+        <textarea
+          value={waiverTemplate}
+          onChange={(e) => setWaiverTemplate(e.target.value)}
+          className="input font-mono text-sm"
+          rows={20}
+          placeholder="Paste your waiver template here..."
+        />
+        <div className="flex items-center gap-4 mt-4">
+          <button onClick={handleSaveWaiver} className="btn-primary" disabled={savingWaiver}>
+            {savingWaiver ? "Saving..." : "Save Waiver Template"}
+          </button>
+          {waiverMessage && (
+            <span className={waiverMessage.includes("Failed") ? "text-red-600" : "text-green-600"}>
+              {waiverMessage}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Payout Settings */}
       <form onSubmit={handleSavePayout} className="space-y-8 mt-8">
