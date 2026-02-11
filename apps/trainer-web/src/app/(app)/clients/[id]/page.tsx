@@ -61,6 +61,7 @@ export default function ClientDetailPage() {
   const params = useParams();
   const clientId = params.id as string;
   const [client, setClient] = useState<any>(null);
+  const [orgName, setOrgName] = useState("");
   const [activities, setActivities] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -70,7 +71,7 @@ export default function ClientDetailPage() {
   const [clientPurchases, setClientPurchases] = useState<any[]>([]);
   const [communications, setCommunications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "profile" | "health" | "activity" | "payments" | "packages" | "comms" | "logs">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "profile" | "health" | "activity" | "payments" | "packages" | "comms" | "logs" | "waivers" | "marketing">("overview");
 
   // Package form
   const [showPackageForm, setShowPackageForm] = useState(false);
@@ -109,6 +110,24 @@ export default function ClientDetailPage() {
   const [newMeasurement, setNewMeasurement] = useState({ type: "", value: "", notes: "" });
   const [savingMeasurement, setSavingMeasurement] = useState(false);
 
+  // Marketing
+  const [referralLinks, setReferralLinks] = useState<any[]>([]);
+  const [clientReferrals, setClientReferrals] = useState<any[]>([]);
+  const [newsletters, setNewsletters] = useState<any[]>([]);
+  const [marketingPrefs, setMarketingPrefs] = useState({ email_opt_in: true, sms_opt_in: true });
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [sendingNewsletter, setSendingNewsletter] = useState(false);
+
+  // Waivers
+  const [waivers, setWaivers] = useState<any[]>([]);
+  const [sendingWaiver, setSendingWaiver] = useState(false);
+  const [waiverLink, setWaiverLink] = useState("");
+  const [sendMethod, setSendMethod] = useState<"link" | "email" | "sms" | null>(null);
+
+  // Onboarding
+  const [sendingOnboarding, setSendingOnboarding] = useState(false);
+  const [onboardingLink, setOnboardingLink] = useState("");
+
   // Profile editing
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
@@ -142,6 +161,14 @@ export default function ClientDetailPage() {
 
     if (clientData) {
       setClient(clientData);
+
+      // Get org name for waiver
+      const { data: orgData } = await supabase
+        .from("orgs")
+        .select("name")
+        .eq("id", clientData.org_id)
+        .single();
+      if (orgData) setOrgName(orgData.name);
     }
 
     // Get recent activity
@@ -245,7 +272,200 @@ export default function ClientDetailPage() {
 
     if (commsData) setCommunications(commsData);
 
+    // Get waivers
+    const { data: waiversData } = await supabase
+      .from("client_waivers")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false });
+
+    if (waiversData) setWaivers(waiversData);
+
+    // Get referral data for this client
+    if (clientData) {
+      const { data: refLinks } = await supabase
+        .from("referral_links")
+        .select("*")
+        .eq("org_id", clientData.org_id)
+        .eq("is_active", true);
+      if (refLinks) setReferralLinks(refLinks);
+
+      const { data: refs } = await supabase
+        .from("referrals")
+        .select("*, referral_links(name, code)")
+        .or(`referrer_client_id.eq.${clientId},referred_client_id.eq.${clientId}`)
+        .order("created_at", { ascending: false });
+      if (refs) setClientReferrals(refs);
+
+      // Get sent newsletters
+      const { data: nlData } = await supabase
+        .from("generated_newsletters")
+        .select("*")
+        .eq("status", "sent")
+        .order("sent_at", { ascending: false })
+        .limit(10);
+      if (nlData) setNewsletters(nlData);
+    }
+
     setLoading(false);
+  }
+
+  async function sendWaiverToClient() {
+    setSendingWaiver(true);
+    setWaiverLink("");
+
+    try {
+      const res = await fetch("/api/send-waiver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: clientId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert("Failed to send waiver: " + (data.error || "Unknown error"));
+      } else {
+        setWaiverLink(data.signing_url);
+        setSendMethod("link");
+        if (data.sms_sent) {
+          alert("Waiver sent via SMS to " + (client?.phone || "client"));
+        } else {
+          alert("Waiver created. SMS could not be sent - you can share the link manually.");
+        }
+        loadClient();
+      }
+    } catch {
+      alert("Failed to send waiver");
+    }
+
+    setSendingWaiver(false);
+  }
+
+  async function sendOnboardingForm() {
+    setSendingOnboarding(true);
+    setOnboardingLink("");
+
+    try {
+      const res = await fetch("/api/send-onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: clientId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert("Failed to send onboarding form: " + (data.error || "Unknown error"));
+      } else {
+        setOnboardingLink(data.onboarding_url);
+        if (data.sms_sent) {
+          alert("Onboarding form sent via SMS to " + (client?.phone || "client"));
+        } else {
+          alert("Onboarding link created. SMS could not be sent - you can share the link manually.");
+        }
+        loadClient();
+      }
+    } catch {
+      alert("Failed to send onboarding form");
+    }
+
+    setSendingOnboarding(false);
+  }
+
+  function downloadSignedWaiverPdf(waiver: any) {
+    // Build the filled waiver content for PDF
+    const clientAddress = [client?.address_line1, client?.address_line2, client?.city, client?.state, client?.postcode].filter(Boolean).join(", ");
+    const clientDob = client?.date_of_birth
+      ? new Date(client.date_of_birth).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })
+      : "";
+    const signedDate = waiver.signed_at
+      ? new Date(waiver.signed_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })
+      : "";
+
+    // Build HTML for PDF
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Signed Waiver - ${client?.full_name}</title>
+<style>
+body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.6; max-width: 700px; margin: 40px auto; color: #333; }
+h1 { text-align: center; font-size: 16pt; margin-bottom: 4px; }
+h2 { text-align: center; font-size: 13pt; margin-top: 0; }
+h3 { font-size: 12pt; margin-top: 24px; }
+hr { border: none; border-top: 1px solid #ccc; margin: 16px 0; }
+ul { padding-left: 24px; }
+.signed-badge { background: #d1fae5; color: #065f46; padding: 8px 16px; border-radius: 8px; display: inline-block; font-weight: bold; margin: 16px 0; }
+.signature-block { margin-top: 32px; border-top: 2px solid #333; padding-top: 16px; }
+.sig-row { display: flex; justify-content: space-between; margin-top: 24px; }
+.sig-col { width: 45%; }
+</style></head><body>
+<div class="signed-badge">SIGNED: ${signedDate}</div>
+<h1>BOXING PERSONAL TRAINING & SPARRING</h1>
+<h2>WAIVER, ASSUMPTION OF RISK & RELEASE</h2>
+<p style="text-align:center">(Australia)</p>
+<hr>
+<h3>1. Parties</h3>
+<p>This Waiver is entered into between:</p>
+<p><strong>Trainer:</strong> ${orgName}</p>
+<p>and</p>
+<p><strong>Participant:</strong> ${client?.full_name}<br>
+<strong>Date of Birth:</strong> ${clientDob}<br>
+<strong>Address:</strong> ${clientAddress}</p>
+<hr>
+<h3>2. Nature of Training Activities</h3>
+<p>I acknowledge that I am voluntarily participating in boxing-related training activities, which may include:</p>
+<ul><li>Boxing technique and skills training</li><li>Pad work, bag work, and conditioning</li><li>Strength, mobility, and cardiovascular exercises</li><li><strong>Controlled sparring or contact drills (where agreed and supervised)</strong></li></ul>
+<p>I understand that sparring is <strong>not mandatory</strong>, but may occur as part of training.</p>
+<hr>
+<h3>3. Acknowledgment of High-Risk Activities</h3>
+<p>I acknowledge that boxing, and particularly sparring or contact training, is a <strong>high-risk physical activity</strong>.</p>
+<p>Risks include, but are not limited to:</p>
+<ul><li>Cuts, bruises, fractures, and musculoskeletal injuries</li><li>Head injury, concussion, or neurological injury</li><li>Loss of consciousness</li><li>Serious or permanent injury</li><li>Death</li></ul>
+<p>I fully understand these risks and <strong>choose to participate voluntarily</strong>.</p>
+<hr>
+<h3>4. Assumption of Risk</h3>
+<p>I voluntarily assume <strong>all risks</strong>, whether known or unknown, associated with participation in boxing training and sparring.</p>
+<hr>
+<h3>5. Health Declaration</h3>
+<p>I declare that I am physically and medically fit to participate and have disclosed all relevant medical conditions.</p>
+<hr>
+<h3>6. Illness, Injury & Symptoms</h3>
+<p>I agree <strong>not to participate</strong> if I am sick, injured, or unwell.</p>
+<hr>
+<h3>7. Alcohol, Drugs & Medication</h3>
+<p>I declare that I am not under the influence of alcohol, recreational drugs, or illicit substances.</p>
+<hr>
+<h3>8. Release & Indemnity</h3>
+<p>To the fullest extent permitted by Australian law, I release and discharge the Trainer from all claims arising from my participation.</p>
+<hr>
+<h3>9. Australian Consumer Law</h3>
+<p>Nothing in this Waiver excludes rights that cannot be excluded under the <strong>Australian Consumer Law</strong>.</p>
+<hr>
+<h3>10. Payment Terms & No Refund Policy</h3>
+<p>All sessions must be paid in advance. All payments are strictly non-refundable.</p>
+<hr>
+<h3>11-15. Additional Terms</h3>
+<p>Group training responsibilities, minor requirements, personal responsibility, photography consent, and governing law (Australia) apply as per full waiver terms.</p>
+<hr>
+<div class="signature-block">
+<h3>16. Acknowledgment & Signature</h3>
+<p>I confirm that I have read and understood this Waiver and agree freely and voluntarily.</p>
+<div class="sig-row">
+<div class="sig-col">
+<p><strong>Participant:</strong> ${client?.full_name}</p>
+<p><strong>Agreed digitally:</strong> ${signedDate}</p>
+</div>
+<div class="sig-col">
+<p><strong>Trainer:</strong> ${orgName}</p>
+</div>
+</div>
+</div>
+</body></html>`;
+
+    // Open in new window for printing/saving as PDF
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.print();
+    }
   }
 
   async function saveCommunication() {
@@ -386,9 +606,9 @@ export default function ClientDetailPage() {
       emergency_contact_phone: client.emergency_contact_phone || "",
       notes: client.notes || "",
       health_conditions: client.health_conditions || [],
-      injuries: client.injuries?.join(", ") || "",
-      medications: client.medications?.join(", ") || "",
-      dietary_restrictions: client.dietary_restrictions?.join(", ") || "",
+      injuries: Array.isArray(client.injuries) ? client.injuries.join(", ") : (client.injuries || ""),
+      medications: Array.isArray(client.medications) ? client.medications.join(", ") : (client.medications || ""),
+      dietary_restrictions: Array.isArray(client.dietary_restrictions) ? client.dietary_restrictions.join(", ") : (client.dietary_restrictions || ""),
     });
     setIsEditingProfile(true);
   }
@@ -919,6 +1139,8 @@ export default function ClientDetailPage() {
             { key: "logs", label: "Logs & Measurements" },
             { key: "packages", label: "Packages" },
             { key: "payments", label: "Payments" },
+            { key: "waivers", label: "Waivers" },
+            { key: "marketing", label: "Marketing" },
             { key: "activity", label: "Activity" },
           ].map((tab) => (
             <button
@@ -1092,6 +1314,54 @@ export default function ClientDetailPage() {
                 )}
               </div>
             )}
+
+            {/* Onboarding Status */}
+            <div className="card p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Onboarding</h3>
+              {client.onboarding_completed_at ? (
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                    Completed
+                  </span>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    {formatDate(client.onboarding_completed_at)}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                    {client.onboarding_token ? "Pending" : "Not Sent"}
+                  </span>
+                  <button
+                    onClick={sendOnboardingForm}
+                    disabled={sendingOnboarding}
+                    className="btn-primary w-full mt-3"
+                  >
+                    {sendingOnboarding ? "Sending..." : "Send Onboarding Form"}
+                  </button>
+                  {onboardingLink && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Share this link:</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={onboardingLink}
+                          className="input flex-1 text-xs bg-white dark:bg-gray-800"
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
+                        />
+                        <button
+                          onClick={() => navigator.clipboard.writeText(onboardingLink)}
+                          className="px-2 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -2478,6 +2748,334 @@ export default function ClientDetailPage() {
               </div>
             )
           )}
+        </div>
+      )}
+
+      {activeTab === "waivers" && (() => {
+        const hasCurrentWaiver = waivers.some((w: any) => w.status === "signed");
+        const sortedWaivers = [...waivers].sort((a: any, b: any) => {
+          // Signed first (by signed date desc), then sent (by sent date desc)
+          if (a.status === "signed" && b.status !== "signed") return -1;
+          if (a.status !== "signed" && b.status === "signed") return 1;
+          const dateA = a.signed_at || a.sent_at || a.created_at;
+          const dateB = b.signed_at || b.sent_at || b.created_at;
+          return new Date(dateB).getTime() - new Date(dateA).getTime();
+        });
+
+        return (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Waivers</h3>
+              {hasCurrentWaiver ? (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Current waiver on file</span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">No current waiver</span>
+              )}
+            </div>
+            <button onClick={sendWaiverToClient} disabled={sendingWaiver} className="btn-primary">
+              {sendingWaiver ? "Sending..." : "Send Waiver"}
+            </button>
+          </div>
+
+          {/* Signing Link (shown after sending) */}
+          {waiverLink && (
+            <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Waiver link generated. Share with client:</p>
+              <div className="flex items-center gap-2">
+                <input type="text" readOnly value={waiverLink} className="input flex-1 text-sm bg-white dark:bg-gray-800" onClick={(e) => (e.target as HTMLInputElement).select()} />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(waiverLink); }}
+                  className="px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Copy
+                </button>
+              </div>
+              <div className="flex gap-2 mt-3">
+                {client?.email && (
+                  <a
+                    href={`mailto:${client.email}?subject=Waiver%20-%20${encodeURIComponent(orgName)}&body=Hi%20${encodeURIComponent(client.full_name)}%2C%0A%0APlease%20review%20and%20sign%20your%20waiver%3A%0A${encodeURIComponent(waiverLink)}%0A%0AThanks%2C%0A${encodeURIComponent(orgName)}`}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white text-blue-700 border border-blue-300 hover:bg-blue-50"
+                  >
+                    Send via Email
+                  </a>
+                )}
+                {client?.phone && (
+                  <a
+                    href={`sms:${client.phone}?body=Hi ${client.full_name}, please sign your waiver: ${waiverLink}`}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white text-blue-700 border border-blue-300 hover:bg-blue-50"
+                  >
+                    Send via SMS
+                  </a>
+                )}
+              </div>
+              <button onClick={() => { setWaiverLink(""); setSendMethod(null); }} className="text-xs text-blue-600 hover:text-blue-800 mt-2">
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* Waiver Records */}
+          {sortedWaivers.length > 0 ? (
+            <div className="card divide-y divide-gray-200 dark:divide-gray-700">
+              {sortedWaivers.map((waiver: any) => (
+                <div key={waiver.id} className="px-6 py-4 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={clsx(
+                        "px-2 py-0.5 rounded-full text-xs font-medium",
+                        waiver.status === "signed" && "bg-green-100 text-green-700",
+                        waiver.status === "sent" && "bg-amber-100 text-amber-700",
+                        waiver.status === "expired" && "bg-red-100 text-red-700",
+                      )}>
+                        {waiver.status === "signed" ? "Signed" : waiver.status === "sent" ? "Sent - Unsigned" : "Expired"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {waiver.sent_at && <span>Sent {formatDate(waiver.sent_at)}</span>}
+                      {waiver.signed_at && <span>Signed {formatDate(waiver.signed_at)}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {waiver.status === "signed" && (
+                      <button
+                        onClick={() => downloadSignedWaiverPdf(waiver)}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+                      >
+                        Download PDF
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card px-6 py-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">No waivers sent yet</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Send a waiver to this client to get started</p>
+            </div>
+          )}
+        </div>
+        );
+      })()}
+
+      {activeTab === "marketing" && (
+        <div className="space-y-6">
+          {/* Engagement Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {clientReferrals.filter((r: any) => r.referrer_client_id === clientId).length}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Referrals Made</p>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {clientReferrals.filter((r: any) => r.referrer_client_id === clientId && r.status === "converted").length}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Conversions</p>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {communications.length}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Communications</p>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {messages.length}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Messages</p>
+            </div>
+          </div>
+
+          {/* Communication Preferences */}
+          <div className="card p-6">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Communication Preferences</h3>
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">Email Marketing</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Receive newsletters and promotions via email</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const newVal = !marketingPrefs.email_opt_in;
+                    setMarketingPrefs({ ...marketingPrefs, email_opt_in: newVal });
+                    await supabase.from("clients").update({ email_opt_in: newVal }).eq("id", clientId);
+                  }}
+                  className={clsx(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    marketingPrefs.email_opt_in ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
+                  )}
+                >
+                  <span className={clsx(
+                    "inline-block h-4 w-4 rounded-full bg-white transition-transform",
+                    marketingPrefs.email_opt_in ? "translate-x-6" : "translate-x-1"
+                  )} />
+                </button>
+              </label>
+              <label className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">SMS Marketing</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Receive promotions and updates via text</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const newVal = !marketingPrefs.sms_opt_in;
+                    setMarketingPrefs({ ...marketingPrefs, sms_opt_in: newVal });
+                    await supabase.from("clients").update({ sms_opt_in: newVal }).eq("id", clientId);
+                  }}
+                  className={clsx(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    marketingPrefs.sms_opt_in ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
+                  )}
+                >
+                  <span className={clsx(
+                    "inline-block h-4 w-4 rounded-full bg-white transition-transform",
+                    marketingPrefs.sms_opt_in ? "translate-x-6" : "translate-x-1"
+                  )} />
+                </button>
+              </label>
+            </div>
+          </div>
+
+          {/* Referral Tracking */}
+          <div className="card">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Referral Activity</h3>
+            </div>
+            {/* Client's referral link */}
+            {referralLinks.length > 0 && (
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Share referral link with this client:</p>
+                <div className="flex flex-wrap gap-2">
+                  {referralLinks.map((link: any) => {
+                    const refUrl = `${window.location.origin}/refer/${link.code}`;
+                    return (
+                      <div key={link.id} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{link.name}</span>
+                        <code className="text-xs text-gray-500 dark:text-gray-400">{link.code}</code>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(refUrl)}
+                          className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+                        >
+                          Copy Link
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {/* Referral history */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {clientReferrals.length > 0 ? (
+                clientReferrals.map((ref: any) => (
+                  <div key={ref.id} className="px-6 py-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {ref.referrer_client_id === clientId
+                          ? `Referred ${ref.referred_name || ref.referred_email}`
+                          : `Referred by ${ref.referral_links?.name || "link"}`}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {ref.created_at ? formatDate(ref.created_at) : ""}
+                      </p>
+                    </div>
+                    <span className={clsx(
+                      "px-2 py-0.5 rounded-full text-xs font-medium",
+                      ref.status === "converted" || ref.status === "rewarded" ? "bg-green-100 text-green-700" :
+                      ref.status === "signed_up" ? "bg-blue-100 text-blue-700" :
+                      ref.status === "pending" ? "bg-amber-100 text-amber-700" :
+                      "bg-gray-100 text-gray-600"
+                    )}>
+                      {ref.status}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No referral activity yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Email Campaigns */}
+          <div className="card">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Email Campaigns</h3>
+              {client?.email && marketingPrefs.email_opt_in && (
+                <button
+                  onClick={async () => {
+                    setSendingNewsletter(true);
+                    const subject = prompt("Email subject:");
+                    if (!subject) { setSendingNewsletter(false); return; }
+                    const body = prompt("Email body (plain text):");
+                    if (!body) { setSendingNewsletter(false); return; }
+                    // Open mailto with pre-filled content
+                    window.open(`mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+                    setSendingNewsletter(false);
+                  }}
+                  className="btn-primary text-sm"
+                >
+                  Send Email
+                </button>
+              )}
+            </div>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {newsletters.length > 0 ? (
+                newsletters.map((nl: any) => (
+                  <div key={nl.id} className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{nl.subject}</p>
+                        {nl.preheader && <p className="text-sm text-gray-500 dark:text-gray-400">{nl.preheader}</p>}
+                      </div>
+                      <div className="text-right text-sm text-gray-500 dark:text-gray-400">
+                        <p>{nl.sent_at ? formatDate(nl.sent_at) : "Draft"}</p>
+                        {nl.sent_to_count && <p>{nl.sent_to_count} recipients</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No campaigns sent yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Communication Timeline */}
+          <div className="card">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Recent Communications</h3>
+            </div>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {communications.length > 0 ? (
+                communications.slice(0, 10).map((comm: any) => (
+                  <div key={comm.id} className="px-6 py-4 flex items-start gap-3">
+                    <span className={clsx(
+                      "mt-0.5 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
+                      comm.direction === "outbound" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+                    )}>
+                      {comm.type === "sms" ? "SMS" : comm.type === "email" ? "EM" : comm.type === "phone" ? "PH" : "NT"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900 dark:text-gray-100 capitalize">{comm.type}</p>
+                        <span className="text-xs text-gray-400">{comm.direction}</span>
+                      </div>
+                      {comm.subject && <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{comm.subject}</p>}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{comm.content}</p>
+                    </div>
+                    <span className="text-xs text-gray-400 shrink-0">{formatDate(comm.created_at)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No communications logged</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
