@@ -3,5 +3,5 @@
   "framework": "nextjs",
   "buildCommand": "npm run build --workspace=apps/trainer-web",
   "outputDirectory": "apps/trainer-web/.next",
-  "installCommand": "npm install"
+  "installCommand": "npm install --workspace=apps/trainer-web"
 }
