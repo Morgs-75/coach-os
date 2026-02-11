@@ -2834,8 +2834,13 @@ ul { padding-left: 24px; }
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {waiver.sent_at && <span>Sent {formatDate(waiver.sent_at)}</span>}
-                      {waiver.signed_at && <span>Signed {formatDate(waiver.signed_at)}</span>}
+                      {waiver.signed_at && <span>Signed {formatDateTime(waiver.signed_at)}</span>}
                     </div>
+                    {waiver.status === "signed" && (client?.phone || client?.email) && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Sent to: {client.phone || client.email}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {waiver.status === "signed" && (

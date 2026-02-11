@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     if (from) {
       try {
         await twilioClient.messages.create({
-          body: `Hi ${client.full_name}, please complete your onboarding form here: ${onboardingUrl}`,
+          body: `Hi ${client.full_name}, I look forward to working with you on your fitness journey. To get started can you please complete my client onboarding form and complete the client waiver. Thank you: ${onboardingUrl}`,
           from,
           to: client.phone,
         });

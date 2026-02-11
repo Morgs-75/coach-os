@@ -41,6 +41,23 @@ export default function SignWaiverPage() {
     if (waiverData.status === "signed") {
       setSigned(true);
       setWaiver(waiverData);
+
+      // Load client details for confirmation screen
+      const { data: signedClientData } = await supabase
+        .from("clients")
+        .select("full_name, email, phone")
+        .eq("id", waiverData.client_id)
+        .single();
+      if (signedClientData) setClient(signedClientData);
+
+      // Load org name
+      const { data: signedOrgData } = await supabase
+        .from("orgs")
+        .select("name")
+        .eq("id", waiverData.org_id)
+        .single();
+      if (signedOrgData) setOrg(signedOrgData);
+
       setLoading(false);
       return;
     }
@@ -56,7 +73,7 @@ export default function SignWaiverPage() {
     // Load client details
     const { data: clientData } = await supabase
       .from("clients")
-      .select("full_name, date_of_birth, address_line1, address_line2, city, state, postcode")
+      .select("full_name, email, phone, date_of_birth, address_line1, address_line2, city, state, postcode")
       .eq("id", waiverData.client_id)
       .single();
 
@@ -155,10 +172,15 @@ export default function SignWaiverPage() {
           <h1 className="text-xl font-bold text-gray-900 mb-2">Waiver Signed</h1>
           <p className="text-gray-500">
             {waiver?.signed_at
-              ? `Signed on ${new Date(waiver.signed_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`
+              ? `Signed on ${new Date(waiver.signed_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })} at ${new Date(waiver.signed_at).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}`
               : "Your waiver has been recorded. Thank you!"}
           </p>
-          {org && <p className="text-sm text-gray-400 mt-4">{org.name}</p>}
+          {client && (
+            <p className="text-sm text-gray-400 mt-2">
+              Sent to: {client.phone || client.email || "—"}
+            </p>
+          )}
+          {org && <p className="text-sm text-gray-400 mt-2">{org.name}</p>}
         </div>
       </div>
     );

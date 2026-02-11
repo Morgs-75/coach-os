@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     if (from) {
       try {
         await twilioClient.messages.create({
-          body: `Hi ${client.full_name}, please sign your waiver here: ${signingUrl}`,
+          body: `Hi ${client.full_name}, can you please complete the attached waiver to ensure your next training session can proceed as scheduled. Thank you! ${signingUrl}`,
           from,
           to: client.phone,
         });
