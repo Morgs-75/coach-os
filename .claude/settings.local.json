@@ -67,7 +67,21 @@
       "Bash(xargs sed -i \"s|from ''@coach-os/shared''|from ''@/types''|g\")",
       "Bash(vercel deploy:*)",
       "Bash(for i in 1 2 3 4)",
-      "Bash(do curl -s -o /dev/null -w \"Test $i: %{time_starttransfer}s\\\\n\" https://coach-os-uve6.vercel.app/)"
+      "Bash(do curl -s -o /dev/null -w \"Test $i: %{time_starttransfer}s\\\\n\" https://coach-os-uve6.vercel.app/)",
+      "WebFetch(domain:trainer.coach-os.com)",
+      "WebFetch(domain:coach-os-uve6.vercel.app)",
+      "Bash(git restore:*)",
+      "Bash(npx next start -p 3001)",
+      "Bash(npx next start -p 3002)",
+      "Bash(npx next start -p 4000)",
+      "Bash(npx next start -p 5000)",
+      "Bash(grep:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force; Remove-Item -Recurse -Force ''C:\\\\Users\\\\Troy Morgan\\\\OneDrive\\\\coach-os\\\\apps\\\\trainer-web\\\\.next'' -ErrorAction SilentlyContinue; Write-Host ''Cleaned up''\")",
+      "Bash(claude:*)",
+      "Bash(npm view:*)",
+      "Bash(find:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

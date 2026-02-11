@@ -357,6 +357,20 @@ export default function CalendarPage() {
 
     setSaving(true);
 
+    // Check client has a signed waiver
+    const { data: signedWaivers } = await supabase
+      .from("client_waivers")
+      .select("id")
+      .eq("client_id", bookingForm.client_id)
+      .eq("status", "signed")
+      .limit(1);
+
+    if (!signedWaivers || signedWaivers.length === 0) {
+      setSaving(false);
+      alert("This client does not have a signed waiver on file. Please send a waiver from the client's Waivers tab before booking.");
+      return;
+    }
+
     const endTime = new Date(startTime.getTime() + bookingForm.duration * 60000);
     const selectedType = sessionTypes.find(st => st.id === bookingForm.session_type_id);
 

@@ -285,6 +285,20 @@ export default function PublicBookingPage() {
       clientId = newClient.id;
     }
 
+    // Check client has a signed waiver
+    const { data: signedWaivers } = await supabase
+      .from("client_waivers")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("status", "signed")
+      .limit(1);
+
+    if (!signedWaivers || signedWaivers.length === 0) {
+      setError("You must have a signed waiver on file before booking. Please contact your trainer.");
+      setBooking(false);
+      return;
+    }
+
     // Create the booking
     const { error: bookingError } = await supabase
       .from("bookings")
