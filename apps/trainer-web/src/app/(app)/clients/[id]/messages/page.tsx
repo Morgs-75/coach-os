@@ -19,6 +19,7 @@ export default function ClientMessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -85,14 +86,17 @@ export default function ClientMessagesPage() {
     if (!membership) return;
     setOrgId(membership.org_id);
 
-    // Get client name
+    // Get client name and phone
     const { data: client } = await supabase
       .from("clients")
-      .select("full_name")
+      .select("full_name, phone")
       .eq("id", clientId)
       .single();
 
-    if (client) setClientName(client.full_name);
+    if (client) {
+      setClientName(client.full_name);
+      setClientPhone(client.phone || "");
+    }
 
     // Get or create thread
     let { data: thread } = await supabase
@@ -130,12 +134,28 @@ export default function ClientMessagesPage() {
 
     const messageBody = newMessage.trim();
     setSending(true);
-    await supabase.from("messages").insert({
+    const { error: insertError } = await supabase.from("messages").insert({
       org_id: orgId,
       thread_id: threadId,
       sender_type: "trainer",
       body: messageBody,
     });
+
+    if (insertError) {
+      console.error("Message send failed:", insertError);
+      alert("Failed to send message: " + insertError.message);
+      setSending(false);
+      return;
+    }
+
+    // Send SMS to client
+    if (clientPhone) {
+      fetch("/api/send-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: clientPhone, message: messageBody, client_id: clientId }),
+      }).catch(() => {});
+    }
 
     // Send push notification to client (fire-and-forget)
     fetch("/api/messages/send-push", {
