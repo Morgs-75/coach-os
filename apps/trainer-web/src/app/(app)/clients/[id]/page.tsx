@@ -371,6 +371,37 @@ export default function ClientDetailPage() {
     setSendingOnboarding(false);
   }
 
+  async function revokeWaiver(waiverId: string) {
+    if (!confirm("Are you sure you want to revoke this waiver? The signing link will no longer work.")) return;
+
+    const { error } = await supabase
+      .from("client_waivers")
+      .update({ status: "expired" })
+      .eq("id", waiverId);
+
+    if (error) {
+      alert("Failed to revoke waiver: " + error.message);
+    } else {
+      loadClient();
+    }
+  }
+
+  async function revokeOnboarding() {
+    if (!confirm("Are you sure you want to revoke this onboarding form? The link will no longer work.")) return;
+
+    const { error } = await supabase
+      .from("clients")
+      .update({ onboarding_token: null })
+      .eq("id", clientId);
+
+    if (error) {
+      alert("Failed to revoke onboarding: " + error.message);
+    } else {
+      setOnboardingLink("");
+      loadClient();
+    }
+  }
+
   function downloadSignedWaiverPdf(waiver: any) {
     // Build the filled waiver content for PDF
     const clientAddress = [client?.address_line1, client?.address_line2, client?.city, client?.state, client?.postcode].filter(Boolean).join(", ");
@@ -1332,13 +1363,23 @@ ul { padding-left: 24px; }
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                     {client.onboarding_token ? "Pending" : "Not Sent"}
                   </span>
-                  <button
-                    onClick={sendOnboardingForm}
-                    disabled={sendingOnboarding}
-                    className="btn-primary w-full mt-3"
-                  >
-                    {sendingOnboarding ? "Sending..." : "Send Onboarding Form"}
-                  </button>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={sendOnboardingForm}
+                      disabled={sendingOnboarding}
+                      className="btn-primary flex-1"
+                    >
+                      {sendingOnboarding ? "Sending..." : "Send Onboarding Form"}
+                    </button>
+                    {client.onboarding_token && (
+                      <button
+                        onClick={revokeOnboarding}
+                        className="px-3 py-2 text-sm font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                      >
+                        Revoke
+                      </button>
+                    )}
+                  </div>
                   {onboardingLink && (
                     <div className="mt-2">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Share this link:</p>
@@ -2849,6 +2890,14 @@ ul { padding-left: 24px; }
                         className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
                       >
                         Download PDF
+                      </button>
+                    )}
+                    {(waiver.status === "sent" || waiver.status === "signed") && (
+                      <button
+                        onClick={() => revokeWaiver(waiver.id)}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                      >
+                        Revoke
                       </button>
                     )}
                   </div>
