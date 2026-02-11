@@ -205,6 +205,7 @@ export default function OnboardingPage() {
         client_id: client.id,
         name: "Onboarding Waiver",
         status: "signed",
+        source: "onboarding",
         sent_at: new Date().toISOString(),
         signed_at: new Date().toISOString(),
       });

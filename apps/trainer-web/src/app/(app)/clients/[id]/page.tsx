@@ -1363,6 +1363,11 @@ ul { padding-left: 24px; }
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                     {client.onboarding_token ? "Pending" : "Not Sent"}
                   </span>
+                  {client.onboarding_sent_at && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      Sent {formatDateTime(client.onboarding_sent_at)}
+                    </p>
+                  )}
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={sendOnboardingForm}
@@ -2872,6 +2877,11 @@ ul { padding-left: 24px; }
                       )}>
                         {waiver.status === "signed" ? "Signed" : waiver.status === "sent" ? "Sent - Unsigned" : "Expired"}
                       </span>
+                      {waiver.source === "onboarding" && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                          Sent with onboarding form
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {waiver.sent_at && <span>Sent {formatDateTime(waiver.sent_at)}</span>}

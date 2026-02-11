@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const token = crypto.randomUUID();
     const { error: updateError } = await supabase
       .from("clients")
-      .update({ onboarding_token: token })
+      .update({ onboarding_token: token, onboarding_sent_at: new Date().toISOString() })
       .eq("id", client_id);
 
     if (updateError) {
