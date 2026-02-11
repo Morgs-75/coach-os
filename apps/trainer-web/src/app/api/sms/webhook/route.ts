@@ -96,6 +96,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Save to message thread so it appears in the conversation
+    const { data: thread } = await supabase
+      .from("message_threads")
+      .select("id")
+      .eq("org_id", client.org_id)
+      .eq("client_id", client.id)
+      .single();
+
+    if (thread) {
+      await supabase.from("messages").insert({
+        org_id: client.org_id,
+        thread_id: thread.id,
+        sender_type: "client",
+        body: (formData.get("Body") as string)?.trim() || body,
+      });
+    }
+
     // Return TwiML response (empty response is fine)
     return new NextResponse(
       '<?xml version="1.0" encoding="UTF-8"?><Response></Response>',
