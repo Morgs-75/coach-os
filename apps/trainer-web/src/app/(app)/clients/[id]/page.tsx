@@ -371,6 +371,33 @@ export default function ClientDetailPage() {
     setSendingOnboarding(false);
   }
 
+  async function resendWaiver(waiverToken: string) {
+    if (!client?.phone) {
+      alert("Client has no phone number.");
+      return;
+    }
+    const signingUrl = `${window.location.origin}/sign-waiver/${waiverToken}`;
+    try {
+      const res = await fetch("/api/send-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: client.phone,
+          message: `Hi ${client.full_name}, can you please complete the attached waiver to ensure your next training session can proceed as scheduled. Thank you! ${signingUrl}`,
+          client_id: clientId,
+        }),
+      });
+      if (res.ok) {
+        alert("Waiver link resent via SMS.");
+      } else {
+        const data = await res.json();
+        alert("Failed to resend: " + (data.error || "Unknown error"));
+      }
+    } catch {
+      alert("Failed to resend waiver.");
+    }
+  }
+
   async function revokeWaiver(waiverId: string) {
     if (!confirm("Are you sure you want to revoke this waiver? The signing link will no longer work.")) return;
 
@@ -2893,7 +2920,27 @@ ul { padding-left: 24px; }
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    {waiver.status === "sent" && waiver.token && (
+                      <>
+                        <button
+                          onClick={() => resendWaiver(waiver.token)}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                        >
+                          Resend SMS
+                        </button>
+                        <button
+                          onClick={() => {
+                            const url = `${window.location.origin}/sign-waiver/${waiver.token}`;
+                            navigator.clipboard.writeText(url);
+                            alert("Waiver link copied to clipboard.");
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+                        >
+                          Copy Link
+                        </button>
+                      </>
+                    )}
                     {waiver.status === "signed" && (
                       <button
                         onClick={() => downloadSignedWaiverPdf(waiver)}
