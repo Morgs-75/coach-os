@@ -6,30 +6,11 @@ import { LedgerTable } from "@/components/my-accounts/LedgerTable";
 import { TransactionCodingModal } from "@/components/my-accounts/TransactionCodingModal";
 import Link from "next/link";
 import { clsx } from "clsx";
+import type { CashbookLedger, ChartOfAccount } from "@/types";
 
 type ViewMode = "chronological" | "by-account";
 
-interface LedgerEntry {
-  id: string;
-  transaction_date: string;
-  account_code: string;
-  account_name: string;
-  description: string;
-  amount_cents: number;
-  gst_cents: number;
-  direction: "credit" | "debit";
-  tax_treatment: string;
-  bank_account_name: string;
-  running_balance?: number;
-}
-
-interface ChartOfAccount {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  tax_treatment: string;
-}
+type LedgerEntry = CashbookLedger & { running_balance: number };
 
 interface LedgerClientProps {
   entries: LedgerEntry[];
@@ -46,27 +27,32 @@ export function LedgerClient({ entries, accounts, totalDebits, totalCredits }: L
   // Convert ledger entry to transaction format for the modal
   const entryToTransaction = (entry: LedgerEntry) => ({
     id: entry.id,
-    org_id: "mock",
+    org_id: entry.org_id || "mock",
     bank_account_id: "ba-001",
+    basiq_transaction_id: "",
     transaction_date: entry.transaction_date,
+    post_date: null,
     description: entry.description,
-    merchant_name: null,
+    merchant_name: entry.merchant_name || null,
+    merchant_category: null,
+    reference: null,
     amount_cents: entry.amount_cents,
     direction: entry.direction,
-    status: "coded" as const,
+    status: (entry.status || "coded") as "coded",
+    is_split: false,
     account_id: accounts.find(a => a.code === entry.account_code)?.id || null,
     account: accounts.find(a => a.code === entry.account_code) || null,
-    tax_treatment: entry.tax_treatment as "gst" | "gst_free" | "bas_excluded",
+    tax_treatment: "gst" as const,
     gst_cents: entry.gst_cents,
-    notes: null,
+    notes: entry.notes || null,
     coded_at: new Date().toISOString(),
     coded_by: null,
     ai_suggested_account_id: null,
     ai_suggested_account: null,
     ai_confidence: null,
     ai_reasoning: null,
-    matched_money_event_id: null,
-    match_type: null,
+    matched_money_event_id: entry.matched_money_event_id || null,
+    match_type: entry.match_type || null,
     bank_account: { id: "ba-001", account_name: entry.bank_account_name, institution_name: "Bank" },
     splits: undefined,
     created_at: new Date().toISOString(),
@@ -87,7 +73,7 @@ export function LedgerClient({ entries, accounts, totalDebits, totalCredits }: L
               ...entry,
               account_code: updatedAccount.code,
               account_name: updatedAccount.name,
-              tax_treatment: taxTreatment || entry.tax_treatment,
+              tax_treatment: taxTreatment || "gst",
               gst_cents: taxTreatment === "gst" ? Math.round(entry.amount_cents / 11) : 0,
             }
           : entry
@@ -288,8 +274,8 @@ export function LedgerClient({ entries, accounts, totalDebits, totalCredits }: L
       {/* Edit Transaction Modal */}
       {editingEntry && (
         <TransactionCodingModal
-          transaction={entryToTransaction(editingEntry)}
-          accounts={accounts}
+          transaction={entryToTransaction(editingEntry) as any}
+          accounts={accounts as any}
           onSave={handleSaveTransaction}
           onClose={() => setEditingEntry(null)}
         />

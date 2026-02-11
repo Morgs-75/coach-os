@@ -167,10 +167,10 @@ export default async function LedgerPage({
       mockData = mockData.filter(e => e.account_code === awaitedParams.account);
     }
     if (awaitedParams.start) {
-      mockData = mockData.filter(e => e.transaction_date >= awaitedParams.start);
+      mockData = mockData.filter(e => e.transaction_date >= awaitedParams.start!);
     }
     if (awaitedParams.end) {
-      mockData = mockData.filter(e => e.transaction_date <= awaitedParams.end);
+      mockData = mockData.filter(e => e.transaction_date <= awaitedParams.end!);
     }
     finalLedgerData = mockData;
   }
