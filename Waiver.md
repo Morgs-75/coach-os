@@ -166,23 +166,6 @@ This Waiver is governed by the laws of **Australia**, with exclusive jurisdictio
 
 ---
 
-## 16. Acknowledgment & Signature  
+## 16. Acknowledgment & Signature
 
 I confirm that I have read and understood this Waiver and sign it freely and voluntarily.
-
-**Participant Name:** __________________________  
-**Signature:** ________________________________  
-**Date:** _______________________
-
-**Trainer Name:** _____________________________  
-**Signature:** ________________________________  
-**Date:** _______________________
-
----
-
-### For Minors Only  
-
-**Parent / Guardian Name:** ___________________  
-**Signature:** ________________________________  
-**Date:** _______________________
-``

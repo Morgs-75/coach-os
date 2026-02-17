@@ -22,6 +22,11 @@ export default function SettingsPage() {
   const [savingWaiver, setSavingWaiver] = useState(false);
   const [waiverMessage, setWaiverMessage] = useState("");
 
+  // Proforma disclaimer
+  const [proformaDisclaimer, setProformaDisclaimer] = useState("");
+  const [savingProforma, setSavingProforma] = useState(false);
+  const [proformaMessage, setProformaMessage] = useState("");
+
   // Earnings
   const [earnings, setEarnings] = useState<any>(null);
   const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
@@ -52,7 +57,7 @@ export default function SettingsPage() {
     // Load org
     const { data: org } = await supabase
       .from("orgs")
-      .select("name, commission_rate, waiver_template")
+      .select("name, commission_rate, waiver_template, proforma_disclaimer")
       .eq("id", membership.org_id)
       .single();
 
@@ -88,6 +93,7 @@ export default function SettingsPage() {
     if (org) {
       setOrgName(org.name);
       setWaiverTemplate(org.waiver_template || "");
+      setProformaDisclaimer(org.proforma_disclaimer || "");
     }
     if (branding) {
       setDisplayName(branding.display_name);
@@ -205,6 +211,34 @@ export default function SettingsPage() {
       setWaiverMessage("Waiver template saved!");
     }
     setSavingWaiver(false);
+  }
+
+  async function handleSaveProforma() {
+    setSavingProforma(true);
+    setProformaMessage("");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSavingProforma(false); return; }
+
+    const { data: membership } = await supabase
+      .from("org_members")
+      .select("org_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!membership) { setSavingProforma(false); return; }
+
+    const { error } = await supabase
+      .from("orgs")
+      .update({ proforma_disclaimer: proformaDisclaimer })
+      .eq("id", membership.org_id);
+
+    if (error) {
+      setProformaMessage("Failed to save proforma disclaimer");
+    } else {
+      setProformaMessage("Proforma disclaimer saved!");
+    }
+    setSavingProforma(false);
   }
 
   if (loading) {
@@ -346,6 +380,31 @@ export default function SettingsPage() {
           {waiverMessage && (
             <span className={waiverMessage.includes("Failed") ? "text-red-600" : "text-green-600"}>
               {waiverMessage}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Proforma Disclaimer */}
+      <div className="card p-6 mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Proforma Disclaimer</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          This disclaimer will appear on proforma invoices sent to clients. Use this to include payment terms, refund policies, or other important legal notices.
+        </p>
+        <textarea
+          value={proformaDisclaimer}
+          onChange={(e) => setProformaDisclaimer(e.target.value)}
+          className="input font-mono text-sm"
+          rows={10}
+          placeholder="Enter your proforma disclaimer here..."
+        />
+        <div className="flex items-center gap-4 mt-4">
+          <button onClick={handleSaveProforma} className="btn-primary" disabled={savingProforma}>
+            {savingProforma ? "Saving..." : "Save Proforma Disclaimer"}
+          </button>
+          {proformaMessage && (
+            <span className={proformaMessage.includes("Failed") ? "text-red-600" : "text-green-600"}>
+              {proformaMessage}
             </span>
           )}
         </div>
