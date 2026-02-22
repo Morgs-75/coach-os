@@ -16,41 +16,44 @@ serve(async (req) => {
   try {
     let remindersCreated = 0;
     let feedbackRequestsCreated = 0;
+    const now = new Date();
 
     // ========================================
-    // 1. SESSION REMINDERS (for upcoming bookings)
+    // 1. SESSION REMINDERS (24h before)
     // ========================================
 
-    // Get bookings in the next 48 hours that need reminders
-    const twoDaysFromNow = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-    const now = new Date().toISOString();
+    const twoDaysFromNow = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
 
     const { data: upcomingBookings, error: bookingsError } = await supabase
       .from("bookings")
       .select(`
-        *,
+        id, org_id, client_id, start_time, location_details,
         clients(id, full_name, phone),
-        orgs(id, name),
-        sms_settings(
-          enabled,
-          send_session_reminders,
-          reminder_hours_before,
-          timezone
-        )
+        orgs(id, name)
       `)
       .eq("status", "confirmed")
-      .gte("start_time", now)
+      .gte("start_time", now.toISOString())
       .lte("start_time", twoDaysFromNow)
-      .is("reminder_sent", false) // Assumes you have this column on bookings table
+      .eq("reminder_24h_sent", false)
       .order("start_time", { ascending: true });
 
     if (bookingsError) {
-      console.error("Error fetching bookings:", bookingsError);
-    } else if (upcomingBookings) {
-      for (const booking of upcomingBookings) {
+      console.error("Error fetching upcoming bookings:", bookingsError);
+    } else if (upcomingBookings && upcomingBookings.length > 0) {
+      // Batch fetch sms_settings for all orgs in one query (avoids N+1)
+      const orgIds = [...new Set(upcomingBookings.map((b: any) => b.org_id))];
+      const { data: settingsRows } = await supabase
+        .from("sms_settings")
+        .select("*")
+        .in("org_id", orgIds);
+
+      const settingsMap = new Map((settingsRows || []).map((s: any) => [s.org_id, s]));
+
+      for (const booking of upcomingBookings as any[]) {
         try {
-          // Check if SMS is enabled and reminders are turned on
-          if (!booking.sms_settings?.enabled || !booking.sms_settings?.send_session_reminders) {
+          const settings = settingsMap.get(booking.org_id);
+
+          if (!settings?.enabled || !settings?.send_session_reminders) {
             continue;
           }
 
@@ -59,24 +62,20 @@ serve(async (req) => {
             continue;
           }
 
-          // Calculate reminder time (default 24 hours before)
-          const hoursBeforeBooking = booking.sms_settings.reminder_hours_before || 24;
+          const hoursBeforeBooking = settings.reminder_hours_before || 24;
           const reminderTime = new Date(
             new Date(booking.start_time).getTime() - hoursBeforeBooking * 60 * 60 * 1000
           );
 
-          // Only schedule if reminder time is in the future
-          if (reminderTime < new Date()) {
-            console.log(`Skipping booking ${booking.id}: reminder time already passed`);
-            // Still mark as sent to avoid repeated checks
+          // If reminder time has already passed, mark and skip
+          if (reminderTime < now) {
             await supabase
               .from("bookings")
-              .update({ reminder_sent: true })
+              .update({ reminder_24h_sent: true })
               .eq("id", booking.id);
             continue;
           }
 
-          // Format session datetime
           const sessionDate = new Date(booking.start_time);
           const dateStr = sessionDate.toLocaleDateString("en-AU", {
             weekday: "short",
@@ -89,8 +88,7 @@ serve(async (req) => {
             hour12: true,
           });
 
-          // Enqueue reminder SMS
-          const messageId = await supabase.rpc("insert_sms_from_service", {
+          const { data: messageId, error: rpcError } = await supabase.rpc("insert_sms_from_service", {
             p_org_id: booking.org_id,
             p_client_id: booking.client_id,
             p_template_key: "session_reminder",
@@ -103,120 +101,121 @@ serve(async (req) => {
             p_scheduled_for: reminderTime.toISOString(),
             p_related_entity_type: "booking",
             p_related_entity_id: booking.id,
-            p_idempotency_key: `reminder-${booking.id}`,
+            p_idempotency_key: `reminder-24h-${booking.id}`,
           });
 
-          if (messageId.data) {
-            // Mark reminder as sent
+          if (rpcError) {
+            console.error(`RPC error for booking ${booking.id}:`, rpcError.message);
+            continue;
+          }
+
+          if (messageId) {
             await supabase
               .from("bookings")
-              .update({ reminder_sent: true })
+              .update({ reminder_24h_sent: true })
               .eq("id", booking.id);
 
             remindersCreated++;
-            console.log(`Created reminder for booking ${booking.id} (message ${messageId.data})`);
+            console.log(`Created 24h reminder for booking ${booking.id}`);
           }
-        } catch (bookingErr) {
-          console.error(`Failed to create reminder for booking ${booking.id}:`, bookingErr);
+        } catch (err) {
+          console.error(`Failed to create reminder for booking ${booking.id}:`, err);
         }
       }
     }
 
     // ========================================
-    // 2. FEEDBACK REQUESTS (for completed sessions)
+    // 2. FEEDBACK REQUESTS (after completed sessions)
     // ========================================
 
-    // Get bookings completed in the last 6 hours that need feedback requests
-    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString();
 
     const { data: completedBookings, error: completedError } = await supabase
       .from("bookings")
       .select(`
-        *,
+        id, org_id, client_id, end_time,
         clients(id, full_name, phone),
-        orgs(id, name),
-        sms_settings(
-          enabled,
-          send_feedback_requests,
-          feedback_hours_after,
-          timezone
-        )
+        orgs(id, name)
       `)
       .eq("status", "completed")
       .gte("end_time", sixHoursAgo)
-      .lte("end_time", now)
-      .is("feedback_sent", false) // Assumes you have this column on bookings table
+      .lte("end_time", now.toISOString())
+      .eq("feedback_sent", false)
       .order("end_time", { ascending: true });
 
     if (completedError) {
       console.error("Error fetching completed bookings:", completedError);
-    } else if (completedBookings) {
-      for (const booking of completedBookings) {
+    } else if (completedBookings && completedBookings.length > 0) {
+      const orgIds = [...new Set(completedBookings.map((b: any) => b.org_id))];
+      const { data: settingsRows } = await supabase
+        .from("sms_settings")
+        .select("*")
+        .in("org_id", orgIds);
+
+      const settingsMap = new Map((settingsRows || []).map((s: any) => [s.org_id, s]));
+
+      for (const booking of completedBookings as any[]) {
         try {
-          // Check if SMS is enabled and feedback requests are turned on
-          if (!booking.sms_settings?.enabled || !booking.sms_settings?.send_feedback_requests) {
+          const settings = settingsMap.get(booking.org_id);
+
+          if (!settings?.enabled || !settings?.send_feedback_requests) {
             continue;
           }
 
           if (!booking.clients?.phone) {
-            console.log(`Skipping booking ${booking.id}: client has no phone`);
             continue;
           }
 
-          // Calculate feedback request time (default 2 hours after)
-          const hoursAfterBooking = booking.sms_settings.feedback_hours_after || 2;
+          const hoursAfterBooking = settings.feedback_hours_after || 2;
           const feedbackTime = new Date(
             new Date(booking.end_time).getTime() + hoursAfterBooking * 60 * 60 * 1000
           );
 
-          // Check if it's time to send (should be past the scheduled time)
-          if (feedbackTime > new Date()) {
-            console.log(`Skipping booking ${booking.id}: feedback time not yet reached`);
+          // Not yet time to send
+          if (feedbackTime > now) {
             continue;
           }
 
-          // Enqueue feedback request SMS
-          const messageId = await supabase.rpc("insert_sms_from_service", {
+          const webappUrl = Deno.env.get("WEBAPP_URL") || "https://coachOS.netlify.app";
+
+          const { data: messageId, error: rpcError } = await supabase.rpc("insert_sms_from_service", {
             p_org_id: booking.org_id,
             p_client_id: booking.client_id,
             p_template_key: "feedback_request",
             p_variables: {
               client_name: booking.clients.full_name.split(" ")[0],
               coach_name: booking.orgs.name,
-              feedback_link: `${Deno.env.get("WEBAPP_URL") || "https://yourapp.com"}/feedback/${booking.id}`,
+              feedback_link: `${webappUrl}/feedback/${booking.id}`,
             },
-            p_scheduled_for: new Date().toISOString(), // Send immediately
+            p_scheduled_for: now.toISOString(),
             p_related_entity_type: "booking",
             p_related_entity_id: booking.id,
             p_idempotency_key: `feedback-${booking.id}`,
           });
 
-          if (messageId.data) {
-            // Mark feedback as sent
+          if (rpcError) {
+            console.error(`RPC error for booking ${booking.id}:`, rpcError.message);
+            continue;
+          }
+
+          if (messageId) {
             await supabase
               .from("bookings")
               .update({ feedback_sent: true })
               .eq("id", booking.id);
 
             feedbackRequestsCreated++;
-            console.log(`Created feedback request for booking ${booking.id} (message ${messageId.data})`);
+            console.log(`Created feedback request for booking ${booking.id}`);
           }
-        } catch (bookingErr) {
-          console.error(`Failed to create feedback request for booking ${booking.id}:`, bookingErr);
+        } catch (err) {
+          console.error(`Failed to create feedback request for booking ${booking.id}:`, err);
         }
       }
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        remindersCreated,
-        feedbackRequestsCreated,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: true, remindersCreated, feedbackRequestsCreated }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("Cron SMS reminders error:", err);
