@@ -65,11 +65,13 @@ export async function POST(request: Request) {
         weekday: "long",
         day: "numeric",
         month: "long",
+        timeZone: "Australia/Sydney",
       });
       const timeStr = new Date(booking.start_time).toLocaleTimeString("en-AU", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
+        timeZone: "Australia/Sydney",
       });
 
       return twiml(`Confirmed! See you ${dateStr} at ${timeStr}.`);
