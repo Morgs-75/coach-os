@@ -486,6 +486,8 @@ export default function CalendarPage() {
     const endTime = new Date(startTime.getTime() + bookingForm.duration * 60000);
     const selectedType = sessionTypes.find(st => st.id === bookingForm.session_type_id);
 
+    const isRescheduled = new Date(editingBooking.start_time).toISOString() !== startTime.toISOString();
+
     const { error } = await supabase
       .from("bookings")
       .update({
@@ -495,6 +497,7 @@ export default function CalendarPage() {
         duration_mins: bookingForm.duration,
         session_type: selectedType?.slug || editingBooking.session_type,
         notes: bookingForm.notes || null,
+        ...(isRescheduled ? { client_confirmed: false, confirmation_sent_at: new Date().toISOString() } : {}),
       })
       .eq("id", editingBooking.id);
 
@@ -504,6 +507,29 @@ export default function CalendarPage() {
       console.error("Update error:", error);
       alert("Error updating booking: " + (error.message || JSON.stringify(error)));
       return;
+    }
+
+    // Send SMS if rescheduled
+    if (isRescheduled) {
+      try {
+        const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
+        const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
+        const firstName = editingBooking.client_name?.split(" ")[0] || "there";
+        const message = `Hi ${firstName}, your session has been rescheduled to ${dateStr} at ${timeStr}. Reply Y to confirm.`;
+
+        await fetch("/api/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            client_id: bookingForm.client_id,
+            booking_id: editingBooking.id,
+            message,
+            request_confirmation: true,
+          }),
+        });
+      } catch (err) {
+        console.error("SMS reschedule error:", err);
+      }
     }
 
     setShowBookingModal(false);
