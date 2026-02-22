@@ -1136,7 +1136,7 @@ export default function CalendarPage() {
                           setBookingForm({
                             ...bookingForm,
                             smsType: "custom",
-                            customSmsMessage: bookingForm.customSmsMessage || defaultMsg
+                            customSmsMessage: defaultMsg
                           });
                         }}
                         className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
