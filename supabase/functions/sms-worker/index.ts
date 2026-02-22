@@ -28,12 +28,11 @@ serve(async (req) => {
 
     const { data: messages, error: dequeueError } = await supabase
       .from("sms_messages")
-      .select("*, sms_settings!inner(*)") // Join settings
+      .select("*")
       .eq("status", "queued")
       .lte("scheduled_for", now)
       .or(`locked_until.is.null,locked_until.lt.${now}`)
-      .limit(BATCH_SIZE)
-      .for("update", { skipLocked: true });
+      .limit(BATCH_SIZE);
 
     if (dequeueError) throw dequeueError;
     if (!messages || messages.length === 0) {
@@ -41,15 +40,24 @@ serve(async (req) => {
     }
 
     // Lock messages
-    const messageIds = messages.map((m) => m.id);
+    const messageIds = messages.map((m: any) => m.id);
     await supabase
       .from("sms_messages")
       .update({ status: "sending", locked_until: lockUntil })
       .in("id", messageIds);
 
+    // Batch fetch sms_settings for all orgs in this batch
+    const orgIds = [...new Set(messages.map((m: any) => m.org_id))];
+    const { data: settingsRows } = await supabase
+      .from("sms_settings")
+      .select("*")
+      .in("org_id", orgIds);
+    const settingsMap = new Map((settingsRows || []).map((s: any) => [s.org_id, s]));
+
     let processed = 0;
     for (const message of messages) {
-      await processSmsMessage(supabase, message);
+      const settings = settingsMap.get(message.org_id);
+      await processSmsMessage(supabase, { ...message, sms_settings: settings });
       processed++;
     }
 
