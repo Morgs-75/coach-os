@@ -133,6 +133,26 @@ export default function CalendarPage() {
     loadData();
   }, [currentDate]);
 
+  // Realtime: update booking confirmation status live
+  useEffect(() => {
+    if (!orgId) return;
+
+    const channel = supabase
+      .channel("booking-confirmations")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bookings", filter: `org_id=eq.${orgId}` },
+        (payload) => {
+          setBookings((prev) =>
+            prev.map((b) => b.id === payload.new.id ? { ...b, ...payload.new, client_name: b.client_name } : b)
+          );
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [orgId]);
+
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
