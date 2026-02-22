@@ -540,17 +540,17 @@ export default function CalendarPage() {
     }
   }
 
-  async function handleDeleteBooking() {
+  async function handleCancelBooking() {
     if (!editingBooking) return;
-    if (!confirm("Delete this booking?")) return;
+    if (!confirm("Cancel this booking?")) return;
 
     const { error } = await supabase
       .from("bookings")
-      .delete()
+      .update({ status: "cancelled" })
       .eq("id", editingBooking.id);
 
     if (error) {
-      alert("Error deleting booking: " + (error.message || JSON.stringify(error)));
+      alert("Error cancelling booking: " + (error.message || JSON.stringify(error)));
       return;
     }
 
@@ -1183,10 +1183,10 @@ export default function CalendarPage() {
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
               {editingBooking ? (
                 <button
-                  onClick={handleDeleteBooking}
+                  onClick={handleCancelBooking}
                   className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                 >
-                  Delete
+                  Cancel Booking
                 </button>
               ) : (
                 <div></div>
