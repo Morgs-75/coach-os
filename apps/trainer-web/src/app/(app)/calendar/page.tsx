@@ -17,7 +17,7 @@ type Booking = {
   notes?: string;
   client_confirmed?: boolean;
   confirmation_sent_at?: string;
-  client_purchase_id?: string;
+  purchase_id?: string;
 };
 
 type BlockedTime = {
@@ -211,7 +211,7 @@ export default function CalendarPage() {
       const pastBookings = bookingsRes.data.filter((b: any) =>
         new Date(b.end_time) < now &&
         b.status === "confirmed" &&
-        b.client_purchase_id
+        b.purchase_id
       );
 
       for (const booking of pastBookings) {
@@ -225,14 +225,14 @@ export default function CalendarPage() {
         const { data: purchase } = await supabase
           .from("client_purchases")
           .select("sessions_used")
-          .eq("id", booking.client_purchase_id)
+          .eq("id", booking.purchase_id)
           .single();
 
         if (purchase) {
           await supabase
             .from("client_purchases")
             .update({ sessions_used: purchase.sessions_used + 1 })
-            .eq("id", booking.client_purchase_id);
+            .eq("id", booking.purchase_id);
         }
       }
     }
@@ -411,10 +411,9 @@ export default function CalendarPage() {
       notes: bookingForm.notes || null,
     };
 
-    // TODO: Link to purchase_id once column exists on bookings table
-    // if (bookingForm.client_purchase_id) {
-    //   insertData.purchase_id = bookingForm.client_purchase_id;
-    // }
+    if (bookingForm.client_purchase_id) {
+      insertData.purchase_id = bookingForm.client_purchase_id;
+    }
 
     console.log("Inserting booking:", JSON.stringify(insertData, null, 2));
 
@@ -449,7 +448,8 @@ export default function CalendarPage() {
         } else {
           const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
           const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
-          message = `Hi ${client.full_name.split(" ")[0]}, your session is confirmed for ${dateStr} at ${timeStr}.${requestConfirm ? " Reply Y to confirm." : ""} See you then!`;
+          const calendarLink = `https://coach-os.netlify.app/api/calendar/${newBooking.id}`;
+          message = `Hi ${client.full_name.split(" ")[0]}, your session is confirmed for ${dateStr} at ${timeStr}.${requestConfirm ? " Reply Y to confirm." : ""} Add to calendar: ${calendarLink} See you then!`;
         }
 
         try {
@@ -503,7 +503,7 @@ export default function CalendarPage() {
       smsType: "standard",
       customSmsMessage: "",
       requestConfirmation: true,
-      client_purchase_id: (booking as any).client_purchase_id || "",
+      client_purchase_id: (booking as any).purchase_id || "",
     });
     setShowBookingModal(true);
   }
@@ -548,7 +548,8 @@ export default function CalendarPage() {
         const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
         const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
         const firstName = editingBooking.client_name?.split(" ")[0] || "there";
-        const message = `Hi ${firstName}, your session has been rescheduled to ${dateStr} at ${timeStr}. Reply Y to confirm.`;
+        const calendarLink = `https://coach-os.netlify.app/api/calendar/${editingBooking.id}`;
+        const message = `Hi ${firstName}, your session has been rescheduled to ${dateStr} at ${timeStr}. Reply Y to confirm. Add to calendar: ${calendarLink}`;
 
         const smsRes = await fetch("/api/send-sms", {
           method: "POST",

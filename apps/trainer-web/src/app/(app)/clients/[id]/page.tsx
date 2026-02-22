@@ -940,7 +940,7 @@ ul { padding-left: 24px; }
       expiresAt = expiry.toISOString();
     }
 
-    const totalSessions = (offer.sessions_included || 0) + (offer.bonus_sessions || 0);
+    const totalSessions = offer.offer_type === 'single_session' ? 1 : (offer.sessions_included || 0) + (offer.bonus_sessions || 0);
 
     const discountCents = calculateDiscount(offer.price_cents);
     const finalPrice = offer.price_cents - discountCents;
@@ -1062,7 +1062,7 @@ ul { padding-left: 24px; }
       expiresAt = expiry.toISOString();
     }
 
-    const totalSessions = (offer.sessions_included || 0) + (offer.bonus_sessions || 0);
+    const totalSessions = offer.offer_type === 'single_session' ? 1 : (offer.sessions_included || 0) + (offer.bonus_sessions || 0);
 
     const paymentLabels: Record<string, string> = {
       cash: "Cash",
