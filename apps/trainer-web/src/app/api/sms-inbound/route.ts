@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         .eq("status", "confirmed")
         .eq("client_confirmed", false)
         .not("confirmation_sent_at", "is", null)
-        .gte("start_time", new Date().toISOString())
+        .gte("start_time", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order("start_time", { ascending: true })
         .limit(1)
         .maybeSingle();
