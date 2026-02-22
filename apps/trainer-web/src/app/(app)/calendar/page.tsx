@@ -946,19 +946,21 @@ export default function CalendarPage() {
                       )}
                       {/* Confirmation status indicator */}
                       {booking.confirmation_sent_at && (
-                        <div className={`absolute bottom-1 left-1.5 flex items-center gap-1 text-[9px] font-medium ${
-                          booking.client_confirmed ? "text-white" : "text-white/70"
+                        <div className={`absolute bottom-1 left-1 right-1 flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                          booking.client_confirmed
+                            ? "bg-green-500/90 text-white"
+                            : "bg-white/20 text-white"
                         }`}>
                           {booking.client_confirmed ? (
                             <>
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                               </svg>
                               Confirmed
                             </>
                           ) : (
                             <>
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               Awaiting
