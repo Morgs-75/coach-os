@@ -82,6 +82,35 @@ export async function POST(request: Request) {
         timeZone: timezone,
       });
 
+      // Check for additional unconfirmed bookings
+      const { data: nextBooking } = await supabase
+        .from("bookings")
+        .select("id, start_time")
+        .eq("client_id", client.id)
+        .eq("status", "confirmed")
+        .eq("client_confirmed", false)
+        .not("confirmation_sent_at", "is", null)
+        .gte("start_time", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .order("start_time", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (nextBooking) {
+        const nextDateStr = new Date(nextBooking.start_time).toLocaleDateString("en-AU", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          timeZone: timezone,
+        });
+        const nextTimeStr = new Date(nextBooking.start_time).toLocaleTimeString("en-AU", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: timezone,
+        });
+        return twiml(`Confirmed! See you ${dateStr} at ${timeStr}. You also have a session on ${nextDateStr} at ${nextTimeStr}. Reply Y to confirm that one too.`);
+      }
+
       return twiml(`Confirmed! See you ${dateStr} at ${timeStr}.`);
     }
 

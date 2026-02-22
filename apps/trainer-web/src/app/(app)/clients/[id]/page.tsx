@@ -65,6 +65,7 @@ export default function ClientDetailPage() {
   const [activities, setActivities] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [purchasePayments, setPurchasePayments] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [measurementTypes, setMeasurementTypes] = useState<any[]>([]);
   const [offers, setOffers] = useState<any[]>([]);
@@ -207,6 +208,17 @@ export default function ClientDetailPage() {
       .limit(50);
 
     if (paymentData) setPayments(paymentData);
+
+    // Get cash/card/bank payments recorded manually (not Stripe)
+    const { data: purchasePaymentData } = await supabase
+      .from("client_purchases")
+      .select("id, amount_paid_cents, currency, payment_status, payment_method, created_at, offers(name)")
+      .eq("client_id", clientId)
+      .not("payment_method", "is", null)
+      .neq("payment_method", "stripe")
+      .order("created_at", { ascending: false });
+
+    if (purchasePaymentData) setPurchasePayments(purchasePaymentData);
 
     // Get measurements
     const { data: measurementData } = await supabase
@@ -1127,8 +1139,28 @@ ul { padding-left: 24px; }
 
   // Payment stats
   const failedPayments = payments.filter((p) => p.payment_status === "failed" || p.type === "FAILED");
-  const successfulPayments = payments.filter((p) => p.type === "INCOME" && p.payment_status !== "failed");
-  const totalPaid = successfulPayments.reduce((sum, p) => sum + (p.amount_cents || 0), 0);
+  const successfulStripePayments = payments.filter((p) => p.type === "INCOME" && p.payment_status !== "failed");
+  const successfulPurchasePayments = purchasePayments.filter((p) => p.payment_status === "succeeded");
+  const successfulPayments = [...successfulStripePayments, ...successfulPurchasePayments];
+  const totalPaid = successfulStripePayments.reduce((sum: number, p: any) => sum + (p.amount_cents || 0), 0)
+    + successfulPurchasePayments.reduce((sum: number, p: any) => sum + (p.amount_paid_cents || 0), 0);
+
+  const methodLabel = (method: string | null) => {
+    switch (method) {
+      case "cash": return "Cash";
+      case "card": return "Card";
+      case "bank_transfer": return "Bank Transfer";
+      default: return method || "Unknown";
+    }
+  };
+  const methodColor = (method: string | null) => {
+    switch (method) {
+      case "cash": return "bg-green-100 text-green-700";
+      case "card": return "bg-blue-100 text-blue-700";
+      case "bank_transfer": return "bg-purple-100 text-purple-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
 
   // Group measurements by type for display
   const measurementsByType = measurements.reduce((acc, m) => {
@@ -1509,44 +1541,77 @@ ul { padding-left: 24px; }
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">Payment History</h3>
             </div>
-            <div className="divide-y divide-gray-200">
-              {payments.length > 0 ? (
-                payments.map((payment) => {
-                  const isFailed = payment.payment_status === "failed" || payment.type === "FAILED";
-                  const isRefund = payment.type === "REFUND";
-                  return (
-                    <div key={payment.id} className="px-6 py-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {isRefund ? "Refund" : "Payment"}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatDateTime(payment.event_date)}</p>
-                        {payment.stripe_invoice_id && (
-                          <p className="text-xs text-gray-400">Invoice: {payment.stripe_invoice_id}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className={clsx(
-                          "font-medium",
-                          isFailed ? "text-red-600" : isRefund ? "text-orange-600" : "text-green-600"
-                        )}>
-                          {isRefund ? "-" : ""}${(payment.amount_cents / 100).toFixed(2)}
-                        </p>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {(() => {
+                const stripeEntries = payments.map((p: any) => ({
+                  key: p.id,
+                  date: p.event_date,
+                  description: p.type === "REFUND" ? "Refund" : "Stripe Payment",
+                  amount: p.type === "REFUND" ? -(p.amount_cents || 0) : (p.amount_cents || 0),
+                  currency: p.currency,
+                  status: p.payment_status === "failed" || p.type === "FAILED" ? "failed"
+                    : p.type === "REFUND" ? "refunded" : "succeeded",
+                  method: "stripe",
+                  note: p.stripe_invoice_id ? `Invoice: ${p.stripe_invoice_id}` : null,
+                }));
+                const manualEntries = purchasePayments.map((p: any) => ({
+                  key: `purchase-${p.id}`,
+                  date: p.created_at,
+                  description: (p.offers as any)?.name || "Package",
+                  amount: p.amount_paid_cents || 0,
+                  currency: p.currency || "aud",
+                  status: p.payment_status === "succeeded" ? "succeeded"
+                    : p.payment_status === "failed" ? "failed" : "pending",
+                  method: p.payment_method,
+                  note: null,
+                }));
+                const all = [...stripeEntries, ...manualEntries]
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                if (all.length === 0) {
+                  return <p className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No payment history</p>;
+                }
+                return all.map((entry) => (
+                  <div key={entry.key} className="px-6 py-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{entry.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{formatDateTime(entry.date)}</p>
+                      {entry.note && <p className="text-xs text-gray-400">{entry.note}</p>}
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <p className={clsx(
+                        "font-medium",
+                        entry.status === "failed" ? "text-red-600"
+                          : entry.status === "refunded" ? "text-orange-600"
+                          : "text-green-600"
+                      )}>
+                        {entry.amount < 0 ? "-" : ""}${(Math.abs(entry.amount) / 100).toFixed(2)}
+                      </p>
+                      <div className="flex gap-1">
                         <span className={clsx(
-                          "inline-block px-2 py-0.5 rounded text-xs font-medium mt-1",
-                          isFailed ? "bg-red-100 text-red-700" :
-                          isRefund ? "bg-orange-100 text-orange-700" :
-                          "bg-green-100 text-green-700"
+                          "inline-block px-2 py-0.5 rounded text-xs font-medium",
+                          entry.method === "stripe" ? "bg-indigo-100 text-indigo-700"
+                            : methodColor(entry.method)
                         )}>
-                          {isFailed ? "Failed" : isRefund ? "Refunded" : "Succeeded"}
+                          {entry.method === "stripe" ? "Stripe" : methodLabel(entry.method)}
+                        </span>
+                        <span className={clsx(
+                          "inline-block px-2 py-0.5 rounded text-xs font-medium",
+                          entry.status === "failed" ? "bg-red-100 text-red-700"
+                            : entry.status === "refunded" ? "bg-orange-100 text-orange-700"
+                            : entry.status === "pending" ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                        )}>
+                          {entry.status === "failed" ? "Failed"
+                            : entry.status === "refunded" ? "Refunded"
+                            : entry.status === "pending" ? "Pending"
+                            : "Succeeded"}
                         </span>
                       </div>
                     </div>
-                  );
-                })
-              ) : (
-                <p className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No payment history</p>
-              )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
