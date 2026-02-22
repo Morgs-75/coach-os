@@ -133,27 +133,28 @@ export default function CalendarPage() {
     loadData();
   }, [currentDate]);
 
-  // Realtime: update booking confirmation status live
+  // Poll every 15 seconds for confirmation updates
   useEffect(() => {
     if (!orgId) return;
-
-    const channel = supabase
-      .channel(`booking-confirmations-${orgId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "bookings" },
-        (payload: any) => {
-          console.log("Realtime booking update:", payload);
-          if (payload.new.org_id !== orgId) return;
-          setBookings((prev) =>
-            prev.map((b) => b.id === payload.new.id ? { ...b, ...payload.new, client_name: b.client_name } : b)
-          );
-        }
-      )
-      .subscribe((status) => console.log("Realtime status:", status));
-
-    return () => { supabase.removeChannel(channel); };
-  }, [orgId]);
+    const interval = setInterval(async () => {
+      const rangeStart = new Date(weekStart);
+      const rangeEnd = new Date(weekStart);
+      rangeEnd.setDate(rangeEnd.getDate() + 7);
+      const { data } = await supabase
+        .from("bookings")
+        .select("id, client_confirmed, confirmation_sent_at, status")
+        .eq("org_id", orgId)
+        .gte("start_time", rangeStart.toISOString())
+        .lt("start_time", rangeEnd.toISOString());
+      if (data) {
+        setBookings((prev) => prev.map((b) => {
+          const updated = data.find((d: any) => d.id === b.id);
+          return updated ? { ...b, ...updated } : b;
+        }));
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [orgId, weekStart]);
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
