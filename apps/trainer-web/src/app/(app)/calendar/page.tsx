@@ -143,13 +143,14 @@ export default function CalendarPage() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "bookings" },
         (payload: any) => {
+          console.log("Realtime booking update:", payload);
           if (payload.new.org_id !== orgId) return;
           setBookings((prev) =>
             prev.map((b) => b.id === payload.new.id ? { ...b, ...payload.new, client_name: b.client_name } : b)
           );
         }
       )
-      .subscribe();
+      .subscribe((status) => console.log("Realtime status:", status));
 
     return () => { supabase.removeChannel(channel); };
   }, [orgId]);
