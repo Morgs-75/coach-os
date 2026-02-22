@@ -441,28 +441,9 @@ export default function CalendarPage() {
             }),
           });
 
-          // Update booking to mark that reminder was sent
-          if (requestConfirm) {
-            await supabase
-              .from("bookings")
-              .update({ reminder_sent: true })
-              .eq("id", newBooking.id);
-          }
         } catch (err) {
-          // SMS service not configured yet - just log it
-          console.log("SMS confirmation:", message);
+          console.error("SMS confirmation error:", err);
         }
-
-        // Log SMS to communications
-        await supabase.from("client_communications").insert({
-          org_id: orgId,
-          client_id: bookingForm.client_id,
-          user_id: userId,
-          type: "sms",
-          direction: "outbound",
-          subject: "Booking Confirmation",
-          content: message,
-        });
       }
     }
 
@@ -549,27 +530,12 @@ export default function CalendarPage() {
           }),
         });
 
-        if (response.ok) {
-          alert("SMS confirmation sent!");
-        } else {
-          alert("SMS not configured. Message:\n\n" + message);
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          console.error("SMS send failed:", err);
         }
       } catch (err) {
-        // API route doesn't exist yet - show the message
-        alert("SMS service not configured yet.\n\nMessage preview:\n" + message);
-      }
-
-      // Log SMS to communications
-      if (orgId && userId) {
-        await supabase.from("client_communications").insert({
-          org_id: orgId,
-          client_id: booking.client_id,
-          user_id: userId,
-          type: "sms",
-          direction: "outbound",
-          subject: "Session Reminder",
-          content: message,
-        });
+        console.error("SMS confirmation error:", err);
       }
     }
   }
