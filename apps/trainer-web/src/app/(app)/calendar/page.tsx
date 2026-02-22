@@ -830,8 +830,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={dayIndex}
-                  onClick={() => handleSlotClick(date, slot.hour, slot.minute)}
-                  onDoubleClick={() => booking && handleBookingDoubleClick(booking)}
+                  onClick={() => booking ? handleBookingDoubleClick(booking) : handleSlotClick(date, slot.hour, slot.minute)}
                   className={clsx(
                     "border-l border-gray-100 relative border-t",
                     slot.minute === 0 ? "border-t-gray-300" : "border-t-gray-100",
