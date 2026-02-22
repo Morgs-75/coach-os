@@ -1002,8 +1002,12 @@ export default function CalendarPage() {
           <span>Available</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-blue-100"></div>
+          <div className="w-3 h-3 rounded bg-blue-400"></div>
           <span>Booked</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-green-600"></div>
+          <span>Confirmed</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
