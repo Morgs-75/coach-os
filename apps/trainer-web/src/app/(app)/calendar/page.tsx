@@ -461,6 +461,13 @@ export default function CalendarPage() {
             }),
           });
 
+          // Mark confirmation as sent if reply was requested
+          if (requestConfirm) {
+            await supabase
+              .from("bookings")
+              .update({ confirmation_sent_at: new Date().toISOString() })
+              .eq("id", newBooking.id);
+          }
         } catch (err) {
           console.error("SMS confirmation error:", err);
         }
