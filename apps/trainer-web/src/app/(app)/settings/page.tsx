@@ -9,6 +9,10 @@ export default function SettingsPage() {
   const [primaryColor, setPrimaryColor] = useState("#0ea5e9");
   const [orgName, setOrgName] = useState("");
 
+  // Booking settings
+  const [timezone, setTimezone] = useState("Australia/Brisbane");
+  const [orgId, setOrgId] = useState("");
+
   // Payout settings
   const [payoutMethod, setPayoutMethod] = useState("bank_transfer");
   const [bankAccountName, setBankAccountName] = useState("");
@@ -53,6 +57,15 @@ export default function SettingsPage() {
       .single();
 
     if (!membership) return;
+    setOrgId(membership.org_id);
+
+    // Load booking settings
+    const { data: bookingSettings } = await supabase
+      .from("booking_settings")
+      .select("timezone")
+      .eq("org_id", membership.org_id)
+      .maybeSingle();
+    if (bookingSettings?.timezone) setTimezone(bookingSettings.timezone);
 
     // Load org
     const { data: org } = await supabase
@@ -139,6 +152,12 @@ export default function SettingsPage() {
     await supabase
       .from("branding")
       .update({ display_name: displayName, primary_color: primaryColor })
+      .eq("org_id", membership.org_id);
+
+    // Update timezone
+    await supabase
+      .from("booking_settings")
+      .update({ timezone })
       .eq("org_id", membership.org_id);
 
     setMessage("Settings saved!");
@@ -326,6 +345,26 @@ export default function SettingsPage() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="input"
               />
+            </div>
+
+            <div>
+              <label htmlFor="timezone" className="label">
+                Timezone
+              </label>
+              <select
+                id="timezone"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="input"
+              >
+                <option value="Australia/Brisbane">Queensland (UTC+10, no DST)</option>
+                <option value="Australia/Sydney">NSW / ACT / Victoria (AEDT/AEST)</option>
+                <option value="Australia/Adelaide">South Australia (ACDT/ACST)</option>
+                <option value="Australia/Darwin">Northern Territory (UTC+9:30)</option>
+                <option value="Australia/Perth">Western Australia (UTC+8)</option>
+                <option value="Australia/Hobart">Tasmania (AEDT/AEST)</option>
+                <option value="Pacific/Auckland">New Zealand (NZDT/NZST)</option>
+              </select>
             </div>
 
             <div>

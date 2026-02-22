@@ -61,17 +61,25 @@ export async function POST(request: Request) {
 
       console.log("Update result:", { updateError });
 
+      // Look up org timezone
+      const { data: settings } = await supabase
+        .from("booking_settings")
+        .select("timezone")
+        .eq("org_id", client.org_id)
+        .maybeSingle();
+      const timezone = settings?.timezone || "Australia/Brisbane";
+
       const dateStr = new Date(booking.start_time).toLocaleDateString("en-AU", {
         weekday: "long",
         day: "numeric",
         month: "long",
-        timeZone: "Australia/Sydney",
+        timeZone: timezone,
       });
       const timeStr = new Date(booking.start_time).toLocaleTimeString("en-AU", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
-        timeZone: "Australia/Sydney",
+        timeZone: timezone,
       });
 
       return twiml(`Confirmed! See you ${dateStr} at ${timeStr}.`);
