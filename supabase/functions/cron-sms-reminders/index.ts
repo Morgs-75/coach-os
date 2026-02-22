@@ -62,9 +62,10 @@ serve(async (req) => {
             continue;
           }
 
-          const hoursBeforeBooking = settings.reminder_hours_before || 24;
+          // Use minute-based column if available, otherwise fall back to hours column
+          const minsBeforeBooking = settings.reminder_mins_before ?? (settings.reminder_hours_before ?? 24) * 60;
           const reminderTime = new Date(
-            new Date(booking.start_time).getTime() - hoursBeforeBooking * 60 * 60 * 1000
+            new Date(booking.start_time).getTime() - minsBeforeBooking * 60 * 1000
           );
 
           // If reminder time has already passed, mark and skip
@@ -166,9 +167,10 @@ serve(async (req) => {
             continue;
           }
 
-          const hoursAfterBooking = settings.feedback_hours_after || 2;
+          // Use minute-based column if available, otherwise fall back to hours column
+          const minsAfterBooking = settings.feedback_mins_after ?? (settings.feedback_hours_after ?? 2) * 60;
           const feedbackTime = new Date(
-            new Date(booking.end_time).getTime() + hoursAfterBooking * 60 * 60 * 1000
+            new Date(booking.end_time).getTime() + minsAfterBooking * 60 * 1000
           );
 
           // Not yet time to send

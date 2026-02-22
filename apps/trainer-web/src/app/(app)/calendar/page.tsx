@@ -51,6 +51,7 @@ type ClientPackage = {
   expires_at: string | null;
   offers: {
     name: string;
+    session_duration_mins: number | null;
   };
 };
 
@@ -318,16 +319,30 @@ export default function CalendarPage() {
 
     const { data } = await supabase
       .from("client_purchases")
-      .select("id, offer_id, sessions_total, sessions_used, payment_status, expires_at, offers(name)")
+      .select("id, offer_id, sessions_total, sessions_used, payment_status, expires_at, offers(name, session_duration_mins)")
       .eq("client_id", clientId)
       .eq("payment_status", "succeeded")
       .order("purchased_at", { ascending: false });
 
     if (data) {
-      // Filter to only show packages with sessions remaining and not expired
+      // Count active (confirmed/pending) bookings already linked to each purchase
+      // so a 1-session pack with a booked-but-not-yet-completed session shows as held
+      const purchaseIds = data.map((p: any) => p.id);
+      const { data: activeBookings } = await supabase
+        .from("bookings")
+        .select("purchase_id")
+        .in("purchase_id", purchaseIds)
+        .in("status", ["confirmed", "pending"]);
+
+      const heldCounts = new Map<string, number>();
+      (activeBookings || []).forEach((b: any) => {
+        if (b.purchase_id) heldCounts.set(b.purchase_id, (heldCounts.get(b.purchase_id) || 0) + 1);
+      });
+
       const now = new Date();
       const available = data.filter((p: any) => {
-        const hasSessionsLeft = p.sessions_total > p.sessions_used;
+        const held = heldCounts.get(p.id) || 0;
+        const hasSessionsLeft = (p.sessions_total - p.sessions_used - held) > 0;
         const notExpired = !p.expires_at || new Date(p.expires_at) > now;
         return hasSessionsLeft && notExpired;
       });
@@ -1092,6 +1107,8 @@ export default function CalendarPage() {
                           ...(matchedType ? {
                             session_type_id: matchedType.id,
                             duration: matchedType.duration_mins,
+                          } : pkg?.offers?.session_duration_mins ? {
+                            duration: pkg.offers.session_duration_mins,
                           } : {}),
                         });
                       }}

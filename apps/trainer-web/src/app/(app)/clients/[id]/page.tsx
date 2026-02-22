@@ -1633,20 +1633,37 @@ ul { padding-left: 24px; }
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave blank for no expiry</p>
                 </div>
               </div>
-              <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
-                  onClick={savePackageEdit}
-                  disabled={savingPackageEdit}
-                  className="btn-primary"
+                  onClick={async () => {
+                    if (!confirm(`Delete "${editingPackage.offers?.name || "this package"}"? This cannot be undone.`)) return;
+                    const { error } = await supabase.from("client_purchases").delete().eq("id", editingPackage.id);
+                    if (error) {
+                      alert("Error deleting package: " + (error.message || JSON.stringify(error)));
+                    } else {
+                      setClientPurchases(clientPurchases.filter(p => p.id !== editingPackage.id));
+                      setEditingPackage(null);
+                    }
+                  }}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium"
                 >
-                  {savingPackageEdit ? "Saving..." : "Save Changes"}
+                  Delete Package
                 </button>
-                <button
-                  onClick={() => setEditingPackage(null)}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={savePackageEdit}
+                    disabled={savingPackageEdit}
+                    className="btn-primary"
+                  >
+                    {savingPackageEdit ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={() => setEditingPackage(null)}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}
