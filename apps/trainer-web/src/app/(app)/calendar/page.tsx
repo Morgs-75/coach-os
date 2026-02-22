@@ -138,11 +138,12 @@ export default function CalendarPage() {
     if (!orgId) return;
 
     const channel = supabase
-      .channel("booking-confirmations")
+      .channel(`booking-confirmations-${orgId}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "bookings", filter: `org_id=eq.${orgId}` },
-        (payload) => {
+        { event: "UPDATE", schema: "public", table: "bookings" },
+        (payload: any) => {
+          if (payload.new.org_id !== orgId) return;
           setBookings((prev) =>
             prev.map((b) => b.id === payload.new.id ? { ...b, ...payload.new, client_name: b.client_name } : b)
           );
