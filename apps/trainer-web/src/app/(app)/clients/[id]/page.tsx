@@ -214,8 +214,6 @@ export default function ClientDetailPage() {
       .from("client_purchases")
       .select("id, amount_paid_cents, currency, payment_status, payment_method, created_at, offers(name)")
       .eq("client_id", clientId)
-      .not("payment_method", "is", null)
-      .neq("payment_method", "stripe")
       .order("created_at", { ascending: false });
 
     if (purchasePaymentData) setPurchasePayments(purchasePaymentData);
@@ -1150,7 +1148,9 @@ ul { padding-left: 24px; }
       case "cash": return "Cash";
       case "card": return "Card";
       case "bank_transfer": return "Bank Transfer";
-      default: return method || "Unknown";
+      case "stripe": return "Stripe";
+      case null: return "Pending";
+      default: return method || "Pending";
     }
   };
   const methodColor = (method: string | null) => {
@@ -1158,7 +1158,8 @@ ul { padding-left: 24px; }
       case "cash": return "bg-green-100 text-green-700";
       case "card": return "bg-blue-100 text-blue-700";
       case "bank_transfer": return "bg-purple-100 text-purple-700";
-      default: return "bg-gray-100 text-gray-700";
+      case "stripe": return "bg-indigo-100 text-indigo-700";
+      default: return "bg-gray-100 text-gray-600";
     }
   };
 
