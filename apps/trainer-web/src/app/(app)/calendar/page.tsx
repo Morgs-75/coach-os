@@ -486,7 +486,10 @@ export default function CalendarPage() {
     const endTime = new Date(startTime.getTime() + bookingForm.duration * 60000);
     const selectedType = sessionTypes.find(st => st.id === bookingForm.session_type_id);
 
-    const isRescheduled = new Date(editingBooking.start_time).toISOString() !== startTime.toISOString();
+    const originalTime = new Date(editingBooking.start_time).toISOString();
+    const newTime = startTime.toISOString();
+    const isRescheduled = originalTime !== newTime;
+    console.log("Reschedule check:", { originalTime, newTime, isRescheduled });
 
     const { error } = await supabase
       .from("bookings")
@@ -517,7 +520,7 @@ export default function CalendarPage() {
         const firstName = editingBooking.client_name?.split(" ")[0] || "there";
         const message = `Hi ${firstName}, your session has been rescheduled to ${dateStr} at ${timeStr}. Reply Y to confirm.`;
 
-        await fetch("/api/send-sms", {
+        const smsRes = await fetch("/api/send-sms", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -527,6 +530,8 @@ export default function CalendarPage() {
             request_confirmation: true,
           }),
         });
+        const smsData = await smsRes.json();
+        console.log("Reschedule SMS response:", smsRes.status, smsData);
       } catch (err) {
         console.error("SMS reschedule error:", err);
       }
