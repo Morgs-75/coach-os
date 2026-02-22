@@ -50,8 +50,6 @@ export default function LoginPage() {
       return;
     }
 
-    alert("Login successful! Redirecting to dashboard...");
-
     // Save or clear remembered email
     if (rememberMe) {
       localStorage.setItem("rememberedEmail", email);
