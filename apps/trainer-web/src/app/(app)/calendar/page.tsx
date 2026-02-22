@@ -927,7 +927,7 @@ export default function CalendarPage() {
                       style={{
                         top: 1,
                         height: `${(booking.duration_mins / 15) * rowHeight - 2}px`,
-                        backgroundColor: bookingType?.color || "#3B82F6",
+                        backgroundColor: booking.client_confirmed ? "#16a34a" : (bookingType?.color || "#3B82F6"),
                       }}
                       onClick={(e) => { e.stopPropagation(); handleBookingDoubleClick(booking); }}
                     >
