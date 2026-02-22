@@ -893,12 +893,13 @@ export default function CalendarPage() {
                 >
                   {booking && (
                     <div
-                      className="absolute left-0 right-0 mx-0.5 rounded overflow-hidden z-10 p-1.5 group"
+                      className="absolute left-0 right-0 mx-0.5 rounded overflow-hidden z-10 p-1.5 group cursor-pointer"
                       style={{
                         top: 1,
                         height: `${(booking.duration_mins / 15) * rowHeight - 2}px`,
                         backgroundColor: bookingType?.color || "#3B82F6",
                       }}
+                      onClick={(e) => { e.stopPropagation(); handleBookingDoubleClick(booking); }}
                     >
                       <div className="text-xs font-bold text-white truncate">
                         {booking.client_name} - {bookingType?.name || booking.session_type}
