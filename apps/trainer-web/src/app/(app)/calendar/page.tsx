@@ -542,7 +542,7 @@ export default function CalendarPage() {
 
   async function handleCancelBooking() {
     if (!editingBooking) return;
-    if (!confirm("Cancel this booking?")) return;
+    if (!confirm("Cancel this booking and notify the client by SMS?")) return;
 
     const { error } = await supabase
       .from("bookings")
@@ -552,6 +552,26 @@ export default function CalendarPage() {
     if (error) {
       alert("Error cancelling booking: " + (error.message || JSON.stringify(error)));
       return;
+    }
+
+    // Send SMS cancellation notice to client
+    try {
+      const startTime = new Date(editingBooking.start_time);
+      const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
+      const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
+      const firstName = editingBooking.client_name?.split(" ")[0] || "there";
+      const message = `Hi ${firstName}, your session on ${dateStr} at ${timeStr} has been cancelled. Please contact us to reschedule.`;
+
+      await fetch("/api/send-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: editingBooking.client_id,
+          message,
+        }),
+      });
+    } catch (err) {
+      console.error("SMS cancellation error:", err);
     }
 
     setShowBookingModal(false);
