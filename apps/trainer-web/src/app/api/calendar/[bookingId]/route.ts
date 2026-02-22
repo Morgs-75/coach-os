@@ -3,8 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function GET(
   request: Request,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
+  const { bookingId } = await params;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -22,7 +24,7 @@ export async function GET(
       clients (full_name),
       orgs (name)
     `)
-    .eq("id", params.bookingId)
+    .eq("id", bookingId)
     .single();
 
   if (error) {
