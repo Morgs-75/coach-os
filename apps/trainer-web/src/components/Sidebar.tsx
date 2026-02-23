@@ -20,6 +20,7 @@ const navigation = [
   { name: "Clients", href: "/clients", icon: "👥" },
   { name: "Leads", href: "/leads", icon: "📋" },
   { name: "Pricing", href: "/pricing", icon: "💵" },
+  { name: "myMarketing", href: "/marketing", icon: "📣" },
   { name: "Email", href: "/email", icon: "📧" },
   { name: "Messages", href: "/messages", icon: "💬" },
   { name: "Automations", href: "/automations", icon: "⚡" },

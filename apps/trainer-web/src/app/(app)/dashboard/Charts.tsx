@@ -137,7 +137,7 @@ export default function Charts({
                 <BarChart data={weeklySessionData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
                   <XAxis dataKey="week" tick={{ fontSize: 9 }} />
                   <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip formatter={(v: number) => [aud(v), "Value"]} />
+                  <Tooltip formatter={(v: number | undefined) => [aud(v ?? 0), "Value"]} />
                   <Bar dataKey="value_delivered" name="Value" fill={C.teal} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -159,8 +159,8 @@ export default function Charts({
                 <YAxis yAxisId="rev" tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
                 <YAxis yAxisId="qty" orientation="right" tick={{ fontSize: 10 }} />
                 <Tooltip
-                  formatter={(val: number, name: string) =>
-                    name === "Revenue" ? [aud(val), name] : [val, name]
+                  formatter={(val: number | undefined, name: string) =>
+                    name === "Revenue" ? [aud(val ?? 0), name] : [val ?? 0, name]
                   }
                 />
                 <Legend iconSize={9} wrapperStyle={{ fontSize: 11 }} />
@@ -183,8 +183,8 @@ export default function Charts({
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
                 <Tooltip
-                  formatter={(val: number, name: string) =>
-                    name === "Revenue ($)" ? [aud(val), name] : [val, name]
+                  formatter={(val: number | undefined, name: string) =>
+                    name === "Revenue ($)" ? [aud(val ?? 0), name] : [val ?? 0, name]
                   }
                 />
                 <Legend iconSize={9} wrapperStyle={{ fontSize: 11 }} />
@@ -260,7 +260,7 @@ export default function Charts({
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-                <Tooltip formatter={(v: number) => [aud(v), "Revenue"]} />
+                <Tooltip formatter={(v: number | undefined) => [aud(v ?? 0), "Revenue"]} />
                 <Bar dataKey="revenue" name="Revenue" fill={C.green} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -274,7 +274,7 @@ export default function Charts({
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-                <Tooltip formatter={(v: number) => [aud(v), "Revenue"]} />
+                <Tooltip formatter={(v: number | undefined) => [aud(v ?? 0), "Revenue"]} />
                 <Bar dataKey="revenue" name="Revenue" fill={C.amber} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
