@@ -385,7 +385,7 @@ export default async function DashboardPage({
     const booking = d.toLocaleDateString("en-CA", { timeZone: tz });
     if (booking === today) return "Today";
     if (booking === tomorrow) return "Tomorrow";
-    return d.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", timeZone: tz });
+    return d.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: tz });
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
