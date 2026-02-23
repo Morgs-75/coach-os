@@ -3,7 +3,9 @@ import { getOrg } from "@/lib/get-org";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import Charts from "./Charts";
+import DashboardDateFilter from "./DashboardDateFilter";
 import type { WeeklySessionRow, MonthlyRow, PackageStat, NameValue, RevenueByDemo } from "./Charts";
 
 // ── Timezone helpers ─────────────────────────────────────────────────────────
@@ -66,9 +68,18 @@ const aud = (cents: number) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 0 })
     .format(cents / 100);
 
+function localDateToUTC(dateStr: string, offsetMin: number): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d) - offsetMin * 60000);
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const org = await getOrg();
   if (!org) redirect("/login");
 
@@ -80,7 +91,16 @@ export default async function DashboardPage() {
     .from("sms_settings").select("timezone").eq("org_id", orgId).maybeSingle();
   const tz = smsSettings?.timezone || "Australia/Brisbane";
 
-  const { now, todayStart, todayEnd, weekStart, weekEnd } = getOrgDateBounds(tz);
+  const { now, todayStart, todayEnd, weekStart, weekEnd, offsetMin } = getOrgDateBounds(tz);
+
+  // Date range from URL params (default: today → +7 days)
+  const params = await searchParams;
+  const todayStr = now.toLocaleDateString("en-CA", { timeZone: tz });
+  const defaultToStr = new Date(now.getTime() + 7 * 86400000).toLocaleDateString("en-CA", { timeZone: tz });
+  const fromStr = params.from || todayStr;
+  const toStr = params.to || defaultToStr;
+  const rangeStart = localDateToUTC(fromStr, offsetMin);
+  const rangeEnd = new Date(localDateToUTC(toStr, offsetMin).getTime() + 86400000); // end of that day
 
   const eightWeeksAgo = new Date(weekStart.getTime() - 7 * 7 * 86400000);
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -322,15 +342,23 @@ export default async function DashboardPage() {
         )
       : 0;
 
-  // Upcoming display list
-  const { data: upcomingBookings } = await supabase
+  // Sessions in selected date range
+  const { data: rangeBookings } = await supabase
     .from("bookings")
-    .select("*, clients(full_name)")
+    .select("id, start_time, end_time, status, session_type, client_confirmed, purchase_id, clients(id, full_name)")
     .eq("org_id", orgId)
-    .gte("start_time", now.toISOString())
-    .neq("status", "cancelled")
+    .gte("start_time", rangeStart.toISOString())
+    .lt("start_time", rangeEnd.toISOString())
     .order("start_time")
-    .limit(8);
+    .limit(100);
+
+  // Summary counts for the range
+  const rangeSessions = rangeBookings || [];
+  const rangeBooked = rangeSessions.filter(b => b.status === "pending").length;
+  const rangeConfirmed = rangeSessions.filter(b => b.status === "confirmed").length;
+  const rangeCompleted = rangeSessions.filter(b => b.status === "completed").length;
+  const rangeCancelled = rangeSessions.filter(b => b.status === "cancelled").length;
+  const rangeUnpaid = rangeSessions.filter(b => !b.purchase_id && b.status !== "cancelled").length;
 
   const formatTime = (s: string) =>
     new Date(s).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz });
@@ -451,36 +479,70 @@ export default async function DashboardPage() {
         revenueByAge={revenueByAge}
       />
 
-      {/* ── Bottom: Upcoming sessions + At-Risk + Revenue summary ── */}
+      {/* ── Date range filter ── */}
+      <Suspense>
+        <DashboardDateFilter from={fromStr} to={toStr} />
+      </Suspense>
+
+      {/* ── Sessions in range + At-Risk + Revenue summary ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Upcoming sessions */}
+        {/* Sessions in range */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Upcoming Sessions</h2>
-            <Link href="/calendar" className="text-xs text-blue-600 hover:text-blue-700">View calendar →</Link>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Sessions in Range</h2>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xs text-gray-500 dark:text-gray-400">{rangeSessions.length} total</span>
+                {rangeBooked > 0 && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">{rangeBooked} booked</span>}
+                {rangeConfirmed > 0 && <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">{rangeConfirmed} confirmed</span>}
+                {rangeCompleted > 0 && <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">{rangeCompleted} completed</span>}
+                {rangeCancelled > 0 && <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">{rangeCancelled} cancelled</span>}
+                {rangeUnpaid > 0 && <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium">{rangeUnpaid} unpaid</span>}
+              </div>
+            </div>
+            <Link href="/calendar" className="text-xs text-blue-600 hover:text-blue-700 shrink-0">View calendar →</Link>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {(upcomingBookings || []).length > 0 ? (
-              upcomingBookings!.map((b: any) => (
-                <div key={b.id} className="px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400">
-                      {b.clients?.full_name?.charAt(0) || "?"}
+          <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[480px] overflow-y-auto">
+            {rangeSessions.length > 0 ? (
+              rangeSessions.map((b: any) => {
+                const statusConfig: Record<string, { label: string; cls: string }> = {
+                  pending:   { label: "Booked",    cls: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300" },
+                  confirmed: { label: "Confirmed", cls: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" },
+                  completed: { label: "Completed", cls: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" },
+                  cancelled: { label: "Cancelled", cls: "bg-red-100 dark:bg-red-900/40 text-red-500 dark:text-red-400" },
+                  no_show:   { label: "No Show",   cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" },
+                };
+                const sc = statusConfig[b.status] ?? statusConfig.pending;
+                const unpaid = !b.purchase_id && b.status !== "cancelled";
+                return (
+                  <div key={b.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400 shrink-0">
+                      {(b.clients as any)?.full_name?.charAt(0) || "?"}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.clients?.full_name || "Client"}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{b.session_type?.replace("_", " ") || "Session"}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{(b.clients as any)?.full_name || "Client"}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{b.session_type?.replace(/_/g, " ") || "Session"}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {unpaid && (
+                        <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                          Unpaid
+                        </span>
+                      )}
+                      <span className={clsx("text-xs px-1.5 py-0.5 rounded font-medium", sc.cls)}>
+                        {sc.label}
+                      </span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatTime(b.start_time)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(b.start_time)}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatTime(b.start_time)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(b.start_time)}</p>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No upcoming sessions</div>
+              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No sessions in this date range</div>
             )}
           </div>
         </div>
