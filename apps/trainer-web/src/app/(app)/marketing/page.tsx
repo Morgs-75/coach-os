@@ -318,12 +318,10 @@ export default function MarketingPage() {
                       <input
                         type="text"
                         value={offerEmojis[offer.id] ?? "•"}
-                        onChange={(e) => {
-                          const val = [...e.target.value].slice(-2).join("") || "•";
-                          setOfferEmojis(prev => ({ ...prev, [offer.id]: val }));
-                        }}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => setOfferEmojis(prev => ({ ...prev, [offer.id]: e.target.value || "•" }))}
                         className="w-9 h-9 text-center text-lg border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-blue-400 cursor-text"
-                        title="Emoji or symbol for this offer"
+                        title="Click and type an emoji to replace the bullet"
                       />
                       <span className="text-[9px] text-gray-400 leading-none">prefix</span>
                     </div>
