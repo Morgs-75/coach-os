@@ -1048,7 +1048,8 @@ export default function CalendarPage() {
             >
               {/* Show all 15-min time labels */}
               <span className={clsx(
-                "absolute -top-[9px] left-0 right-1 text-right pr-2 leading-none select-none",
+                "absolute left-0 right-1 text-right pr-2 leading-none select-none",
+                slotIndex === 0 ? "top-0" : "-top-[9px]",
                 slot.minute === 0
                   ? "text-[11px] font-semibold text-gray-500 dark:text-gray-400"
                   : "text-[10px] text-gray-400 dark:text-gray-500"
