@@ -71,6 +71,7 @@ export default function ClientDetailPage() {
   const [offers, setOffers] = useState<any[]>([]);
   const [clientPurchases, setClientPurchases] = useState<any[]>([]);
   const [communications, setCommunications] = useState<any[]>([]);
+  const [clientBookings, setClientBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "profile" | "health" | "activity" | "payments" | "packages" | "comms" | "logs" | "waivers" | "marketing">("overview");
 
@@ -224,6 +225,16 @@ export default function ClientDetailPage() {
       .order("created_at", { ascending: false });
 
     if (purchasePaymentData) setPurchasePayments(purchasePaymentData);
+
+    // Get bookings for this client
+    const { data: bookingsData } = await supabase
+      .from("bookings")
+      .select("id, start_time, end_time, duration_mins, session_type, status, notes")
+      .eq("client_id", clientId)
+      .order("start_time", { ascending: false })
+      .limit(50);
+
+    if (bookingsData) setClientBookings(bookingsData);
 
     // Get measurements
     const { data: measurementData } = await supabase
@@ -1369,6 +1380,64 @@ ul { padding-left: 24px; }
                 </div>
               </div>
             )}
+            {/* Sessions */}
+            {clientBookings.length > 0 && (() => {
+              const now = new Date();
+              const upcoming = clientBookings.filter(b => new Date(b.start_time) >= now && b.status !== "cancelled").slice(0, 3);
+              const recent = clientBookings.filter(b => new Date(b.start_time) < now && b.status !== "cancelled").slice(0, 5);
+              return (
+                <div className="card p-6">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Sessions</h3>
+                  {upcoming.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Upcoming</p>
+                      <div className="space-y-2">
+                        {upcoming.map((b: any) => (
+                          <div key={b.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {new Date(b.start_time).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(b.start_time).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                                {" · "}{b.session_type?.replace(/_/g, " ") || "Session"}
+                              </p>
+                            </div>
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{b.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {recent.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Recent</p>
+                      <div className="space-y-2">
+                        {recent.map((b: any) => (
+                          <div key={b.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {new Date(b.start_time).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(b.start_time).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                                {" · "}{b.session_type?.replace(/_/g, " ") || "Session"}
+                              </p>
+                            </div>
+                            <span className={clsx(
+                              "text-xs px-1.5 py-0.5 rounded",
+                              b.status === "completed" ? "bg-green-100 text-green-700" :
+                              b.status === "no_show" ? "bg-amber-100 text-amber-700" :
+                              "bg-gray-100 text-gray-600"
+                            )}>{b.status?.replace(/_/g, " ")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Sidebar */}
