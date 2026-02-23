@@ -111,6 +111,11 @@ export default function ClientDetailPage() {
   const [newMeasurement, setNewMeasurement] = useState({ type: "", value: "", notes: "" });
   const [savingMeasurement, setSavingMeasurement] = useState(false);
 
+  // SMS preferences
+  const [smsReminderEnabled, setSmsReminderEnabled] = useState(true);
+  const [smsFollowupEnabled, setSmsFollowupEnabled] = useState(true);
+  const [smsSavedMessage, setSmsSavedMessage] = useState("");
+
   // Marketing
   const [referralLinks, setReferralLinks] = useState<any[]>([]);
   const [clientReferrals, setClientReferrals] = useState<any[]>([]);
@@ -162,6 +167,8 @@ export default function ClientDetailPage() {
 
     if (clientData) {
       setClient(clientData);
+      setSmsReminderEnabled(clientData.sms_reminder_enabled ?? true);
+      setSmsFollowupEnabled(clientData.sms_followup_enabled ?? true);
 
       // Get org name for waiver
       const { data: orgData } = await supabase
@@ -679,6 +686,19 @@ ul { padding-left: 24px; }
       dietary_restrictions: Array.isArray(client.dietary_restrictions) ? client.dietary_restrictions.join(", ") : (client.dietary_restrictions || ""),
     });
     setIsEditingProfile(true);
+  }
+
+  async function toggleSmsPreference(field: "sms_reminder_enabled" | "sms_followup_enabled", value: boolean) {
+    if (field === "sms_reminder_enabled") setSmsReminderEnabled(value);
+    else setSmsFollowupEnabled(value);
+
+    await supabase
+      .from("clients")
+      .update({ [field]: value })
+      .eq("id", clientId);
+
+    setSmsSavedMessage("Saved");
+    setTimeout(() => setSmsSavedMessage(""), 2000);
   }
 
   async function saveProfile() {
@@ -2672,6 +2692,36 @@ ul { padding-left: 24px; }
           <div className="card p-6">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Notes</h3>
             <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{client.notes || "No notes"}</p>
+          </div>
+
+          {/* SMS Preferences */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">SMS Preferences</h3>
+              {smsSavedMessage && (
+                <span className="text-sm text-green-600">{smsSavedMessage}</span>
+              )}
+            </div>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={smsReminderEnabled}
+                  onChange={(e) => toggleSmsPreference("sms_reminder_enabled", e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Send session reminders</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={smsFollowupEnabled}
+                  onChange={(e) => toggleSmsPreference("sms_followup_enabled", e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Send follow-up messages</span>
+              </label>
+            </div>
           </div>
         </div>
           )}

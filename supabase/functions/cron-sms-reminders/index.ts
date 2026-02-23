@@ -19,7 +19,16 @@ serve(async (req) => {
     const now = new Date();
 
     // ========================================
-    // 1. SESSION REMINDERS (24h before)
+    // 0. AUTO-COMPLETE PAST SESSIONS
+    // ========================================
+    await supabase
+      .from("bookings")
+      .update({ status: "completed" })
+      .eq("status", "confirmed")
+      .lt("end_time", now.toISOString());
+
+    // ========================================
+    // 1. SESSION REMINDERS (before session)
     // ========================================
 
     const twoDaysFromNow = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
@@ -27,8 +36,8 @@ serve(async (req) => {
     const { data: upcomingBookings, error: bookingsError } = await supabase
       .from("bookings")
       .select(`
-        id, org_id, client_id, start_time, location_details,
-        clients(id, full_name, phone),
+        id, org_id, client_id, start_time, location_type,
+        clients(id, full_name, phone, sms_reminder_enabled),
         orgs(id, name)
       `)
       .eq("status", "confirmed")
@@ -62,6 +71,11 @@ serve(async (req) => {
             continue;
           }
 
+          if (booking.clients?.sms_reminder_enabled === false) {
+            console.log(`Skipping booking ${booking.id}: client has reminders disabled`);
+            continue;
+          }
+
           // Use minute-based column if available, otherwise fall back to hours column
           const minsBeforeBooking = settings.reminder_mins_before ?? (settings.reminder_hours_before ?? 24) * 60;
           const reminderTime = new Date(
@@ -78,15 +92,18 @@ serve(async (req) => {
           }
 
           const sessionDate = new Date(booking.start_time);
+          const tz = settings.timezone || "Australia/Brisbane";
           const dateStr = sessionDate.toLocaleDateString("en-AU", {
             weekday: "short",
             month: "short",
             day: "numeric",
+            timeZone: tz,
           });
           const timeStr = sessionDate.toLocaleTimeString("en-AU", {
             hour: "numeric",
             minute: "2-digit",
             hour12: true,
+            timeZone: tz,
           });
 
           const { data: messageId, error: rpcError } = await supabase.rpc("insert_sms_from_service", {
@@ -96,7 +113,7 @@ serve(async (req) => {
             p_variables: {
               client_name: booking.clients.full_name.split(" ")[0],
               session_datetime: `${dateStr} at ${timeStr}`,
-              location: booking.location_details || "TBD",
+              location: booking.location_type || "TBD",
               coach_name: booking.orgs.name,
             },
             p_scheduled_for: reminderTime.toISOString(),
@@ -129,17 +146,17 @@ serve(async (req) => {
     // 2. FEEDBACK REQUESTS (after completed sessions)
     // ========================================
 
-    const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString();
+    const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
 
     const { data: completedBookings, error: completedError } = await supabase
       .from("bookings")
       .select(`
         id, org_id, client_id, end_time,
-        clients(id, full_name, phone),
+        clients(id, full_name, phone, sms_followup_enabled),
         orgs(id, name)
       `)
       .eq("status", "completed")
-      .gte("end_time", sixHoursAgo)
+      .gte("end_time", twoDaysAgo)
       .lte("end_time", now.toISOString())
       .eq("feedback_sent", false)
       .order("end_time", { ascending: true });
@@ -164,6 +181,11 @@ serve(async (req) => {
           }
 
           if (!booking.clients?.phone) {
+            continue;
+          }
+
+          if (booking.clients?.sms_followup_enabled === false) {
+            console.log(`Skipping booking ${booking.id}: client has follow-ups disabled`);
             continue;
           }
 

@@ -31,6 +31,7 @@ const navigation = [
 
 const settingsNav = [
   { name: "Session Types", href: "/settings/session-types" },
+  { name: "SMS & Reminders", href: "/settings/sms" },
   { name: "Account", href: "/settings" },
 ];
 
