@@ -60,14 +60,35 @@ function buildMessage(template: string, selectedOffers: Offer[], offerEmojis: Re
 
 type RecipientFilter = "all" | "active" | "manual";
 
+interface SavedTemplate {
+  id: string;
+  name: string;
+  body: string;
+  offerEmojis: Record<string, string>;
+}
+
+const STORAGE_KEY = "coachOS_marketing_templates";
+const DEFAULT_BODY = "Hi {name}, we have some special offers available:\n\n{offers}\n\nReply to book or for more info.\n\nReply STOP to opt out.";
+
+function loadStoredTemplates(): SavedTemplate[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch { return []; }
+}
+
 export default function MarketingPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [offerEmojis, setOfferEmojis] = useState<Record<string, string>>({});
-  const [template, setTemplate] = useState(
-    "Hi {name}, we have some special offers available:\n\n{offers}\n\nReply to book or for more info.\n\nReply STOP to opt out."
-  );
+  const [template, setTemplate] = useState(DEFAULT_BODY);
   const templateRef = useRef<HTMLTextAreaElement>(null);
+
+  // Saved templates
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveModalName, setSaveModalName] = useState("");
+  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
   const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>("all");
   const [clientCount, setClientCount] = useState<number | null>(null);
 
@@ -86,7 +107,10 @@ export default function MarketingPage() {
 
   const supabase = createClient();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    setSavedTemplates(loadStoredTemplates());
+  }, []);
 
   useEffect(() => {
     if (orgId && recipientFilter !== "manual") fetchClientCount();
@@ -141,6 +165,42 @@ export default function MarketingPage() {
         .eq("org_id", orgId).in("id", ids).not("phone", "is", null).neq("phone", "");
       setClientCount(count ?? 0);
     }
+  }
+
+  function saveTemplate(name: string) {
+    const existing = savedTemplates.find(t => t.id === activeTemplateId);
+    const updated: SavedTemplate = existing
+      ? { ...existing, name, body: template, offerEmojis }
+      : { id: Date.now().toString(), name, body: template, offerEmojis };
+    const next = existing
+      ? savedTemplates.map(t => t.id === updated.id ? updated : t)
+      : [...savedTemplates, updated];
+    setSavedTemplates(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setActiveTemplateId(updated.id);
+    setShowSaveModal(false);
+    setSaveModalName("");
+  }
+
+  function loadTemplate(t: SavedTemplate) {
+    setTemplate(t.body);
+    setOfferEmojis(t.offerEmojis ?? {});
+    setActiveTemplateId(t.id);
+    setShowTemplatePanel(false);
+  }
+
+  function deleteTemplate(id: string) {
+    const next = savedTemplates.filter(t => t.id !== id);
+    setSavedTemplates(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    if (activeTemplateId === id) setActiveTemplateId(null);
+  }
+
+  function newTemplate() {
+    setTemplate(DEFAULT_BODY);
+    setOfferEmojis({});
+    setActiveTemplateId(null);
+    setShowTemplatePanel(false);
   }
 
   // Manual mode: count selected recipients that have a phone
@@ -352,7 +412,80 @@ export default function MarketingPage() {
 
           {/* Step 2 — Message */}
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">2. Compose Message</h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">2. Compose Message</h2>
+              <div className="flex items-center gap-2">
+                {activeTemplateId && (
+                  <span className="text-xs text-blue-600 dark:text-blue-400 font-medium truncate max-w-[120px]">
+                    {savedTemplates.find(t => t.id === activeTemplateId)?.name}
+                  </span>
+                )}
+                <button onClick={() => setShowTemplatePanel(!showTemplatePanel)}
+                  className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                  {showTemplatePanel ? "Hide" : "Templates"} {savedTemplates.length > 0 ? `(${savedTemplates.length})` : ""}
+                </button>
+                <button onClick={() => { setSaveModalName(savedTemplates.find(t => t.id === activeTemplateId)?.name ?? ""); setShowSaveModal(true); }}
+                  className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">
+                  {activeTemplateId ? "Update" : "Save"}
+                </button>
+              </div>
+            </div>
+
+            {/* Template panel */}
+            {showTemplatePanel && (
+              <div className="mb-3 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Saved Templates</span>
+                  <button onClick={newTemplate} className="text-xs text-blue-600 hover:underline">+ New blank</button>
+                </div>
+                {savedTemplates.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-4">No saved templates yet. Compose a message and click Save.</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+                    {savedTemplates.map(t => (
+                      <div key={t.id} className={clsx(
+                        "flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800",
+                        activeTemplateId === t.id && "bg-blue-50 dark:bg-blue-900/20"
+                      )}>
+                        <button onClick={() => loadTemplate(t)}
+                          className="text-sm text-gray-800 dark:text-gray-200 text-left flex-1 truncate hover:text-blue-600">
+                          {t.name}
+                        </button>
+                        <button onClick={() => deleteTemplate(t.id)}
+                          className="text-xs text-red-400 hover:text-red-600 ml-2 shrink-0">
+                          Delete
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Save modal */}
+            {showSaveModal && (
+              <div className="mb-3 p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <p className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  {activeTemplateId ? "Update template name" : "Save as new template"}
+                </p>
+                <div className="flex gap-2">
+                  <input type="text" value={saveModalName} onChange={e => setSaveModalName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && saveModalName.trim() && saveTemplate(saveModalName.trim())}
+                    placeholder="e.g. Summer Promo" autoFocus
+                    className="input text-sm flex-1 py-1.5" />
+                  <button onClick={() => saveModalName.trim() && saveTemplate(saveModalName.trim())}
+                    disabled={!saveModalName.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-40">
+                    Save
+                  </button>
+                  <button onClick={() => setShowSaveModal(false)}
+                    className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm hover:bg-gray-300">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
               Type your message freely. Use <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{name}`}</code> for the recipient's first name and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{offers}`}</code> to insert the selected offer list. Emojis are supported.
             </p>
