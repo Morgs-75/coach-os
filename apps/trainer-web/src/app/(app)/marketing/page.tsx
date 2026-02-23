@@ -83,6 +83,9 @@ export default function MarketingPage() {
   const [template, setTemplate] = useState(DEFAULT_BODY);
   const templateRef = useRef<HTMLTextAreaElement>(null);
 
+  // Offer emoji picker
+  const [openPickerFor, setOpenPickerFor] = useState<string | null>(null);
+
   // Saved templates
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
@@ -373,17 +376,37 @@ export default function MarketingPage() {
                   )}>
                     <input type="checkbox" checked={selected.has(offer.id)} onChange={() => toggleOffer(offer.id)} className="mt-1 rounded text-blue-600 cursor-pointer" />
 
-                    {/* Emoji prefix input */}
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <input
-                        type="text"
-                        value={offerEmojis[offer.id] ?? "•"}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => setOfferEmojis(prev => ({ ...prev, [offer.id]: e.target.value || "•" }))}
-                        className="w-9 h-9 text-center text-lg border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-blue-400 cursor-text"
-                        title="Click and type an emoji to replace the bullet"
-                      />
-                      <span className="text-[9px] text-gray-400 leading-none">prefix</span>
+                    {/* Emoji prefix picker */}
+                    <div className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setOpenPickerFor(openPickerFor === offer.id ? null : offer.id)}
+                        className="w-9 h-9 flex items-center justify-center text-xl border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:border-blue-400 transition-colors"
+                        title="Click to change the prefix emoji"
+                      >
+                        {offerEmojis[offer.id] ?? "•"}
+                      </button>
+                      {openPickerFor === offer.id && (
+                        <div className="absolute z-20 top-10 left-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-2 w-52">
+                          <p className="text-[10px] text-gray-400 mb-1.5 px-1">Choose a prefix</p>
+                          <div className="grid grid-cols-6 gap-0.5 mb-2">
+                            {["•", "–", "★", "🏋️", "💪", "🔥", "⚡", "🎯", "✅", "👊", "🙌", "💥", "🚀", "⭐", "🏆", "💰", "📌", "🎉", "💡", "🥇", "❤️", "🧠", "🏃", "🤸"].map(e => (
+                              <button key={e} type="button"
+                                onClick={() => { setOfferEmojis(prev => ({ ...prev, [offer.id]: e })); setOpenPickerFor(null); }}
+                                className={clsx(
+                                  "w-7 h-7 text-base rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
+                                  (offerEmojis[offer.id] ?? "•") === e && "bg-blue-100 dark:bg-blue-900/40"
+                                )}>
+                                {e}
+                              </button>
+                            ))}
+                          </div>
+                          <button type="button" onClick={() => setOpenPickerFor(null)}
+                            className="w-full text-xs text-gray-400 hover:text-gray-600 py-1">
+                            Close
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleOffer(offer.id)}>
