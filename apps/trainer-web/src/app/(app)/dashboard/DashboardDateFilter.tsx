@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 
 interface Props {
@@ -46,10 +45,8 @@ const PRESETS = [
 ];
 
 export default function DashboardDateFilter({ from, to }: Props) {
-  const router = useRouter();
-
   const push = (f: string, t: string) => {
-    router.push(`/dashboard?from=${f}&to=${t}`);
+    window.location.href = `/dashboard?from=${f}&to=${t}`;
   };
 
   const activePreset = PRESETS.find(p => p.from() === from && p.to() === to)?.label;
