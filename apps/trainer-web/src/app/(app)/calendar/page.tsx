@@ -309,8 +309,14 @@ export default function CalendarPage() {
       const result = await supabase
         .from("blocked_times")
         .update(data)
-        .eq("id", editingBlock.id);
+        .eq("id", editingBlock.id)
+        .eq("org_id", orgId)
+        .select();
       error = result.error;
+      if (!error && (!result.data || result.data.length === 0)) {
+        alert("Update failed — the record could not be saved. Check Supabase RLS policies for blocked_times.");
+        return;
+      }
     } else {
       const result = await supabase.from("blocked_times").insert({
         ...data,
