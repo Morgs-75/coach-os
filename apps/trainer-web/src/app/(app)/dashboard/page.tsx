@@ -3,7 +3,6 @@ import { getOrg } from "@/lib/get-org";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import Charts from "./Charts";
 import DashboardDateFilter from "./DashboardDateFilter";
 import type { WeeklySessionRow, MonthlyRow, PackageStat, NameValue, RevenueByDemo } from "./Charts";
@@ -342,15 +341,22 @@ export default async function DashboardPage({
         )
       : 0;
 
-  // Sessions in selected date range
-  const { data: rangeBookings } = await supabase
-    .from("bookings")
-    .select("id, start_time, end_time, status, session_type, client_confirmed, purchase_id, clients(id, full_name)")
-    .eq("org_id", orgId)
-    .gte("start_time", rangeStart.toISOString())
-    .lt("start_time", rangeEnd.toISOString())
-    .order("start_time")
-    .limit(100);
+  // Sessions in selected date range + fees banked in range
+  const [{ data: rangeBookings }, { data: rangePurchases }] = await Promise.all([
+    supabase.from("bookings")
+      .select("id, start_time, end_time, status, session_type, client_confirmed, purchase_id, clients(id, full_name)")
+      .eq("org_id", orgId)
+      .gte("start_time", rangeStart.toISOString())
+      .lt("start_time", rangeEnd.toISOString())
+      .order("start_time")
+      .limit(100),
+    supabase.from("client_purchases")
+      .select("amount_paid_cents")
+      .eq("org_id", orgId)
+      .eq("payment_status", "succeeded")
+      .gte("purchased_at", rangeStart.toISOString())
+      .lt("purchased_at", rangeEnd.toISOString()),
+  ]);
 
   // Summary counts for the range
   const rangeSessions = rangeBookings || [];
@@ -359,6 +365,15 @@ export default async function DashboardPage({
   const rangeCompleted = rangeSessions.filter(b => b.status === "completed").length;
   const rangeCancelled = rangeSessions.filter(b => b.status === "cancelled").length;
   const rangeUnpaid = rangeSessions.filter(b => !b.purchase_id && b.status !== "cancelled").length;
+
+  // Fees for the selected period
+  const feesBankedCents = (rangePurchases || []).reduce((s, p) => s + (p.amount_paid_cents || 0), 0);
+  const feesEarnedCents = rangeSessions
+    .filter(b => b.status === "completed")
+    .reduce((sum, b) => sum + (b.purchase_id ? (purchaseValueMap.get(b.purchase_id) ?? 0) : 0), 0);
+  const forecastFeesCents = feesEarnedCents + rangeSessions
+    .filter(b => b.status === "confirmed")
+    .reduce((sum, b) => sum + (b.purchase_id ? (purchaseValueMap.get(b.purchase_id) ?? 0) : 0), 0);
 
   const formatTime = (s: string) =>
     new Date(s).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz });
@@ -390,108 +405,36 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* ── Top KPI Row ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Revenue this month */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Revenue This Month</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{aud(revenueThisMonth)}</p>
-          {momChange !== null && (
-            <p className={clsx("text-xs mt-1 font-medium", momChange >= 0 ? "text-green-600" : "text-red-500")}>
-              {momChange >= 0 ? "▲" : "▼"} {Math.abs(momChange)}% vs last month
-            </p>
-          )}
-          <p className="text-xs text-gray-400 mt-0.5">Last month: {aud(revenueLastMonth)}</p>
-        </div>
-
-        {/* Sessions this month */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sessions This Month</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{sessionsThisMonth}</p>
-          <p className="text-xs text-gray-400 mt-1">{sessionsWeekRes.count || 0} this week · {sessionsTodayRes.count || 0} today</p>
-        </div>
-
-        {/* Completion rate */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Completion Rate (30d)</p>
-          <p className={clsx("text-2xl font-bold mt-1", completionRate >= 80 ? "text-green-600" : completionRate >= 60 ? "text-amber-500" : "text-red-500")}>
-            {completionRate}%
-          </p>
-          <p className="text-xs text-gray-400 mt-1">{completedLast30} completed of {totalLast30} booked</p>
-        </div>
-
-        {/* Cancellation rate */}
-        <div className={clsx("rounded-lg border p-4", cancelledLast30 > 0 ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700")}>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Cancellation Rate (30d)</p>
-          <p className={clsx("text-2xl font-bold mt-1", cancelledLast30 > 0 ? "text-red-600" : "text-green-600")}>
-            {cancellationRate}%
-          </p>
-          <p className="text-xs text-gray-400 mt-1">{cancelledLast30} cancellations</p>
-        </div>
-      </div>
-
-      {/* ── Secondary KPI Strip ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Active Clients</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{activeClientsRes.count || 0}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Avg LTV / Client</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">${avgRevenuePerClient}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Outstanding Sessions</p>
-          <p className="text-lg font-semibold text-blue-600">{outstandingSessions}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">MRR</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{aud(mrr)}</p>
-        </div>
-        <div className={clsx("rounded-lg border p-3 text-center",
-          pastDueSubscriptions.length > 0 ? "bg-red-50 dark:bg-red-950 border-red-200" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-        )}>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Past Due</p>
-          <p className={clsx("text-lg font-semibold", pastDueSubscriptions.length > 0 ? "text-red-600" : "text-gray-900 dark:text-gray-100")}>
-            {pastDueSubscriptions.length}
-          </p>
-        </div>
-        <div className={clsx("rounded-lg border p-3 text-center",
-          (riskRes.data?.length || 0) > 0 ? "bg-amber-50 dark:bg-amber-950 border-amber-200" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-        )}>
-          <p className="text-xs text-gray-500 dark:text-gray-400">At Risk</p>
-          <p className={clsx("text-lg font-semibold", (riskRes.data?.length || 0) > 0 ? "text-amber-600" : "text-gray-900 dark:text-gray-100")}>
-            {riskRes.data?.length || 0}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Charts ── */}
-      <Charts
-        weeklySessionData={weeklySessionData}
-        monthlyData={monthlyData}
-        packageStats={packageStats}
-        sessionStatusBreakdown={sessionStatusBreakdown}
-        genderData={genderData}
-        ageData={ageData}
-        experienceData={experienceData}
-        revenueByGender={revenueByGender}
-        revenueByAge={revenueByAge}
-      />
-
       {/* ── Date range filter ── */}
-      <Suspense>
-        <DashboardDateFilter from={fromStr} to={toStr} />
-      </Suspense>
+      <DashboardDateFilter from={fromStr} to={toStr} />
 
-      {/* ── Sessions in range + At-Risk + Revenue summary ── */}
+      {/* ── Period KPIs ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Fees Banked</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{aud(feesBankedCents)}</p>
+          <p className="text-xs text-gray-400 mt-1">Payments received in period</p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Fees Earned</p>
+          <p className="text-2xl font-bold text-green-600 mt-1">{aud(feesEarnedCents)}</p>
+          <p className="text-xs text-gray-400 mt-1">{rangeCompleted} session{rangeCompleted !== 1 ? "s" : ""} completed</p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Forecast Fees Earned</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">{aud(forecastFeesCents)}</p>
+          <p className="text-xs text-gray-400 mt-1">+ {rangeConfirmed} confirmed session{rangeConfirmed !== 1 ? "s" : ""}</p>
+        </div>
+      </div>
+
+      {/* ── Sessions in range + sidebar ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Sessions in range */}
+        {/* Sessions list */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Sessions in Range</h2>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Sessions</h2>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-xs text-gray-500 dark:text-gray-400">{rangeSessions.length} total</span>
                 {rangeBooked > 0 && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">{rangeBooked} booked</span>}
@@ -578,34 +521,52 @@ export default async function DashboardPage({
 
           {/* Revenue summary */}
           <div className="bg-gray-900 rounded-lg p-4 text-white">
-            <h3 className="text-xs font-medium text-gray-400 mb-3">Revenue Summary</h3>
+            <h3 className="text-xs font-medium text-gray-400 mb-3">Business Overview</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-xs text-gray-400">This Month</span>
+                <span className="text-xs text-gray-400">Revenue This Month</span>
                 <span className="text-sm font-medium">{aud(revenueThisMonth)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-400">Last Month</span>
+                <span className="text-sm font-medium">{aud(revenueLastMonth)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-xs text-gray-400">MRR (Subscriptions)</span>
                 <span className="text-sm font-medium">{aud(mrr)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-400">Avg LTV / Client</span>
-                <span className="text-sm font-medium">${avgRevenuePerClient}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-xs text-gray-400">Outstanding Sessions</span>
-                <span className="text-sm font-medium text-blue-400">{outstandingSessions} sessions owed</span>
+                <span className="text-sm font-medium text-blue-400">{outstandingSessions} owed</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-gray-700">
-                <span className="text-xs text-gray-400">Revenue at Risk</span>
-                <span className={clsx("text-sm font-medium", pastDueSubscriptions.length * avgRevenue > 0 ? "text-red-400" : "text-green-400")}>
-                  {aud(pastDueSubscriptions.length * avgRevenue)}
+                <span className="text-xs text-gray-400">Active Clients</span>
+                <span className="text-sm font-medium">{activeClientsRes.count || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-400">Completion Rate (30d)</span>
+                <span className={clsx("text-sm font-medium", completionRate >= 80 ? "text-green-400" : completionRate >= 60 ? "text-amber-400" : "text-red-400")}>
+                  {completionRate}%
                 </span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* ── Charts ── */}
+      <Charts
+        weeklySessionData={weeklySessionData}
+        monthlyData={monthlyData}
+        packageStats={packageStats}
+        sessionStatusBreakdown={sessionStatusBreakdown}
+        genderData={genderData}
+        ageData={ageData}
+        experienceData={experienceData}
+        revenueByGender={revenueByGender}
+        revenueByAge={revenueByAge}
+      />
+
     </div>
   );
 }

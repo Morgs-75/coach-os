@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 
 interface Props {
@@ -48,14 +47,10 @@ const PRESETS = [
 
 export default function DashboardDateFilter({ from, to }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const push = useCallback((f: string, t: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set("from", f);
-    p.set("to", t);
-    router.push(`/dashboard?${p.toString()}`);
-  }, [router, searchParams]);
+  const push = (f: string, t: string) => {
+    router.push(`/dashboard?from=${f}&to=${t}`);
+  };
 
   const activePreset = PRESETS.find(p => p.from() === from && p.to() === to)?.label;
 
