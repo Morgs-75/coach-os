@@ -3,35 +3,136 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const DEFAULT_REMINDER_BODY =
+const DEFAULT_PRE_BODY =
   "Hi {{client_name}}, just a reminder your session is coming up at {{session_datetime}}. See you then!";
-const DEFAULT_FOLLOWUP_BODY =
+const DEFAULT_POST_BODY =
   "Hi {{client_name}}, great session today! Looking forward to seeing you next time.";
+
+interface Schedule {
+  id: string;
+  type: "pre_session" | "post_session";
+  label: string;
+  mins_offset: number;
+  body: string;
+  enabled: boolean;
+}
+
+function ScheduleCard({
+  schedule,
+  defaultBody,
+  minsLabel,
+  variableHint,
+  saving,
+  message,
+  onChange,
+  onSave,
+  onDelete,
+}: {
+  schedule: Schedule;
+  defaultBody: string;
+  minsLabel: string;
+  variableHint: string;
+  saving: boolean;
+  message: string;
+  onChange: (updates: Partial<Schedule>) => void;
+  onSave: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="card p-5 space-y-4">
+      {/* Header row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <label className="flex items-center gap-2 cursor-pointer shrink-0">
+          <input
+            type="checkbox"
+            checked={schedule.enabled}
+            onChange={(e) => onChange({ enabled: e.target.checked })}
+            className="w-4 h-4 rounded"
+          />
+          <span className="text-sm text-gray-500 dark:text-gray-400">On</span>
+        </label>
+        <input
+          type="text"
+          value={schedule.label}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="Label (e.g. 60 min reminder)"
+          className="input flex-1 min-w-0 text-sm"
+        />
+        <div className="flex items-center gap-2 shrink-0">
+          <input
+            type="number"
+            min={1}
+            max={10080}
+            value={schedule.mins_offset}
+            onChange={(e) => onChange({ mins_offset: Number(e.target.value) })}
+            className="input w-20 text-sm text-center"
+          />
+          <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {minsLabel}
+          </span>
+        </div>
+        <button
+          onClick={onDelete}
+          className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+          title="Delete"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Body */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="label mb-0">Message</label>
+          {schedule.body !== defaultBody && (
+            <button
+              onClick={() => onChange({ body: defaultBody })}
+              className="text-xs text-brand-600 hover:underline"
+            >
+              Revert to default
+            </button>
+          )}
+        </div>
+        <textarea
+          value={schedule.body}
+          onChange={(e) => onChange({ body: e.target.value })}
+          rows={3}
+          className="input font-mono text-sm"
+        />
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          Variables: <code>{variableHint}</code>
+        </p>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-4">
+        <button onClick={onSave} disabled={saving} className="btn-primary text-sm">
+          {saving ? "Saving..." : "Save"}
+        </button>
+        {message && (
+          <span className={`text-sm ${message.includes("Failed") ? "text-red-600" : "text-green-600"}`}>
+            {message}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function SmsSettingsPage() {
   const [orgId, setOrgId] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Card 1 — SMS Enabled
+  // Master toggle
   const [enabled, setEnabled] = useState(false);
   const [savingEnabled, setSavingEnabled] = useState(false);
   const [enabledMessage, setEnabledMessage] = useState("");
 
-  // Card 2 — Session Reminders
-  const [sendSessionReminders, setSendSessionReminders] = useState(true);
-  const [reminderMinsBefore, setReminderMinsBefore] = useState(60);
-  const [reminderBody, setReminderBody] = useState(DEFAULT_REMINDER_BODY);
-  const [reminderTemplateId, setReminderTemplateId] = useState<string | null>(null);
-  const [savingReminders, setSavingReminders] = useState(false);
-  const [remindersMessage, setRemindersMessage] = useState("");
-
-  // Card 3 — Follow-up Messages
-  const [sendFeedbackRequests, setSendFeedbackRequests] = useState(true);
-  const [feedbackMinsAfter, setFeedbackMinsAfter] = useState(90);
-  const [followupBody, setFollowupBody] = useState(DEFAULT_FOLLOWUP_BODY);
-  const [followupTemplateId, setFollowupTemplateId] = useState<string | null>(null);
-  const [savingFollowup, setSavingFollowup] = useState(false);
-  const [followupMessage, setFollowupMessage] = useState("");
+  // Schedules
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [messageById, setMessageById] = useState<Record<string, string>>({});
+  const [addingType, setAddingType] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -54,36 +155,20 @@ export default function SmsSettingsPage() {
 
     const { data: smsSettings } = await supabase
       .from("sms_settings")
-      .select("*")
+      .select("enabled")
       .eq("org_id", membership.org_id)
       .maybeSingle();
 
-    if (smsSettings) {
-      setEnabled(smsSettings.enabled ?? false);
-      setSendSessionReminders(smsSettings.send_session_reminders ?? true);
-      setReminderMinsBefore(smsSettings.reminder_mins_before ?? 60);
-      setSendFeedbackRequests(smsSettings.send_feedback_requests ?? true);
-      setFeedbackMinsAfter(smsSettings.feedback_mins_after ?? 90);
-    }
+    if (smsSettings) setEnabled(smsSettings.enabled ?? false);
 
-    const { data: templates } = await supabase
-      .from("sms_templates")
-      .select("id, template_key, body")
+    const { data: schedulesData } = await supabase
+      .from("sms_schedules")
+      .select("*")
       .eq("org_id", membership.org_id)
-      .in("template_key", ["session_reminder", "feedback_request"]);
+      .order("type")
+      .order("sort_order");
 
-    if (templates) {
-      const reminder = templates.find((t) => t.template_key === "session_reminder");
-      const followup = templates.find((t) => t.template_key === "feedback_request");
-      if (reminder) {
-        setReminderBody(reminder.body);
-        setReminderTemplateId(reminder.id);
-      }
-      if (followup) {
-        setFollowupBody(followup.body);
-        setFollowupTemplateId(followup.id);
-      }
-    }
+    if (schedulesData) setSchedules(schedulesData);
 
     setLoading(false);
   }
@@ -99,66 +184,72 @@ export default function SmsSettingsPage() {
     if (!error) setTimeout(() => setEnabledMessage(""), 3000);
   }
 
-  async function saveReminders() {
-    setSavingReminders(true);
-    setRemindersMessage("");
-
-    const settingsError = (await supabase
-      .from("sms_settings")
-      .upsert(
-        { org_id: orgId, send_session_reminders: sendSessionReminders, reminder_mins_before: reminderMinsBefore },
-        { onConflict: "org_id" }
-      )).error;
-
-    let bodyError = null;
-    if (reminderTemplateId) {
-      bodyError = (await supabase
-        .from("sms_templates")
-        .update({ body: reminderBody, updated_at: new Date().toISOString() })
-        .eq("id", reminderTemplateId)).error;
-    }
-
-    const error = settingsError || bodyError;
-    setRemindersMessage(error ? "Failed to save" : "Saved!");
-    setSavingReminders(false);
-    if (!error) setTimeout(() => setRemindersMessage(""), 3000);
+  function updateSchedule(id: string, updates: Partial<Schedule>) {
+    setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
   }
 
-  async function saveFollowup() {
-    setSavingFollowup(true);
-    setFollowupMessage("");
+  async function saveSchedule(id: string) {
+    const schedule = schedules.find((s) => s.id === id);
+    if (!schedule) return;
 
-    const settingsError = (await supabase
-      .from("sms_settings")
-      .upsert(
-        { org_id: orgId, send_feedback_requests: sendFeedbackRequests, feedback_mins_after: feedbackMinsAfter },
-        { onConflict: "org_id" }
-      )).error;
+    setSavingId(id);
+    setMessageById((prev) => ({ ...prev, [id]: "" }));
 
-    let bodyError = null;
-    if (followupTemplateId) {
-      bodyError = (await supabase
-        .from("sms_templates")
-        .update({ body: followupBody, updated_at: new Date().toISOString() })
-        .eq("id", followupTemplateId)).error;
-    }
+    const { error } = await supabase
+      .from("sms_schedules")
+      .update({
+        label: schedule.label,
+        mins_offset: schedule.mins_offset,
+        body: schedule.body,
+        enabled: schedule.enabled,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-    const error = settingsError || bodyError;
-    setFollowupMessage(error ? "Failed to save" : "Saved!");
-    setSavingFollowup(false);
-    if (!error) setTimeout(() => setFollowupMessage(""), 3000);
+    setMessageById((prev) => ({ ...prev, [id]: error ? "Failed to save" : "Saved!" }));
+    setSavingId(null);
+    if (!error) setTimeout(() => setMessageById((prev) => ({ ...prev, [id]: "" })), 3000);
   }
 
-  if (loading) {
-    return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
+  async function addSchedule(type: "pre_session" | "post_session") {
+    setAddingType(type);
+    const isPost = type === "post_session";
+    const sortOrder = schedules.filter((s) => s.type === type).length;
+
+    const { data, error } = await supabase
+      .from("sms_schedules")
+      .insert({
+        org_id: orgId,
+        type,
+        label: isPost ? "90 min follow-up" : "60 min reminder",
+        mins_offset: isPost ? 90 : 60,
+        body: isPost ? DEFAULT_POST_BODY : DEFAULT_PRE_BODY,
+        enabled: true,
+        sort_order: sortOrder,
+      })
+      .select()
+      .single();
+
+    if (!error && data) setSchedules((prev) => [...prev, data]);
+    setAddingType(null);
   }
+
+  async function deleteSchedule(id: string) {
+    await supabase.from("sms_schedules").delete().eq("id", id);
+    setSchedules((prev) => prev.filter((s) => s.id !== id));
+  }
+
+  if (loading) return <div className="text-gray-500 dark:text-gray-400">Loading...</div>;
+
+  const preSchedules = schedules.filter((s) => s.type === "pre_session");
+  const postSchedules = schedules.filter((s) => s.type === "post_session");
 
   return (
     <div className="max-w-3xl">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">SMS &amp; Reminders</h1>
 
-      {/* Card 1 — SMS Enabled */}
-      <div className="card p-6 mb-6">
+      {/* SMS Enabled */}
+      <div className="card p-6 mb-8">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">SMS Messaging</h2>
         <label className="flex items-center gap-3 cursor-pointer">
           <input
@@ -171,7 +262,7 @@ export default function SmsSettingsPage() {
         </label>
         {!enabled && (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            All automated SMS (reminders and follow-ups) is currently paused.
+            All automated SMS is currently paused.
           </p>
         )}
         <div className="flex items-center gap-4 mt-4">
@@ -186,130 +277,76 @@ export default function SmsSettingsPage() {
         </div>
       </div>
 
-      {/* Card 2 — Session Reminders */}
-      <div className="card p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Session Reminders</h2>
-        <div className="space-y-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sendSessionReminders}
-              onChange={(e) => setSendSessionReminders(e.target.checked)}
-              className="w-4 h-4 rounded"
-            />
-            <span className="text-gray-700 dark:text-gray-300">Send pre-session reminders</span>
-          </label>
-
-          {sendSessionReminders && (
-            <div>
-              <label className="label">Minutes before session</label>
-              <input
-                type="number"
-                min={15}
-                max={1440}
-                value={reminderMinsBefore}
-                onChange={(e) => setReminderMinsBefore(Number(e.target.value))}
-                className="input w-32"
-              />
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="label mb-0">Message</label>
-              {reminderBody !== DEFAULT_REMINDER_BODY && (
-                <button
-                  onClick={() => setReminderBody(DEFAULT_REMINDER_BODY)}
-                  className="text-xs text-brand-600 hover:underline"
-                >
-                  Revert to default
-                </button>
-              )}
-            </div>
-            <textarea
-              value={reminderBody}
-              onChange={(e) => setReminderBody(e.target.value)}
-              rows={3}
-              className="input font-mono text-sm"
-            />
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Variables: <code>{"{{client_name}}"}</code>, <code>{"{{session_datetime}}"}</code>, <code>{"{{location}}"}</code>, <code>{"{{coach_name}}"}</code>
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 mt-4">
-          <button onClick={saveReminders} disabled={savingReminders} className="btn-primary">
-            {savingReminders ? "Saving..." : "Save"}
+      {/* Session Reminders */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Session Reminders</h2>
+          <button
+            onClick={() => addSchedule("pre_session")}
+            disabled={addingType === "pre_session"}
+            className="btn-secondary text-sm"
+          >
+            {addingType === "pre_session" ? "Adding..." : "+ Add Reminder"}
           </button>
-          {remindersMessage && (
-            <span className={remindersMessage.includes("Failed") ? "text-red-600" : "text-green-600"}>
-              {remindersMessage}
-            </span>
-          )}
         </div>
+        {preSchedules.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+            No reminders configured. Click &quot;+ Add Reminder&quot; to create one.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {preSchedules.map((schedule) => (
+              <ScheduleCard
+                key={schedule.id}
+                schedule={schedule}
+                defaultBody={DEFAULT_PRE_BODY}
+                minsLabel="min before"
+                variableHint="{{client_name}}, {{session_datetime}}, {{location}}, {{coach_name}}"
+                saving={savingId === schedule.id}
+                message={messageById[schedule.id] || ""}
+                onChange={(updates) => updateSchedule(schedule.id, updates)}
+                onSave={() => saveSchedule(schedule.id)}
+                onDelete={() => deleteSchedule(schedule.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Card 3 — Follow-up Messages */}
-      <div className="card p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Follow-up Messages</h2>
-        <div className="space-y-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sendFeedbackRequests}
-              onChange={(e) => setSendFeedbackRequests(e.target.checked)}
-              className="w-4 h-4 rounded"
-            />
-            <span className="text-gray-700 dark:text-gray-300">Send follow-up messages after sessions</span>
-          </label>
-
-          {sendFeedbackRequests && (
-            <div>
-              <label className="label">Minutes after session ends</label>
-              <input
-                type="number"
-                min={15}
-                max={1440}
-                value={feedbackMinsAfter}
-                onChange={(e) => setFeedbackMinsAfter(Number(e.target.value))}
-                className="input w-32"
-              />
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="label mb-0">Message</label>
-              {followupBody !== DEFAULT_FOLLOWUP_BODY && (
-                <button
-                  onClick={() => setFollowupBody(DEFAULT_FOLLOWUP_BODY)}
-                  className="text-xs text-brand-600 hover:underline"
-                >
-                  Revert to default
-                </button>
-              )}
-            </div>
-            <textarea
-              value={followupBody}
-              onChange={(e) => setFollowupBody(e.target.value)}
-              rows={3}
-              className="input font-mono text-sm"
-            />
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Variables: <code>{"{{client_name}}"}</code>, <code>{"{{coach_name}}"}</code>, <code>{"{{feedback_link}}"}</code>
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 mt-4">
-          <button onClick={saveFollowup} disabled={savingFollowup} className="btn-primary">
-            {savingFollowup ? "Saving..." : "Save"}
+      {/* Follow-up Messages */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Follow-up Messages</h2>
+          <button
+            onClick={() => addSchedule("post_session")}
+            disabled={addingType === "post_session"}
+            className="btn-secondary text-sm"
+          >
+            {addingType === "post_session" ? "Adding..." : "+ Add Follow-up"}
           </button>
-          {followupMessage && (
-            <span className={followupMessage.includes("Failed") ? "text-red-600" : "text-green-600"}>
-              {followupMessage}
-            </span>
-          )}
         </div>
+        {postSchedules.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+            No follow-ups configured. Click &quot;+ Add Follow-up&quot; to create one.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {postSchedules.map((schedule) => (
+              <ScheduleCard
+                key={schedule.id}
+                schedule={schedule}
+                defaultBody={DEFAULT_POST_BODY}
+                minsLabel="min after"
+                variableHint="{{client_name}}, {{coach_name}}, {{feedback_link}}"
+                saving={savingId === schedule.id}
+                message={messageById[schedule.id] || ""}
+                onChange={(updates) => updateSchedule(schedule.id, updates)}
+                onSave={() => saveSchedule(schedule.id)}
+                onDelete={() => deleteSchedule(schedule.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
