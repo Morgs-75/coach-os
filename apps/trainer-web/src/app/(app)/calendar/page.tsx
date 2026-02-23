@@ -724,6 +724,18 @@ export default function CalendarPage() {
     }) || null;
   }
 
+  function getBlockAtSlot(date: Date, hour: number, minute: number): BlockedTime | null {
+    const dayOfWeek = date.getDay();
+    const dateStr = date.toISOString().split("T")[0];
+    const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`;
+    return blockedTimes.find((b) => {
+      if (!(b.start_time <= timeStr && b.end_time > timeStr)) return false;
+      if (b.date) return b.date === dateStr;
+      if (b.day_of_week !== undefined && b.day_of_week !== null) return b.day_of_week === dayOfWeek;
+      return false;
+    }) ?? null;
+  }
+
   function isAvailable(date: Date, hour: number, minute: number): boolean {
     const dayOfWeek = date.getDay();
     const dateStr = date.toISOString().split("T")[0];
@@ -1066,13 +1078,22 @@ export default function CalendarPage() {
               return (
                 <div
                   key={dayIndex}
-                  onClick={() => booking ? handleBookingDoubleClick(booking) : handleSlotClick(date, slot.hour, slot.minute)}
+                  onClick={() => {
+                    if (booking) {
+                      handleBookingDoubleClick(booking);
+                    } else if (!available) {
+                      const block = getBlockAtSlot(date, slot.hour, slot.minute);
+                      if (block) handleEditBlock(block);
+                    } else {
+                      handleSlotClick(date, slot.hour, slot.minute);
+                    }
+                  }}
                   className={clsx(
                     "border-l border-gray-100 relative border-t",
                     slot.minute === 0 ? "border-t-gray-300" : "border-t-gray-100",
                     available && !isBooked && "bg-green-50 hover:bg-green-100 cursor-pointer",
                     isBooked && "cursor-pointer",
-                    !available && !isBooked && "bg-gray-100 dark:bg-gray-700"
+                    !available && !isBooked && "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
                   )}
                   style={{ height: `${rowHeight}px` }}
                 >
