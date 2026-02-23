@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+const DEFAULT_REMINDER_BODY =
+  "Hi {{client_name}}, just a reminder your session is coming up at {{session_datetime}}. See you then!";
+const DEFAULT_FOLLOWUP_BODY =
+  "Hi {{client_name}}, great session today! Looking forward to seeing you next time.";
+
 export default function SmsSettingsPage() {
   const [orgId, setOrgId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -15,12 +20,16 @@ export default function SmsSettingsPage() {
   // Card 2 — Session Reminders
   const [sendSessionReminders, setSendSessionReminders] = useState(true);
   const [reminderMinsBefore, setReminderMinsBefore] = useState(60);
+  const [reminderBody, setReminderBody] = useState(DEFAULT_REMINDER_BODY);
+  const [reminderTemplateId, setReminderTemplateId] = useState<string | null>(null);
   const [savingReminders, setSavingReminders] = useState(false);
   const [remindersMessage, setRemindersMessage] = useState("");
 
   // Card 3 — Follow-up Messages
   const [sendFeedbackRequests, setSendFeedbackRequests] = useState(true);
   const [feedbackMinsAfter, setFeedbackMinsAfter] = useState(90);
+  const [followupBody, setFollowupBody] = useState(DEFAULT_FOLLOWUP_BODY);
+  const [followupTemplateId, setFollowupTemplateId] = useState<string | null>(null);
   const [savingFollowup, setSavingFollowup] = useState(false);
   const [followupMessage, setFollowupMessage] = useState("");
 
@@ -57,6 +66,25 @@ export default function SmsSettingsPage() {
       setFeedbackMinsAfter(smsSettings.feedback_mins_after ?? 90);
     }
 
+    const { data: templates } = await supabase
+      .from("sms_templates")
+      .select("id, template_key, body")
+      .eq("org_id", membership.org_id)
+      .in("template_key", ["session_reminder", "feedback_request"]);
+
+    if (templates) {
+      const reminder = templates.find((t) => t.template_key === "session_reminder");
+      const followup = templates.find((t) => t.template_key === "feedback_request");
+      if (reminder) {
+        setReminderBody(reminder.body);
+        setReminderTemplateId(reminder.id);
+      }
+      if (followup) {
+        setFollowupBody(followup.body);
+        setFollowupTemplateId(followup.id);
+      }
+    }
+
     setLoading(false);
   }
 
@@ -74,12 +102,23 @@ export default function SmsSettingsPage() {
   async function saveReminders() {
     setSavingReminders(true);
     setRemindersMessage("");
-    const { error } = await supabase
+
+    const settingsError = (await supabase
       .from("sms_settings")
       .upsert(
         { org_id: orgId, send_session_reminders: sendSessionReminders, reminder_mins_before: reminderMinsBefore },
         { onConflict: "org_id" }
-      );
+      )).error;
+
+    let bodyError = null;
+    if (reminderTemplateId) {
+      bodyError = (await supabase
+        .from("sms_templates")
+        .update({ body: reminderBody, updated_at: new Date().toISOString() })
+        .eq("id", reminderTemplateId)).error;
+    }
+
+    const error = settingsError || bodyError;
     setRemindersMessage(error ? "Failed to save" : "Saved!");
     setSavingReminders(false);
     if (!error) setTimeout(() => setRemindersMessage(""), 3000);
@@ -88,12 +127,23 @@ export default function SmsSettingsPage() {
   async function saveFollowup() {
     setSavingFollowup(true);
     setFollowupMessage("");
-    const { error } = await supabase
+
+    const settingsError = (await supabase
       .from("sms_settings")
       .upsert(
         { org_id: orgId, send_feedback_requests: sendFeedbackRequests, feedback_mins_after: feedbackMinsAfter },
         { onConflict: "org_id" }
-      );
+      )).error;
+
+    let bodyError = null;
+    if (followupTemplateId) {
+      bodyError = (await supabase
+        .from("sms_templates")
+        .update({ body: followupBody, updated_at: new Date().toISOString() })
+        .eq("id", followupTemplateId)).error;
+    }
+
+    const error = settingsError || bodyError;
     setFollowupMessage(error ? "Failed to save" : "Saved!");
     setSavingFollowup(false);
     if (!error) setTimeout(() => setFollowupMessage(""), 3000);
@@ -149,6 +199,7 @@ export default function SmsSettingsPage() {
             />
             <span className="text-gray-700 dark:text-gray-300">Send pre-session reminders</span>
           </label>
+
           {sendSessionReminders && (
             <div>
               <label className="label">Minutes before session</label>
@@ -162,9 +213,28 @@ export default function SmsSettingsPage() {
               />
             </div>
           )}
-          <div className="rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Preview: </span>
-            Hi [Client], just a reminder your session is coming up at [Day Date at Time]. See you then!
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="label mb-0">Message</label>
+              {reminderBody !== DEFAULT_REMINDER_BODY && (
+                <button
+                  onClick={() => setReminderBody(DEFAULT_REMINDER_BODY)}
+                  className="text-xs text-brand-600 hover:underline"
+                >
+                  Revert to default
+                </button>
+              )}
+            </div>
+            <textarea
+              value={reminderBody}
+              onChange={(e) => setReminderBody(e.target.value)}
+              rows={3}
+              className="input font-mono text-sm"
+            />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Variables: <code>{"{{client_name}}"}</code>, <code>{"{{session_datetime}}"}</code>, <code>{"{{location}}"}</code>, <code>{"{{coach_name}}"}</code>
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-4 mt-4">
@@ -192,6 +262,7 @@ export default function SmsSettingsPage() {
             />
             <span className="text-gray-700 dark:text-gray-300">Send follow-up messages after sessions</span>
           </label>
+
           {sendFeedbackRequests && (
             <div>
               <label className="label">Minutes after session ends</label>
@@ -205,9 +276,28 @@ export default function SmsSettingsPage() {
               />
             </div>
           )}
-          <div className="rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Preview: </span>
-            Hi [Client], great session today! Looking forward to seeing you next time.
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="label mb-0">Message</label>
+              {followupBody !== DEFAULT_FOLLOWUP_BODY && (
+                <button
+                  onClick={() => setFollowupBody(DEFAULT_FOLLOWUP_BODY)}
+                  className="text-xs text-brand-600 hover:underline"
+                >
+                  Revert to default
+                </button>
+              )}
+            </div>
+            <textarea
+              value={followupBody}
+              onChange={(e) => setFollowupBody(e.target.value)}
+              rows={3}
+              className="input font-mono text-sm"
+            />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Variables: <code>{"{{client_name}}"}</code>, <code>{"{{coach_name}}"}</code>, <code>{"{{feedback_link}}"}</code>
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-4 mt-4">
