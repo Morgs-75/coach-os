@@ -62,7 +62,7 @@ const TIME_SLOTS = Array.from({ length: 65 }, (_, i) => {
   const totalMinutes = 5 * 60 + i * 15; // Start at 05:00
   const hour = Math.floor(totalMinutes / 60);
   const minute = totalMinutes % 60;
-  return { hour, minute, label: `${hour}:${minute.toString().padStart(2, "0")}` };
+  return { hour, minute, label: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}` };
 });
 
 export default function CalendarPage() {
@@ -107,6 +107,7 @@ export default function CalendarPage() {
   const [saving, setSaving] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(2); // 0-4 scale: 20px, 24px, 32px, 40px, 48px
+  const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
 
   const ZOOM_SIZES = [20, 24, 32, 40, 48];
   const rowHeight = ZOOM_SIZES[zoomLevel];
@@ -130,9 +131,34 @@ export default function CalendarPage() {
     });
   }, [weekStart]);
 
+  // For day view: just the current date; for week: all 7 days
+  const viewDays = useMemo(() => {
+    if (viewMode === "day") {
+      const d = new Date(currentDate);
+      d.setHours(0, 0, 0, 0);
+      return [d];
+    }
+    return weekDays;
+  }, [viewMode, currentDate, weekDays]);
+
+  // Month grid: all days in the month padded to full weeks
+  const monthDays = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    // Pad start to Monday
+    const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const days: (Date | null)[] = [];
+    for (let i = 0; i < startPad; i++) days.push(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(year, month, d));
+    while (days.length % 7 !== 0) days.push(null);
+    return days;
+  }, [currentDate]);
+
   useEffect(() => {
     loadData();
-  }, [currentDate]);
+  }, [currentDate, viewMode]);
 
   // Poll every 15 seconds for confirmation updates
   useEffect(() => {
@@ -171,9 +197,21 @@ export default function CalendarPage() {
     if (!membership) return;
     setOrgId(membership.org_id);
 
-    const rangeStart = new Date(weekStart);
-    const rangeEnd = new Date(weekStart);
-    rangeEnd.setDate(rangeEnd.getDate() + 7);
+    let rangeStart: Date;
+    let rangeEnd: Date;
+    if (viewMode === "day") {
+      rangeStart = new Date(currentDate);
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(currentDate);
+      rangeEnd.setHours(23, 59, 59, 999);
+    } else if (viewMode === "month") {
+      rangeStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      rangeEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    } else {
+      rangeStart = new Date(weekStart);
+      rangeEnd = new Date(weekStart);
+      rangeEnd.setDate(rangeEnd.getDate() + 7);
+    }
 
     const [bookingsRes, blockedRes, clientsRes, sessionTypesRes] = await Promise.all([
       supabase
@@ -729,10 +767,29 @@ export default function CalendarPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Calendar</h1>
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            {weekStart.toLocaleDateString("en-AU", { month: "short", year: "numeric" })}
+            {viewMode === "day" && currentDate.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            {viewMode === "week" && weekStart.toLocaleDateString("en-AU", { month: "short", year: "numeric" })}
+            {viewMode === "month" && currentDate.toLocaleDateString("en-AU", { month: "long", year: "numeric" })}
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden text-xs">
+            {(["day", "week", "month"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={clsx(
+                  "px-3 py-1.5 font-medium capitalize border-l border-gray-200 dark:border-gray-600 first:border-l-0 transition-colors",
+                  viewMode === mode
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                )}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => {
               setSelectedSlot(null);
@@ -843,12 +900,14 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Week Navigation */}
+      {/* Navigation */}
       <div className="flex items-center gap-2 mt-3">
         <button
           onClick={() => {
             const d = new Date(currentDate);
-            d.setDate(d.getDate() - 7);
+            if (viewMode === "day") d.setDate(d.getDate() - 1);
+            else if (viewMode === "week") d.setDate(d.getDate() - 7);
+            else d.setMonth(d.getMonth() - 1);
             setCurrentDate(d);
           }}
           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
@@ -866,7 +925,9 @@ export default function CalendarPage() {
         <button
           onClick={() => {
             const d = new Date(currentDate);
-            d.setDate(d.getDate() + 7);
+            if (viewMode === "day") d.setDate(d.getDate() + 1);
+            else if (viewMode === "week") d.setDate(d.getDate() + 7);
+            else d.setMonth(d.getMonth() + 1);
             setCurrentDate(d);
           }}
           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
@@ -878,11 +939,82 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar Grid */}
+      {viewMode === "month" ? (
+        <div className="flex-1 overflow-auto mt-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900">
+          {/* Month column headers */}
+          <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+              <div key={d} className="py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700 first:border-l-0">
+                {d}
+              </div>
+            ))}
+          </div>
+          {/* Month day cells */}
+          <div className="grid grid-cols-7">
+            {monthDays.map((day, i) => {
+              const dayBookings = day
+                ? bookings.filter((b) => new Date(b.start_time).toDateString() === day.toDateString())
+                : [];
+              return (
+                <div
+                  key={i}
+                  onClick={() => { if (day) { setCurrentDate(day); setViewMode("day"); } }}
+                  className={clsx(
+                    "min-h-[100px] border-l border-t border-gray-200 dark:border-gray-700 p-1",
+                    !day && "bg-gray-50 dark:bg-gray-800/50",
+                    day && "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800",
+                    day && isToday(day) && "bg-blue-50 dark:bg-blue-900/10"
+                  )}
+                >
+                  {day && (
+                    <>
+                      <div className={clsx(
+                        "text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full",
+                        isToday(day) ? "bg-blue-600 text-white" : "text-gray-700 dark:text-gray-300"
+                      )}>
+                        {day.getDate()}
+                      </div>
+                      <div className="space-y-0.5">
+                        {dayBookings.slice(0, 3).map((b) => {
+                          const bt = sessionTypes.find(
+                            (st) => st.id === b.session_type_id || st.slug === b.session_type
+                          );
+                          return (
+                            <div
+                              key={b.id}
+                              onClick={(e) => { e.stopPropagation(); handleBookingDoubleClick(b); }}
+                              className="text-[10px] px-1 py-0.5 rounded truncate text-white cursor-pointer"
+                              style={{ backgroundColor: bt?.color || "#3B82F6" }}
+                            >
+                              {new Date(b.start_time).toLocaleTimeString("en-AU", {
+                                hour: "2-digit", minute: "2-digit", hour12: false,
+                              })}{" "}
+                              {b.client_name}
+                            </div>
+                          );
+                        })}
+                        {dayBookings.length > 3 && (
+                          <div className="text-[10px] text-gray-500 dark:text-gray-400 px-1">
+                            +{dayBookings.length - 3} more
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
       <div className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 overflow-y-auto mt-3">
         {/* Day headers */}
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+        <div
+          className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 sticky top-0 z-10"
+          style={{ display: "grid", gridTemplateColumns: `80px repeat(${viewDays.length}, 1fr)` }}
+        >
           <div className="p-1 text-xs text-gray-500 dark:text-gray-400"></div>
-          {weekDays.map((date, i) => (
+          {viewDays.map((date, i) => (
             <div
               key={i}
               className={clsx(
@@ -903,22 +1035,28 @@ export default function CalendarPage() {
 
         {/* Time slots */}
         {TIME_SLOTS.map((slot, slotIndex) => (
-          <div key={slotIndex} className="grid grid-cols-[60px_repeat(7,1fr)]">
+          <div
+            key={slotIndex}
+            style={{ display: "grid", gridTemplateColumns: `80px repeat(${viewDays.length}, 1fr)` }}
+          >
             <div
               className={clsx(
                 "relative border-r border-gray-200 dark:border-gray-700",
-                slot.minute === 0 ? "border-t border-gray-300 dark:border-gray-600" : "border-t border-gray-100"
+                slot.minute === 0 ? "border-t border-gray-300 dark:border-gray-600" : "border-t border-gray-100 dark:border-gray-700/50"
               )}
               style={{ height: `${rowHeight}px` }}
             >
-              {/* Only show hour labels, positioned at the line */}
-              {slot.minute === 0 && (
-                <span className="absolute -top-[10px] left-0 right-1 text-right text-xs text-gray-500 dark:text-gray-400 font-medium bg-white dark:bg-gray-900 pr-1">
-                  {slot.hour.toString().padStart(2, "0")}:00
-                </span>
-              )}
+              {/* Show all 15-min time labels */}
+              <span className={clsx(
+                "absolute -top-[9px] left-0 right-1 text-right pr-2 leading-none select-none",
+                slot.minute === 0
+                  ? "text-[11px] font-semibold text-gray-500 dark:text-gray-400"
+                  : "text-[10px] text-gray-400 dark:text-gray-500"
+              )}>
+                {slot.label}
+              </span>
             </div>
-            {weekDays.map((date, dayIndex) => {
+            {viewDays.map((date, dayIndex) => {
               const available = isAvailable(date, slot.hour, slot.minute);
               const booking = getBookingAtSlot(date, slot.hour, slot.minute);
               const isBooked = isBookedSlot(date, slot.hour, slot.minute);
@@ -1010,6 +1148,7 @@ export default function CalendarPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -1288,12 +1427,20 @@ export default function CalendarPage() {
 
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
               {editingBooking ? (
-                <button
-                  onClick={handleCancelBooking}
-                  className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
-                >
-                  Cancel Booking
-                </button>
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={handleCancelBooking}
+                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    Cancel Booking
+                  </button>
+                  <button
+                    onClick={() => sendBookingConfirmation(editingBooking)}
+                    className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                  >
+                    Resend Confirmation
+                  </button>
+                </div>
               ) : (
                 <div></div>
               )}

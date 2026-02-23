@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 const DEFAULT_PRE_BODY =
   "Hi {{client_name}}, just a reminder your session is coming up at {{session_datetime}}. See you then!";
 const DEFAULT_POST_BODY =
-  "Hi {{client_name}}, great session today! Looking forward to seeing you next time.";
+  "Hi {{client_name}}, great session today! You currently have {{sessions_remaining}} sessions remaining on your package, with {{sessions_booked}} sessions booked. Please let me know if there is anything you would like to adjust or work on specifically. Have a great day! {{coach_name}}";
 
 interface Schedule {
   id: string;
@@ -337,7 +337,7 @@ export default function SmsSettingsPage() {
                 schedule={schedule}
                 defaultBody={DEFAULT_POST_BODY}
                 minsLabel="min after"
-                variableHint="{{client_name}}, {{coach_name}}, {{feedback_link}}"
+                variableHint="{{client_name}}, {{coach_name}}, {{feedback_link}}, {{sessions_remaining}}, {{sessions_booked}}"
                 saving={savingId === schedule.id}
                 message={messageById[schedule.id] || ""}
                 onChange={(updates) => updateSchedule(schedule.id, updates)}
