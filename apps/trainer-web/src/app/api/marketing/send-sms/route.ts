@@ -41,6 +41,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "SMS is disabled for this organisation" }, { status: 400 });
     }
 
+    // Resolve coach name from org
+    const { data: orgData } = await supabase
+      .from("orgs").select("name").eq("id", org.orgId).maybeSingle();
+    const coachName = orgData?.name ?? "";
+
     const recipients: Recipient[] = [];
 
     if (recipient_filter === "manual") {
@@ -89,7 +94,9 @@ export async function POST(request: Request) {
 
     for (const recipient of recipients) {
       const firstName = recipient.name?.split(" ")[0] ?? "there";
-      const personalised = message.replace(/\{name\}/g, firstName);
+      const personalised = message
+          .replace(/\{name\}/g, firstName)
+          .replace(/\{coach_name\}/g, coachName);
 
       try {
         await twilioClient.messages.create({ body: personalised, from, to: recipient.phone });

@@ -36,24 +36,24 @@ interface LeadRow {
 const aud = (cents: number) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 0 }).format(cents / 100);
 
-function offerLine(offer: Offer): string {
+function offerLine(offer: Offer, prefix = "•"): string {
   const price = aud(offer.price_cents);
   if (offer.offer_type === "subscription") {
-    return `• ${offer.name} – ${price}/${offer.billing_period ?? "month"}`;
+    return `${prefix} ${offer.name} – ${price}/${offer.billing_period ?? "month"}`;
   }
   if (offer.offer_type === "session_pack") {
     const total = (offer.sessions_included ?? 0) + (offer.bonus_sessions ?? 0);
     const validity = offer.pack_validity_days ? `, valid ${offer.pack_validity_days} days` : "";
-    return `• ${offer.name} – ${price} (${total} sessions${validity})`;
+    return `${prefix} ${offer.name} – ${price} (${total} sessions${validity})`;
   }
   const dur = offer.session_duration_mins ? ` (${offer.session_duration_mins} min)` : "";
-  return `• ${offer.name} – ${price}${dur}`;
+  return `${prefix} ${offer.name} – ${price}${dur}`;
 }
 
-function buildMessage(template: string, selectedOffers: Offer[]): string {
+function buildMessage(template: string, selectedOffers: Offer[], offerEmojis: Record<string, string>): string {
   if (!template.trim()) return "";
   const offerBlock = selectedOffers.length > 0
-    ? selectedOffers.map(offerLine).join("\n")
+    ? selectedOffers.map(o => offerLine(o, offerEmojis[o.id] || "•")).join("\n")
     : "(no offers selected)";
   return template.replace(/\{offers\}/g, offerBlock);
 }
@@ -63,6 +63,7 @@ type RecipientFilter = "all" | "active" | "manual";
 export default function MarketingPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [offerEmojis, setOfferEmojis] = useState<Record<string, string>>({});
   const [template, setTemplate] = useState(
     "Hi {name}, we have some special offers available:\n\n{offers}\n\nReply to book or for more info.\n\nReply STOP to opt out."
   );
@@ -204,7 +205,7 @@ export default function MarketingPage() {
   }
 
   const selectedOffers = useMemo(() => offers.filter(o => selected.has(o.id)), [offers, selected]);
-  const preview = useMemo(() => buildMessage(template, selectedOffers), [template, selectedOffers]);
+  const preview = useMemo(() => buildMessage(template, selectedOffers, offerEmojis), [template, selectedOffers, offerEmojis]);
 
   function insertAtCursor(text: string) {
     const el = templateRef.current;
@@ -304,14 +305,30 @@ export default function MarketingPage() {
             ) : (
               <div className="space-y-2">
                 {offers.map((offer) => (
-                  <label key={offer.id} className={clsx(
-                    "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                  <div key={offer.id} className={clsx(
+                    "flex items-start gap-3 p-3 rounded-lg border transition-colors",
                     selected.has(offer.id)
                       ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                      : "border-gray-200 dark:border-gray-700"
                   )}>
-                    <input type="checkbox" checked={selected.has(offer.id)} onChange={() => toggleOffer(offer.id)} className="mt-0.5 rounded text-blue-600" />
-                    <div className="flex-1 min-w-0">
+                    <input type="checkbox" checked={selected.has(offer.id)} onChange={() => toggleOffer(offer.id)} className="mt-1 rounded text-blue-600 cursor-pointer" />
+
+                    {/* Emoji prefix input */}
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <input
+                        type="text"
+                        value={offerEmojis[offer.id] ?? "•"}
+                        onChange={(e) => {
+                          const val = [...e.target.value].slice(-2).join("") || "•";
+                          setOfferEmojis(prev => ({ ...prev, [offer.id]: val }));
+                        }}
+                        className="w-9 h-9 text-center text-lg border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-blue-400 cursor-text"
+                        title="Emoji or symbol for this offer"
+                      />
+                      <span className="text-[9px] text-gray-400 leading-none">prefix</span>
+                    </div>
+
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleOffer(offer.id)}>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{offer.name}</span>
                         <span className={clsx("text-xs px-1.5 py-0.5 rounded font-medium",
@@ -324,10 +341,12 @@ export default function MarketingPage() {
                         </span>
                         {!offer.is_active && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">Inactive</span>}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{offerLine(offer).replace("• ", "")}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {offerLine(offer, offerEmojis[offer.id] || "•")}
+                      </p>
                       {offer.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{offer.description}</p>}
                     </div>
-                  </label>
+                  </div>
                 ))}
               </div>
             )}
@@ -342,14 +361,12 @@ export default function MarketingPage() {
 
             {/* Quick-insert toolbar */}
             <div className="flex flex-wrap gap-1.5 mb-2">
-              <button onClick={() => insertAtCursor("{name}")}
-                className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-mono">
-                {`{name}`}
-              </button>
-              <button onClick={() => insertAtCursor("{offers}")}
-                className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-mono">
-                {`{offers}`}
-              </button>
+              {["{name}", "{coach_name}", "{offers}"].map(token => (
+                <button key={token} onClick={() => insertAtCursor(token)}
+                  className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-mono">
+                  {token}
+                </button>
+              ))}
               <span className="text-gray-300 dark:text-gray-600 text-xs self-center">|</span>
               {["🏋️", "💪", "🔥", "⚡", "🎯", "✅", "👊", "🙌", "💥", "🚀"].map(emoji => (
                 <button key={emoji} onClick={() => insertAtCursor(emoji)}
