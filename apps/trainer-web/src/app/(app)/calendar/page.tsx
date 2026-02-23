@@ -1117,6 +1117,8 @@ export default function CalendarPage() {
                         {booking.client_name} - {bookingType?.name || booking.session_type}
                       </div>
                       <div className="text-[10px] text-white/80">
+                        {new Date(booking.start_time).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
+                        {" · "}
                         {new Date(booking.start_time).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false })}
                         {" - "}
                         {new Date(booking.end_time).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: false })}
@@ -1223,7 +1225,7 @@ export default function CalendarPage() {
               })()}
               {editingBooking && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {editingBooking.client_name}
+                  {editingBooking.client_name} · {new Date(editingBooking.start_time).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })} {new Date(editingBooking.start_time).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true })}
                 </p>
               )}
             </div>
