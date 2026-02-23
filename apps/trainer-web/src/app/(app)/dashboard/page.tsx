@@ -465,7 +465,7 @@ export default async function DashboardPage({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{(b.clients as any)?.full_name || "Client"}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{b.session_type?.replace(/_/g, " ") || "Session"}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(b.start_time)} · {formatTime(b.start_time)}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {unpaid && (
@@ -476,10 +476,6 @@ export default async function DashboardPage({
                       <span className={clsx("text-xs px-1.5 py-0.5 rounded font-medium", sc.cls)}>
                         {sc.label}
                       </span>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatTime(b.start_time)}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(b.start_time)}</p>
                     </div>
                   </div>
                 );
