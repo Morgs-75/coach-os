@@ -4,7 +4,52 @@ import Link from "next/link";
 import { clsx } from "clsx";
 import { redirect } from "next/navigation";
 
-// Server Component - data fetched before HTML sent to browser
+// Convert midnight of "today" in a given IANA timezone to UTC Date objects
+function getOrgDateBounds(tz: string) {
+  const now = new Date();
+
+  // Get date/time parts in the org's timezone
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric", month: "numeric", day: "numeric",
+    weekday: "short", hour: "numeric", minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "0";
+  const year = parseInt(get("year"));
+  const month = parseInt(get("month")) - 1; // 0-indexed
+  const day = parseInt(get("day"));
+  const weekday = get("weekday"); // "Sun", "Mon", etc.
+  const tzHour = parseInt(get("hour")) % 24;
+  const tzMin = parseInt(get("minute"));
+
+  // Compute UTC offset (minutes) for this timezone right now
+  const utcParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC", hour: "numeric", minute: "numeric", hour12: false,
+  }).formatToParts(now);
+  const utcHour = parseInt(utcParts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+  const utcMin = parseInt(utcParts.find((p) => p.type === "minute")?.value ?? "0");
+
+  let offsetMin = (tzHour * 60 + tzMin) - (utcHour * 60 + utcMin);
+  if (offsetMin > 720) offsetMin -= 1440;
+  if (offsetMin < -720) offsetMin += 1440;
+
+  // Midnight today in the org's timezone, expressed as UTC
+  // e.g. AEST (UTC+10): midnight Brisbane = UTC - 10h = previous day 14:00 UTC
+  const todayStart = new Date(Date.UTC(year, month, day) - offsetMin * 60000);
+  const todayEnd = new Date(todayStart.getTime() + 86400000);
+
+  // Monday of the current week (Mon-Sun calendar, matching the calendar page)
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dowIdx = weekdays.indexOf(weekday);
+  const daysFromMon = dowIdx === 0 ? 6 : dowIdx - 1;
+  const weekStart = new Date(todayStart.getTime() - daysFromMon * 86400000);
+  const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
+
+  return { todayStart, todayEnd, weekStart, weekEnd };
+}
+
 export default async function DashboardPage() {
   const org = await getOrg();
 
@@ -16,30 +61,54 @@ export default async function DashboardPage() {
   const orgId = org.orgId;
   const orgName = org.orgName;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(today);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  // Fetch org timezone first (tiny query)
+  const { data: smsSettings } = await supabase
+    .from("sms_settings")
+    .select("timezone")
+    .eq("org_id", orgId)
+    .maybeSingle();
 
-  // All queries in parallel - much faster than sequential
+  const tz = smsSettings?.timezone || "Australia/Brisbane";
+  const { todayStart, todayEnd, weekStart, weekEnd } = getOrgDateBounds(tz);
+
+  // All queries in parallel
   const [
     clientsResult,
     activeClientsResult,
     subscriptionsResult,
-    bookingsResult,
+    sessionsTodayResult,
+    sessionsWeekResult,
+    upcomingResult,
     riskResult,
   ] = await Promise.all([
-    supabase.from("clients").select("id", { count: "exact" }).eq("org_id", orgId),
-    supabase.from("clients").select("id", { count: "exact" }).eq("org_id", orgId).eq("status", "active"),
+    // Client counts (head: true = count only, no data fetched)
+    supabase.from("clients").select("id", { count: "exact", head: true }).eq("org_id", orgId),
+    supabase.from("clients").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "active"),
+    // Subscriptions (small, need data for MRR calc)
     supabase.from("subscriptions").select("status, price_cents").eq("org_id", orgId),
+    // Sessions today — exact count, no limit
     supabase.from("bookings")
-      .select(`*, clients(full_name)`)
+      .select("id", { count: "exact", head: true })
       .eq("org_id", orgId)
-      .gte("start_time", today.toISOString())
-      .lte("start_time", weekEnd.toISOString())
+      .gte("start_time", todayStart.toISOString())
+      .lt("start_time", todayEnd.toISOString())
+      .neq("status", "cancelled"),
+    // Sessions this week (Mon–Sun) — exact count, no limit
+    supabase.from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("org_id", orgId)
+      .gte("start_time", weekStart.toISOString())
+      .lt("start_time", weekEnd.toISOString())
+      .neq("status", "cancelled"),
+    // Upcoming sessions for display list (from now, limited to 8)
+    supabase.from("bookings")
+      .select("*, clients(full_name)")
+      .eq("org_id", orgId)
+      .gte("start_time", new Date().toISOString())
       .neq("status", "cancelled")
       .order("start_time", { ascending: true })
       .limit(8),
+    // At-risk clients
     supabase.from("client_risk")
       .select("client_id, tier, score, reasons, clients(full_name)")
       .eq("org_id", orgId)
@@ -53,13 +122,6 @@ export default async function DashboardPage() {
   const mrr = activeSubscriptions.reduce((sum, s) => sum + (s.price_cents || 0), 0);
   const avgRevenue = activeSubscriptions.length > 0 ? mrr / activeSubscriptions.length : 0;
 
-  const todayEnd = new Date(today);
-  todayEnd.setDate(todayEnd.getDate() + 1);
-  const sessionsToday = bookingsResult.data?.filter(b => {
-    const bookingDate = new Date(b.start_time);
-    return bookingDate >= today && bookingDate < todayEnd;
-  }).length || 0;
-
   const data = {
     totalClients: clientsResult.count || 0,
     activeClients: activeClientsResult.count || 0,
@@ -67,10 +129,10 @@ export default async function DashboardPage() {
     pastDueCount: pastDueSubscriptions.length,
     mrr,
     revenueAtRisk: pastDueSubscriptions.length * avgRevenue,
-    sessionsToday,
-    sessionsThisWeek: bookingsResult.data?.length || 0,
+    sessionsToday: sessionsTodayResult.count || 0,
+    sessionsThisWeek: sessionsWeekResult.count || 0,
     riskClients: riskResult.data || [],
-    upcomingBookings: bookingsResult.data || [],
+    upcomingBookings: upcomingResult.data || [],
   };
 
   const formatCurrency = (cents: number) => {
@@ -86,18 +148,20 @@ export default async function DashboardPage() {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: tz,
     });
   };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayDateStr = todayStart.toLocaleDateString("en-CA", { timeZone: tz });
+    const tomorrowStart = new Date(todayEnd);
+    const tomorrowDateStr = tomorrowStart.toLocaleDateString("en-CA", { timeZone: tz });
+    const bookingDateStr = date.toLocaleDateString("en-CA", { timeZone: tz });
 
-    if (date.toDateString() === now.toDateString()) return "Today";
-    if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-    return date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric" });
+    if (bookingDateStr === todayDateStr) return "Today";
+    if (bookingDateStr === tomorrowDateStr) return "Tomorrow";
+    return date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", timeZone: tz });
   };
 
   return (
