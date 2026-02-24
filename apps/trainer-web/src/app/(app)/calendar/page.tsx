@@ -655,6 +655,10 @@ export default function CalendarPage() {
           const err = await response.json().catch(() => ({}));
           console.error("SMS send failed:", err);
         }
+
+        setShowBookingModal(false);
+        setEditingBooking(null);
+        loadData();
       } catch (err) {
         console.error("SMS confirmation error:", err);
       }
