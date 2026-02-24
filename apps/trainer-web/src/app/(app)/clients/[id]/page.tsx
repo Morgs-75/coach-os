@@ -2049,12 +2049,17 @@ ul { padding-left: 24px; }
           {/* Active Packages */}
           {clientPurchases.length > 0 ? (
             <div className="space-y-4">
+              {/* Client-level upcoming session summary */}
+              {upcomingBookingCount > 0 && (
+                <div className="flex items-center gap-2 px-1 text-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
+                  <span className="text-amber-700 font-medium">{upcomingBookingCount} upcoming session{upcomingBookingCount !== 1 ? "s" : ""} booked</span>
+                </div>
+              )}
               {clientPurchases.map((purchase) => {
                 const isExpired = purchase.expires_at && new Date(purchase.expires_at) < new Date();
                 const sessionsRemaining = purchase.sessions_total - purchase.sessions_used;
                 const isExhausted = sessionsRemaining <= 0;
-                const bookedCount = upcomingBookingCount;
-                const availableCount = Math.max(0, sessionsRemaining - bookedCount);
 
                 return (
                   <div
@@ -2105,23 +2110,19 @@ ul { padding-left: 24px; }
 
                     {purchase.sessions_total && (
                       <div className="mt-4">
-                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gray-400 dark:bg-gray-500 transition-all"
-                            style={{ width: `${(purchase.sessions_used / purchase.sessions_total) * 100}%` }}
-                            title={`${purchase.sessions_used} used`}
-                          />
-                          <div
-                            className="h-full bg-amber-400 transition-all"
-                            style={{ width: `${(Math.min(bookedCount, sessionsRemaining) / purchase.sessions_total) * 100}%` }}
-                            title={`${bookedCount} booked`}
+                            className={clsx(
+                              "h-full rounded-full transition-all",
+                              sessionsRemaining > 2 ? "bg-green-500" :
+                              sessionsRemaining > 0 ? "bg-amber-500" : "bg-gray-400"
+                            )}
+                            style={{ width: `${(sessionsRemaining / purchase.sessions_total) * 100}%` }}
                           />
                         </div>
-                        <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                          <span>{purchase.sessions_used} used</span>
-                          <span className="text-amber-600 font-medium">{bookedCount} booked</span>
-                          <span className="text-green-600 font-medium">{availableCount} available</span>
-                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {purchase.sessions_used} session{purchase.sessions_used !== 1 ? "s" : ""} used
+                        </p>
                       </div>
                     )}
 
