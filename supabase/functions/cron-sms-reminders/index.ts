@@ -184,27 +184,27 @@ serve(async (req) => {
           const orgSchedules = postSchedulesByOrg.get(booking.org_id) || [];
           if (orgSchedules.length === 0) continue;
 
-          // Fetch package info for template variables
-          const { data: pkgData } = await supabase
+          // Fetch package info for template variables — sum across all active packages
+          const { data: pkgRows } = await supabase
             .from("client_purchases")
-            .select("sessions_total, sessions_used")
+            .select("sessions_total, sessions_used, expires_at")
             .eq("client_id", booking.client_id)
-            .eq("payment_status", "succeeded")
-            .order("purchased_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .eq("payment_status", "succeeded");
 
-          const { count: upcomingCount } = await supabase
+          const totalRemaining = (pkgRows || []).reduce((sum: number, p: any) => {
+            if (p.expires_at && new Date(p.expires_at) < now) return sum;
+            return sum + Math.max(0, (p.sessions_total || 0) - (p.sessions_used || 0));
+          }, 0);
+
+          const { data: upcomingBookings } = await supabase
             .from("bookings")
-            .select("id", { count: "exact", head: true } as any)
+            .select("id")
             .eq("client_id", booking.client_id)
             .in("status", ["confirmed", "pending"])
             .gt("start_time", now.toISOString());
 
-          const sessionsRemaining = pkgData
-            ? String(pkgData.sessions_total - pkgData.sessions_used)
-            : "N/A";
-          const sessionsBooked = String(upcomingCount ?? 0);
+          const sessionsRemaining = String(totalRemaining);
+          const sessionsBooked = String(upcomingBookings?.length ?? 0);
 
           for (const schedule of orgSchedules) {
             const feedbackTime = new Date(
