@@ -73,7 +73,7 @@ export default function ClientDetailPage() {
   const [communications, setCommunications] = useState<any[]>([]);
   const [clientBookings, setClientBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "profile" | "health" | "activity" | "payments" | "packages" | "comms" | "logs" | "waivers" | "marketing">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "sessions" | "profile" | "health" | "activity" | "payments" | "packages" | "comms" | "logs" | "waivers" | "marketing">("overview");
 
   // Package form
   const [showPackageForm, setShowPackageForm] = useState(false);
@@ -1255,6 +1255,7 @@ ul { padding-left: 24px; }
         <nav className="flex gap-6 overflow-x-auto">
           {[
             { key: "overview", label: "Overview" },
+            { key: "sessions", label: "Sessions" },
             { key: "profile", label: "Profile" },
             { key: "health", label: "Health" },
             { key: "comms", label: "Communications" },
@@ -2388,6 +2389,47 @@ ul { padding-left: 24px; }
               <button onClick={() => setShowMeasurementForm(true)} className="btn-primary">
                 Log First Measurement
               </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "sessions" && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            All Sessions ({clientBookings.filter(b => b.status !== "cancelled").length})
+          </h2>
+          {clientBookings.length === 0 ? (
+            <div className="card p-8 text-center text-gray-400">No sessions found.</div>
+          ) : (
+            <div className="card divide-y divide-gray-100 dark:divide-gray-800">
+              {clientBookings.filter(b => b.status !== "cancelled").map((b: any) => {
+                const start = new Date(b.start_time);
+                const isPast = start < new Date();
+                return (
+                  <div key={b.id} className="flex items-center justify-between px-5 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {start.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {start.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                        {b.duration_mins ? ` · ${b.duration_mins} min` : ""}
+                        {b.session_type ? ` · ${b.session_type.replace(/_/g, " ")}` : ""}
+                      </p>
+                    </div>
+                    <span className={clsx(
+                      "text-xs px-2 py-0.5 rounded-full font-medium",
+                      b.status === "completed" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                      b.status === "confirmed" ? (isPast ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400") :
+                      b.status === "no_show" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                      "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                    )}>
+                      {b.status === "confirmed" && isPast ? "unconfirmed" : b.status?.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
