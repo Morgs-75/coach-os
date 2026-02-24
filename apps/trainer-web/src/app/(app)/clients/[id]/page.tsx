@@ -1481,30 +1481,49 @@ ul { padding-left: 24px; }
             {/* Package Summary */}
             {(() => {
               const now = new Date();
-              const activePkg = clientPurchases.find(p =>
+              const active = clientPurchases.filter((p: any) =>
                 p.sessions_total > 0 &&
                 p.payment_status === "succeeded" &&
                 (p.sessions_total - p.sessions_used) > 0 &&
                 (!p.expires_at || new Date(p.expires_at) >= now)
+              ).sort((a: any, b: any) =>
+                b.sessions_used - a.sessions_used ||
+                new Date(b.purchased_at).getTime() - new Date(a.purchased_at).getTime()
               );
-              if (!activePkg) return null;
-              const remaining = activePkg.sessions_total - activePkg.sessions_used;
-              const booked = upcomingBookingCount;
+              if (active.length === 0) return null;
+              // Allocate bookings to packages in order (same logic as packages tab)
+              let toAllocate = upcomingBookingCount;
+              const bookedMap = new Map<string, number>();
+              for (const p of active) {
+                const remaining = p.sessions_total - p.sessions_used;
+                const allocated = Math.min(toAllocate, remaining);
+                bookedMap.set(p.id, allocated);
+                toAllocate -= allocated;
+                if (toAllocate <= 0) break;
+              }
+              // Show the primary package (most-used active one)
+              const pkg = active[0];
+              const remaining = pkg.sessions_total - pkg.sessions_used;
+              const booked = bookedMap.get(pkg.id) ?? 0;
               const available = Math.max(0, remaining - booked);
+              const otherCount = active.length - 1;
               return (
                 <div className="card p-6">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-gray-900 dark:text-gray-100">Package</h3>
-                    <button onClick={() => setActiveTab("packages")} className="text-sm text-brand-600 hover:text-brand-700">View</button>
+                    <button onClick={() => setActiveTab("packages")} className="text-sm text-brand-600 hover:text-brand-700">View all</button>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{activePkg.offers?.name || "Session Pack"}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    {pkg.offers?.name || "Session Pack"}
+                    {otherCount > 0 && <span className="ml-1 text-xs">(+{otherCount} more)</span>}
+                  </p>
                   <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex mb-2">
-                    <div className="h-full bg-gray-400 dark:bg-gray-500" style={{ width: `${(activePkg.sessions_used / activePkg.sessions_total) * 100}%` }} />
-                    <div className="h-full bg-amber-400" style={{ width: `${(Math.min(booked, remaining) / activePkg.sessions_total) * 100}%` }} />
+                    <div className="h-full bg-gray-400 dark:bg-gray-500" style={{ width: `${(pkg.sessions_used / pkg.sessions_total) * 100}%` }} />
+                    <div className="h-full bg-amber-400" style={{ width: `${(booked / pkg.sessions_total) * 100}%` }} />
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">{activePkg.sessions_used} used</span>
-                    <span className="text-amber-600 font-medium">{booked} booked</span>
+                    <span className="text-gray-500">{pkg.sessions_used} used</span>
+                    {booked > 0 && <span className="text-amber-600 font-medium">{booked} booked</span>}
                     <span className="text-green-600 font-medium">{available} available</span>
                   </div>
                 </div>
