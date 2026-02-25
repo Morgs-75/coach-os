@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Session Integrity | 3/3 | Complete    | 2026-02-25 |
-| 2. SMS Correctness | 3/3 | Complete   | 2026-02-25 |
+| 2. SMS Correctness | 3/3 | Complete    | 2026-02-25 |
 | 3. Background Jobs | 0/TBD | Not started | - |
 | 4. UI Reliability | 0/TBD | Not started | - |
 | 5. Production Hygiene | 0/TBD | Not started | - |
