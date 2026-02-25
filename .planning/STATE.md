@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 4 of 5 (UI Reliability)
-Plan: 04-02-PLAN.md executed (view-aware calendar confirmation poll)
-Status: Phase 4 in progress — 04-02 complete
-Last activity: 2026-02-25 — 04-02 complete. Poll useEffect rewritten with view-aware range (day/month/week) and immediate-fire on navigation.
+Plan: 04-01-PLAN.md complete (per-section error states on client detail page — human-verified)
+Status: Phase 4 in progress — 04-01 and 04-02 both complete
+Last activity: 2026-02-25 — 04-01 human-verify checkpoint approved. Per-section error states complete.
 
 Progress: [██████░░░░] ~65%
 
@@ -88,5 +88,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Checkpoint — 04-01 Tasks 1+2 complete, awaiting human-verify (Task 3 visual verification)
+Stopped at: Completed 04-01-PLAN.md — human-verify approved, all tasks done
 Resume file: None
