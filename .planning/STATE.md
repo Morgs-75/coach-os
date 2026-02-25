@@ -31,10 +31,11 @@ Progress: [████░░░░░░] ~45%
 | 02-sms-correctness | 2 | ~7 min | ~3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (1 min), 01-02 (1 min), 01-03 (5 min), 01-01 (1 min), 02-02 (2 min)
+- Last 5 plans: 01-03 (5 min), 01-01 (1 min), 02-01 (5 min), 02-02 (2 min)
 - Trend: Fast execution
 
 *Updated after each plan completion*
+| Phase 02-sms-correctness P03 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -54,9 +55,13 @@ Recent decisions affecting current work:
 - [01-01] Optimistic local state increment after use_session() RPC is safe — RPC is write authority, update only runs on confirmed success
 - [01-01] Reinstate local state set to DB-returned newSessionsUsed — authoritative, not stale component value
 - [01-01] Calendar loop uses continue on error — one failed booking does not block subsequent bookings
+- [02-01] Fetch sms_settings.timezone inside handleSaveBooking else branch — minimises scope change, avoids restructuring the function
+- [02-01] Post-session follow-up loop does not format dates in SMS body — no timezone fix needed there
 - [02-02] Use Intl.DateTimeFormat with org timezone to extract local hour in Deno edge (runs in UTC, not server local time)
 - [02-02] Non-wraparound quiet window (start < end): && suppresses inside range; wraparound (start > end): || suppresses across midnight
 - [02-02] Reschedule to org-local time by deriving UTC offset from Intl.DateTimeFormat parts and subtracting from Date.UTC construction
+- [Phase 02-03]: 2-hour grace window replaces 24h lookback in sms-inbound Y-reply handler — prevents matching yesterday's session after midnight
+- [Phase 02-03]: Single inbound handler /api/sms-inbound is authoritative — /api/sms/webhook and supabase/functions/sms-inbound disabled with comments, not deleted
 
 ### Pending Todos
 
@@ -69,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 02-02-PLAN.md — Quiet hours timezone fix, boolean logic correction, and org-local reschedule in sms-worker
+Stopped at: Completed 02-01-PLAN.md — Booking confirmation SMS uses org timezone from sms_settings
 Resume file: None

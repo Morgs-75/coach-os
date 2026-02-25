@@ -13,7 +13,7 @@ This milestone eliminates the most critical data integrity, SMS correctness, and
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Session Integrity** - All session deductions are atomic and accurate, regardless of which path triggers them
-- [ ] **Phase 2: SMS Correctness** - All SMS uses org timezone, quiet hours are enforced correctly, and client Y-reply works reliably
+- [x] **Phase 2: SMS Correctness** - All SMS uses org timezone, quiet hours are enforced correctly, and client Y-reply works reliably (completed 2026-02-25)
 - [ ] **Phase 3: Background Jobs** - Cron automations fire on schedule, failures are recorded, Stripe duplicates are prevented
 - [ ] **Phase 4: UI Reliability** - Client detail page surfaces load failures, calendar poll queries the correct date range
 - [ ] **Phase 5: Production Hygiene** - PII removed from production logs, org timezone sourced from a single canonical location
@@ -48,7 +48,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Fix calendar confirmation SMS timezone (fetch sms_settings.timezone) and verify cron reminder timezone (SMS-01, SMS-02)
+- [x] 02-01-PLAN.md — Fix calendar confirmation SMS timezone (fetch sms_settings.timezone) and verify cron reminder timezone (SMS-01, SMS-02)
 - [ ] 02-02-PLAN.md — Fix sms-worker quiet hours: org-local hour extraction and correct boolean logic (SMS-03, SMS-04)
 - [ ] 02-03-PLAN.md — Consolidate Y-reply handlers: tighten active /api/sms-inbound query, disable dead webhook and inactive edge function (SMS-05)
 
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Session Integrity | 3/3 | Complete    | 2026-02-25 |
-| 2. SMS Correctness | 2/3 | In Progress|  |
+| 2. SMS Correctness | 3/3 | Complete   | 2026-02-25 |
 | 3. Background Jobs | 0/TBD | Not started | - |
 | 4. UI Reliability | 0/TBD | Not started | - |
 | 5. Production Hygiene | 0/TBD | Not started | - |
