@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** A coach can run their entire client-facing business from one place.
-**Current focus:** Phase 4 — UI Reliability
+**Current focus:** Phase 5 — Production Hygiene
 
 ## Current Position
 
 Phase: 5 of 5 (Production Hygiene)
-Plan: 05-01-PLAN.md complete (remove PII-leaking console.log from auth middleware)
-Status: Phase 5 in progress — 05-01 complete
-Last activity: 2026-02-25 — 05-01 complete. Auth middleware no longer logs user IDs to Netlify function logs.
+Plan: 05-02-PLAN.md complete (timezone divergence fix — all consumers read from booking_settings)
+Status: Phase 5 in progress — 05-01 and 05-02 complete
+Last activity: 2026-02-25 — 05-02 complete. All timezone reads aligned to booking_settings.timezone.
 
-Progress: [████████░░] ~80%
+Progress: [█████████░] ~90%
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [████████░░] ~80%
 
 | Phase 03-background-jobs P02 | 1 min | 1 task | 1 file |
 | Phase 04-ui-reliability P02 | 1 min | 1 task | 1 file |
+| Phase 05-production-hygiene P02 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 04-01]: SectionError placed as nested function after !client guard — avoids hoisting issues with existing IIFE pattern
 - [Phase 04-01]: sectionError pattern: per-section boolean flags, reset to false before fetch, set true on error — other section errors preserved via prev spread
 - [Phase 05-01]: No replacement logging for removed PII console.logs — auth state is implicit in redirect/header behaviour, structured logging adds no value here
+- [Phase 05-02]: [05-02] booking_settings is the canonical timezone source — settings page writes there, all consumers read from there
+- [Phase 05-02]: [05-02] Split cron sms_settings (enabled) and booking_settings (timezone) queries and merge: preserves downstream settings.enabled and settings.timezone shape with zero cascade changes
 
 ### Pending Todos
 
@@ -89,5 +92,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 05-01-PLAN.md — PII console.log removed from auth middleware
+Stopped at: Completed 05-02-PLAN.md — timezone divergence fix across calendar, dashboard, and cron-sms-reminders
 Resume file: None
