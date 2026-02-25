@@ -21,8 +21,8 @@
 
 ### CRON — Background job correctness
 
-- [ ] **CRON-01**: Scheduled automations fire only when their configured schedule is due, not on every cron run
-- [ ] **CRON-02**: A failed automation action is recorded as failed, not as a successful run
+- [x] **CRON-01**: Scheduled automations fire only when their configured schedule is due, not on every cron run
+- [x] **CRON-02**: A failed automation action is recorded as failed, not as a successful run
 
 ### STRIPE — Financial data integrity
 
@@ -64,8 +64,8 @@
 | SMS-03 | Phase 2 | Complete |
 | SMS-04 | Phase 2 | Complete |
 | SMS-05 | Phase 2 | Complete |
-| CRON-01 | Phase 3 | Pending |
-| CRON-02 | Phase 3 | Pending |
+| CRON-01 | Phase 3 | Complete |
+| CRON-02 | Phase 3 | Complete |
 | STRIPE-01 | Phase 3 | Complete |
 | UI-01 | Phase 4 | Pending |
 | UI-02 | Phase 4 | Pending |

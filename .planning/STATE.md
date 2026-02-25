@@ -63,6 +63,10 @@ Recent decisions affecting current work:
 - [02-02] Reschedule to org-local time by deriving UTC offset from Intl.DateTimeFormat parts and subtracting from Date.UTC construction
 - [Phase 02-03]: 2-hour grace window replaces 24h lookback in sms-inbound Y-reply handler — prevents matching yesterday's session after midnight
 - [Phase 02-03]: Single inbound handler /api/sms-inbound is authoritative — /api/sms/webhook and supabase/functions/sms-inbound disabled with comments, not deleted
+- [Phase 03-01]: Move schedule gating into processAutomation() where supabase is available — keeps isScheduleDue() pure
+- [Phase 03-01]: Query automation_runs for last ok fired_at to determine schedule due-ness — no last_fired_at column on automations row
+- [Phase 03-01]: Delete dead shouldTriggerFire() rather than stub it — no other call site existed
+- [Phase 03-01]: Return { executed, anyFailed } from executeActions() — avoids global state or exception rethrowing
 - [Phase 03-02]: INCOME row used as sentinel for dedup: if INCOME exists for invoice.id, all three rows (INCOME/FEE/PLATFORM_FEE) exist — single SELECT suffices
 - [Phase 03-02]: Subscription update kept unconditional outside the dedup if/else — status always reflects current state regardless of dedup outcome
 
