@@ -17,7 +17,7 @@
 - [x] **SMS-02**: Session reminder and follow-up SMS formats times in the org's configured timezone consistently
 - [x] **SMS-03**: Quiet hours enforcement suppresses messages based on org local time, not UTC
 - [x] **SMS-04**: Quiet hours logic correctly handles non-wraparound time ranges (e.g. 9 AM–9 PM)
-- [ ] **SMS-05**: Client "Y" reply confirmation works reliably — one active handler with correct booking query
+- [x] **SMS-05**: Client "Y" reply confirmation works reliably — one active handler with correct booking query
 
 ### CRON — Background job correctness
 
@@ -63,7 +63,7 @@
 | SMS-02 | Phase 2 | Complete |
 | SMS-03 | Phase 2 | Complete |
 | SMS-04 | Phase 2 | Complete |
-| SMS-05 | Phase 2 | Pending |
+| SMS-05 | Phase 2 | Complete |
 | CRON-01 | Phase 3 | Pending |
 | CRON-02 | Phase 3 | Pending |
 | STRIPE-01 | Phase 3 | Pending |
