@@ -80,16 +80,76 @@ async function processSmsMessage(supabase: any, message: any) {
     const settings = message.sms_settings;
     if (!message.metadata?.quiet_hours_override && settings) {
       const now = new Date();
-      const hour = now.getHours(); // TODO: Convert to org timezone
 
-      if (
-        settings.quiet_hours_start < settings.quiet_hours_end &&
-        (hour >= settings.quiet_hours_start || hour < settings.quiet_hours_end)
-      ) {
-        // Reschedule to quiet_hours_end
-        const nextSend = new Date(now);
-        nextSend.setHours(settings.quiet_hours_end, 0, 0, 0);
-        if (nextSend <= now) nextSend.setDate(nextSend.getDate() + 1);
+      // Fix SMS-03: Convert to org timezone before extracting hour
+      const orgTimezone = settings.timezone || "Australia/Brisbane";
+      const localHourStr = new Intl.DateTimeFormat("en-AU", {
+        timeZone: orgTimezone,
+        hour: "numeric",
+        hour12: false,
+      }).format(now);
+      const hour = parseInt(localHourStr, 10);
+
+      // Fix SMS-04: Correct boolean logic
+      // Non-wraparound (start < end, e.g. 9 AM–5 PM): suppress when hour is inside the window
+      // Wraparound (start > end, e.g. 9 PM–8 AM): suppress when hour >= start OR hour < end
+      const isQuietHour =
+        settings.quiet_hours_start < settings.quiet_hours_end
+          ? hour >= settings.quiet_hours_start && hour < settings.quiet_hours_end
+          : hour >= settings.quiet_hours_start || hour < settings.quiet_hours_end;
+
+      if (isQuietHour) {
+        // Reschedule to quiet_hours_end in org local time.
+        // Use en-CA locale (returns YYYY-MM-DD) to get today's date in the org timezone,
+        // then construct an ISO-like string at quiet_hours_end hour.
+        // NOTE: new Date("YYYY-MM-DDTHH:00:00") is parsed as LOCAL time in most JS engines,
+        // but Deno edge functions run in UTC. To correctly anchor the time to org local midnight,
+        // we compute the UTC offset and apply it explicitly.
+        const todayInOrg = new Intl.DateTimeFormat("en-CA", {
+          timeZone: orgTimezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(now); // Returns "YYYY-MM-DD" in org local date
+
+        // Build the target time as org-local and convert to UTC by using the offset between
+        // org-local midnight and UTC midnight. The safest portable approach is to compare
+        // the org-local date components to a UTC-constructed date.
+        //
+        // Concrete approach: construct the ISO string with a Z suffix by computing the offset.
+        // Get org-local date components for "now" using Intl.DateTimeFormat parts:
+        const parts = new Intl.DateTimeFormat("en-AU", {
+          timeZone: orgTimezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }).formatToParts(now);
+        const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? "0", 10);
+        // UTC epoch for org-local "now" (treating components as if UTC):
+        const orgLocalAsUtcMs = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+        // Offset in ms: positive means org is ahead of UTC (e.g. Australia/Brisbane is +10h = +36000000ms)
+        const offsetMs = orgLocalAsUtcMs - now.getTime();
+
+        // Build org-local wakeup time as a "fake UTC" date, then subtract offset to get real UTC
+        const wakeupOrgLocalMs = Date.UTC(
+          parseInt(todayInOrg.slice(0, 4), 10),
+          parseInt(todayInOrg.slice(5, 7), 10) - 1,
+          parseInt(todayInOrg.slice(8, 10), 10),
+          settings.quiet_hours_end,
+          0,
+          0,
+          0
+        );
+        const nextSend = new Date(wakeupOrgLocalMs - offsetMs);
+
+        // If the wakeup time is in the past (already past quiet_hours_end today), advance one day
+        if (nextSend.getTime() <= now.getTime()) {
+          nextSend.setUTCDate(nextSend.getUTCDate() + 1);
+        }
 
         await supabase
           .from("sms_messages")
