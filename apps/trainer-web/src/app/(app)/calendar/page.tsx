@@ -529,12 +529,12 @@ export default function CalendarPage() {
         if (bookingForm.smsType === "custom" && bookingForm.customSmsMessage) {
           message = bookingForm.customSmsMessage;
         } else {
-          const { data: smsSetting } = await supabase
-            .from("sms_settings")
+          const { data: bookingSetting } = await supabase
+            .from("booking_settings")
             .select("timezone")
             .eq("org_id", orgId)
             .maybeSingle();
-          const orgTimezone = smsSetting?.timezone || "Australia/Brisbane";
+          const orgTimezone = bookingSetting?.timezone || "Australia/Brisbane";
           const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: orgTimezone });
           const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: orgTimezone });
           const calendarLink = `https://coach-os.netlify.app/api/calendar/${newBooking.id}`;
