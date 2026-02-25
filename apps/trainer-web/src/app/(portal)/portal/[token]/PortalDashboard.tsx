@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface Booking {
   id: string;
@@ -95,10 +96,21 @@ export default function PortalDashboard({
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Sessions remaining */}
-        <div className="rounded-xl p-5 text-white" style={{ backgroundColor: primaryColor }}>
-          <p className="text-sm font-medium opacity-80">Sessions remaining</p>
-          <p className="text-4xl font-bold mt-1">{sessionsRemaining}</p>
+        {/* Sessions remaining + book CTA */}
+        <div className="rounded-xl p-5 text-white flex items-center justify-between gap-4" style={{ backgroundColor: primaryColor }}>
+          <div>
+            <p className="text-sm font-medium opacity-80">Sessions remaining</p>
+            <p className="text-4xl font-bold mt-1">{sessionsRemaining}</p>
+          </div>
+          {sessionsRemaining > 0 && (
+            <Link
+              href={`/portal/${token}/book`}
+              className="shrink-0 px-4 py-2 rounded-lg bg-white text-sm font-semibold"
+              style={{ color: primaryColor }}
+            >
+              Book a session
+            </Link>
+          )}
         </div>
 
         {error && (
