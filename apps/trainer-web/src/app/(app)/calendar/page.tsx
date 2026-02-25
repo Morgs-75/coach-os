@@ -108,6 +108,7 @@ export default function CalendarPage() {
   const [showNotes, setShowNotes] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(2); // 0-4 scale: 20px, 24px, 32px, 40px, 48px
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week");
+  const [pollKey, setPollKey] = useState(0);
 
   const ZOOM_SIZES = [20, 24, 32, 40, 48];
   const rowHeight = ZOOM_SIZES[zoomLevel];
@@ -163,10 +164,28 @@ export default function CalendarPage() {
   // Poll every 15 seconds for confirmation updates
   useEffect(() => {
     if (!orgId) return;
-    const interval = setInterval(async () => {
-      const rangeStart = new Date(weekStart);
-      const rangeEnd = new Date(weekStart);
-      rangeEnd.setDate(rangeEnd.getDate() + 7);
+
+    function getRangeForPoll(): { rangeStart: Date; rangeEnd: Date } {
+      let rangeStart: Date;
+      let rangeEnd: Date;
+      if (viewMode === "day") {
+        rangeStart = new Date(currentDate);
+        rangeStart.setHours(0, 0, 0, 0);
+        rangeEnd = new Date(currentDate);
+        rangeEnd.setHours(23, 59, 59, 999);
+      } else if (viewMode === "month") {
+        rangeStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        rangeEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+      } else {
+        rangeStart = new Date(weekStart);
+        rangeEnd = new Date(weekStart);
+        rangeEnd.setDate(rangeEnd.getDate() + 7);
+      }
+      return { rangeStart, rangeEnd };
+    }
+
+    async function doPoll() {
+      const { rangeStart, rangeEnd } = getRangeForPoll();
       const { data } = await supabase
         .from("bookings")
         .select("id, client_confirmed, confirmation_sent_at, status")
@@ -179,9 +198,13 @@ export default function CalendarPage() {
           return updated ? { ...b, ...updated } : b;
         }));
       }
-    }, 15000);
+    }
+
+    // Fire immediately for the current range, then start 15s interval
+    doPoll();
+    const interval = setInterval(doPoll, 15000);
     return () => clearInterval(interval);
-  }, [orgId, weekStart]);
+  }, [orgId, viewMode, currentDate, pollKey]);
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -807,7 +830,7 @@ export default function CalendarPage() {
             {(["day", "week", "month"] as const).map((mode) => (
               <button
                 key={mode}
-                onClick={() => setViewMode(mode)}
+                onClick={() => { setViewMode(mode); setPollKey(k => k + 1); }}
                 className={clsx(
                   "px-3 py-1.5 font-medium capitalize border-l border-gray-200 dark:border-gray-600 first:border-l-0 transition-colors",
                   viewMode === mode
@@ -938,6 +961,7 @@ export default function CalendarPage() {
             else if (viewMode === "week") d.setDate(d.getDate() - 7);
             else d.setMonth(d.getMonth() - 1);
             setCurrentDate(d);
+            setPollKey(k => k + 1);
           }}
           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
         >
@@ -946,7 +970,7 @@ export default function CalendarPage() {
           </svg>
         </button>
         <button
-          onClick={() => setCurrentDate(new Date())}
+          onClick={() => { setCurrentDate(new Date()); setPollKey(k => k + 1); }}
           className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
         >
           Today
@@ -958,6 +982,7 @@ export default function CalendarPage() {
             else if (viewMode === "week") d.setDate(d.getDate() + 7);
             else d.setMonth(d.getMonth() + 1);
             setCurrentDate(d);
+            setPollKey(k => k + 1);
           }}
           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-700 rounded"
         >
