@@ -29,7 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Bookings marked complete by the cron job (without the calendar open) correctly deduct one session from the package
   3. The "Use 1 Session" button on the client detail page deducts exactly one session, even if clicked rapidly in succession
   4. Checking the client's package on the detail page after any deduction shows the correct remaining count
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Fix browser-side session writes in calendar and client detail to use atomic use_session() RPC (DATA-01, DATA-03)
+- [ ] 01-02-PLAN.md — Fix cron auto-complete to deduct sessions via use_session() after marking bookings complete (DATA-02, DATA-03)
 
 ### Phase 2: SMS Correctness
 **Goal**: All SMS messages show times in the org's configured timezone, quiet hours suppress messages in org local time, and a client's Y reply reliably confirms their booking
@@ -78,7 +82,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Session Integrity | 0/TBD | Not started | - |
+| 1. Session Integrity | 0/2 | Planned | - |
 | 2. SMS Correctness | 0/TBD | Not started | - |
 | 3. Background Jobs | 0/TBD | Not started | - |
 | 4. UI Reliability | 0/TBD | Not started | - |
