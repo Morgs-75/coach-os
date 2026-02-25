@@ -74,7 +74,11 @@ Plans:
   1. If any data section on the client detail page fails to load, the trainer sees a visible error or empty-state indicator rather than a silently blank section
   2. In day view, the calendar's 15-second confirmation poll updates bookings visible in the current day — not a week range
   3. In month view, the calendar's 15-second confirmation poll updates bookings visible in the current month
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Client detail page: per-section inline error states with retry for 4 critical sections (UI-01)
+- [ ] 04-02-PLAN.md — Calendar poll: view-aware date range and immediate-fire on navigation reset (UI-02)
 
 ### Phase 5: Production Hygiene
 **Goal**: Production logs no longer contain PII on every request, and org timezone is sourced from one consistent location across all subsystems
