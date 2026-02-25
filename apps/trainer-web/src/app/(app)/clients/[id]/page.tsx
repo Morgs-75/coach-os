@@ -2239,17 +2239,22 @@ ul { padding-left: 24px; }
                           <button
                             onClick={async () => {
                               if (!confirm("Use 1 session from this pack?")) return;
-                              const { error } = await supabase
-                                .from("client_purchases")
-                                .update({ sessions_used: purchase.sessions_used + 1 })
-                                .eq("id", purchase.id);
-                              if (!error) {
-                                setClientPurchases(clientPurchases.map(p =>
-                                  p.id === purchase.id
-                                    ? { ...p, sessions_used: p.sessions_used + 1 }
-                                    : p
-                                ));
+                              const { data: deducted, error } = await supabase
+                                .rpc("use_session", { p_purchase_id: purchase.id });
+                              if (error) {
+                                console.error("Error using session:", error);
+                                return;
                               }
+                              if (!deducted) {
+                                alert("No sessions remaining or pack is expired.");
+                                return;
+                              }
+                              // Refresh local state to reflect the DB's authoritative count
+                              setClientPurchases(clientPurchases.map(p =>
+                                p.id === purchase.id
+                                  ? { ...p, sessions_used: p.sessions_used + 1 }
+                                  : p
+                              ));
                             }}
                             className="text-sm text-brand-600 hover:text-brand-700 font-medium"
                           >
@@ -2260,17 +2265,23 @@ ul { padding-left: 24px; }
                           <button
                             onClick={async () => {
                               if (!confirm("Reinstate 1 session to this pack?")) return;
-                              const { error } = await supabase
-                                .from("client_purchases")
-                                .update({ sessions_used: purchase.sessions_used - 1 })
-                                .eq("id", purchase.id);
-                              if (!error) {
-                                setClientPurchases(clientPurchases.map(p =>
-                                  p.id === purchase.id
-                                    ? { ...p, sessions_used: p.sessions_used - 1 }
-                                    : p
-                                ));
+                              // Atomic decrement via DB function — no stale component-state value used as payload
+                              const { data: newSessionsUsed, error } = await supabase
+                                .rpc("release_session", { p_purchase_id: purchase.id });
+                              if (error) {
+                                console.error("Error reinstating session:", error);
+                                return;
                               }
+                              if (newSessionsUsed === -1) {
+                                // DB returned sentinel: sessions_used was already 0, no update applied
+                                return;
+                              }
+                              // Update local state from the DB-authoritative returned value
+                              setClientPurchases(clientPurchases.map(p =>
+                                p.id === purchase.id
+                                  ? { ...p, sessions_used: newSessionsUsed }
+                                  : p
+                              ));
                             }}
                             className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 font-medium"
                           >
