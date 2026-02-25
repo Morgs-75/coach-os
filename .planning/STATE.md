@@ -1,33 +1,61 @@
-# Coach OS — State
+# Project State
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** A coach can run their entire client-facing business from one place.
-**Current focus:** Defining requirements for v1.0 Stabilisation
+**Current focus:** Phase 1 — Session Integrity
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-25 — Milestone v1.0 Stabilisation started
+Phase: 1 of 5 (Session Integrity)
+Plan: Not yet planned
+Status: Ready to plan
+Last activity: 2026-02-25 — Roadmap created, v1.0 Stabilisation phases defined
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: —
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: —
+- Trend: —
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
-- Stability audit completed: `.planning/stability-analysis.md`
-- 10 instability candidates ranked and documented
-- No MILESTONES.md (first milestone)
-- Supabase project ref: ntqdmgvxirswnjlnwopq
-- Production: https://coach-os.netlify.app
-- Deploy: push to main → Netlify auto-deploy
-- Supabase functions: `npx supabase functions deploy <name> --project-ref ntqdmgvxirswnjlnwopq`
+### Decisions
 
-## Pending Todos
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
 
-(None — milestone just started)
+- Fix in place, no architecture changes — avoid introducing new failures while fixing existing ones
+- Use atomic DB operations where they exist — `use_session()` DB function already exists, use it
+- Single inbound SMS handler — consolidate to one path to eliminate divergent logic
 
-## Blockers
+### Pending Todos
 
-(None)
+None yet.
+
+### Blockers/Concerns
+
+None yet.
+
+## Session Continuity
+
+Last session: 2026-02-25
+Stopped at: Roadmap created — ready to plan Phase 1
+Resume file: None

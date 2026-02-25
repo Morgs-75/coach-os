@@ -1,0 +1,85 @@
+# Roadmap: Coach OS — v1.0 Stabilisation
+
+## Overview
+
+This milestone eliminates the most critical data integrity, SMS correctness, and UI reliability issues before the platform scales. Each phase targets a distinct subsystem, can be deployed independently, and leaves the system observably more correct than before. Phases are ordered by risk: data integrity first, then communications, then background jobs, then UI reliability, then production hygiene.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 1: Session Integrity** - All session deductions are atomic and accurate, regardless of which path triggers them
+- [ ] **Phase 2: SMS Correctness** - All SMS uses org timezone, quiet hours are enforced correctly, and client Y-reply works reliably
+- [ ] **Phase 3: Background Jobs** - Cron automations fire on schedule, failures are recorded, Stripe duplicates are prevented
+- [ ] **Phase 4: UI Reliability** - Client detail page surfaces load failures, calendar poll queries the correct date range
+- [ ] **Phase 5: Production Hygiene** - PII removed from production logs, org timezone sourced from a single canonical location
+
+## Phase Details
+
+### Phase 1: Session Integrity
+**Goal**: Session counts are always accurate — no over-counting or under-counting regardless of which surface triggers the deduction
+**Depends on**: Nothing (first phase)
+**Requirements**: DATA-01, DATA-02, DATA-03
+**Success Criteria** (what must be TRUE):
+  1. Completing a booking from the calendar deducts exactly one session from the package, even if the calendar is open in multiple tabs simultaneously
+  2. Bookings marked complete by the cron job (without the calendar open) correctly deduct one session from the package
+  3. The "Use 1 Session" button on the client detail page deducts exactly one session, even if clicked rapidly in succession
+  4. Checking the client's package on the detail page after any deduction shows the correct remaining count
+**Plans**: TBD
+
+### Phase 2: SMS Correctness
+**Goal**: All SMS messages show times in the org's configured timezone, quiet hours suppress messages in org local time, and a client's Y reply reliably confirms their booking
+**Depends on**: Nothing (independent of Phase 1)
+**Requirements**: SMS-01, SMS-02, SMS-03, SMS-04, SMS-05
+**Success Criteria** (what must be TRUE):
+  1. Booking confirmation SMS sent from the calendar shows the session time formatted in the org's configured timezone, not the trainer's browser timezone
+  2. Reminder and follow-up SMS from the cron job show session times in the org's configured timezone consistently
+  3. Messages are not sent during the org's configured quiet hours window (e.g., a 9 PM–8 AM window suppresses messages from 9 PM to 8 AM in org local time, not UTC)
+  4. A client replying Y to a confirmation SMS sets their booking to confirmed — the confirmation indicator in the calendar updates within 15 seconds
+**Plans**: TBD
+
+### Phase 3: Background Jobs
+**Goal**: Scheduled automations fire only when due, automation failures are recorded truthfully, and duplicate Stripe webhook deliveries do not inflate financial records
+**Depends on**: Nothing (independent Edge Function fixes)
+**Requirements**: CRON-01, CRON-02, STRIPE-01
+**Success Criteria** (what must be TRUE):
+  1. An automation configured to run weekly does not fire on every cron execution — it fires only when its schedule is next due
+  2. An automation whose action fails (e.g., a message fails to send) is recorded as failed in automation_runs, not as successful
+  3. Delivering the same Stripe invoice.paid webhook twice does not create duplicate rows in money_events — P&L figures remain accurate
+**Plans**: TBD
+
+### Phase 4: UI Reliability
+**Goal**: The client detail page surfaces load failures visibly, and the calendar's booking confirmation poll queries the correct date range for the active view
+**Depends on**: Nothing (independent UI fixes)
+**Requirements**: UI-01, UI-02
+**Success Criteria** (what must be TRUE):
+  1. If any data section on the client detail page fails to load, the trainer sees a visible error or empty-state indicator rather than a silently blank section
+  2. In day view, the calendar's 15-second confirmation poll updates bookings visible in the current day — not a week range
+  3. In month view, the calendar's 15-second confirmation poll updates bookings visible in the current month
+**Plans**: TBD
+
+### Phase 5: Production Hygiene
+**Goal**: Production logs no longer contain PII on every request, and org timezone is sourced from one consistent location across all subsystems
+**Depends on**: Nothing (independent hygiene fixes)
+**Requirements**: INFRA-01, INFRA-02
+**Success Criteria** (what must be TRUE):
+  1. Netlify function logs no longer contain user IDs or session data on routine authenticated requests
+  2. Changing the org timezone in settings is reflected consistently in both booking confirmation SMS and reminder/follow-up SMS — the same time value appears in both message types
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Session Integrity | 0/TBD | Not started | - |
+| 2. SMS Correctness | 0/TBD | Not started | - |
+| 3. Background Jobs | 0/TBD | Not started | - |
+| 4. UI Reliability | 0/TBD | Not started | - |
+| 5. Production Hygiene | 0/TBD | Not started | - |

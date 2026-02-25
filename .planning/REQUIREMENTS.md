@@ -56,27 +56,27 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| SMS-01 | — | Pending |
-| SMS-02 | — | Pending |
-| SMS-03 | — | Pending |
-| SMS-04 | — | Pending |
-| SMS-05 | — | Pending |
-| CRON-01 | — | Pending |
-| CRON-02 | — | Pending |
-| STRIPE-01 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| SMS-01 | Phase 2 | Pending |
+| SMS-02 | Phase 2 | Pending |
+| SMS-03 | Phase 2 | Pending |
+| SMS-04 | Phase 2 | Pending |
+| SMS-05 | Phase 2 | Pending |
+| CRON-01 | Phase 3 | Pending |
+| CRON-02 | Phase 3 | Pending |
+| STRIPE-01 | Phase 3 | Pending |
+| UI-01 | Phase 4 | Pending |
+| UI-02 | Phase 4 | Pending |
+| INFRA-01 | Phase 5 | Pending |
+| INFRA-02 | Phase 5 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 15 total
-- Mapped to phases: 0 (roadmap not yet created)
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-25*
-*Last updated: 2026-02-25 — initial definition, v1.0 Stabilisation*
+*Last updated: 2026-02-25 — traceability populated, roadmap created*
