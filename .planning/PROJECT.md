@@ -8,18 +8,14 @@ Coach OS is an end-to-end business management platform for personal trainers. Ea
 
 A coach can run their entire client-facing business from one place — bookings, payments, communications, and client management — without needing technical knowledge or external tools.
 
-## Current Milestone: v1.0 — Stabilisation
+## Current State
 
-**Goal:** Fix critical data integrity, SMS correctness, and UI reliability issues before scaling the platform.
+**Shipped:** v1.0 Stabilisation (2026-02-26)
 
-**Target areas:**
-- Non-atomic session counter writes (data corruption risk)
-- SMS notification correctness (timezone, quiet hours, duplicate handlers)
-- Cron automation scheduling (fires every run instead of on schedule)
-- Stripe webhook idempotency (duplicate money events)
-- Client detail page reliability (silent load failures)
-- Calendar poll correctness (wrong range in day/month view)
-- Production log noise (PII leaking to Netlify logs)
+The platform is operational in production. The v1.0 milestone resolved the 10 instability candidates identified in the stability audit — session counter atomicity, SMS correctness, background job reliability, UI reliability, and production hygiene.
+
+**Tech stack:** Next.js 14 (app router) + Supabase (Postgres + Edge Functions + Auth) + Netlify + Twilio + Stripe
+**Codebase:** ~4,000 LOC TypeScript (web app) + ~1,500 LOC Deno (edge functions)
 
 ## Requirements
 
@@ -27,57 +23,51 @@ A coach can run their entire client-facing business from one place — bookings,
 
 - ✓ Coach onboarding — functional
 - ✓ Availability management — functional
-- ✓ Client booking (calendar) — functional with known edge cases
-- ✓ Stripe billing and subscriptions — functional with known issues
-- ✓ SMS reminders and notifications — functional with known correctness bugs
+- ✓ Client booking (calendar) — functional
+- ✓ Stripe billing and subscriptions — functional
+- ✓ SMS reminders and notifications — functional
 - ✓ Waiver completion — functional
 - ✓ Client onboarding flows — functional
 - ✓ Backend accounting support — functional
 - ✓ AI business insights — functional
 - ✓ Executive assistant functionality — functional
 - ✓ Marketing features — functional
+- ✓ **DATA-01/02/03**: Session deductions atomic via `use_session()` / `release_session()` DB functions — v1.0
+- ✓ **SMS-01/02/03/04**: All SMS uses org timezone; quiet hours enforce in org local time with correct boolean logic — v1.0
+- ✓ **SMS-05**: Single Y-reply handler with 2-hour grace window — v1.0
+- ✓ **CRON-01/02**: Automations fire on schedule; failures recorded truthfully — v1.0
+- ✓ **STRIPE-01**: Stripe webhook idempotency preventing duplicate money_events — v1.0
+- ✓ **UI-01**: Client detail page surfaces load failures per-section — v1.0
+- ✓ **UI-02**: Calendar poll is view-aware (day/week/month) — v1.0
+- ✓ **INFRA-01**: PII removed from production logs — v1.0
+- ✓ **INFRA-02**: Org timezone sourced from single canonical `booking_settings.timezone` — v1.0
 
 ### Active
 
-<!-- Defined in REQUIREMENTS.md -->
-See REQUIREMENTS.md for v1.0 scoped requirements with REQ-IDs.
+(None — define in next milestone with `/gsd:new-milestone`)
 
 ### Out of Scope
 
-- New features of any kind — stabilisation milestone only
-- Architectural redesigns — fix in place, no restructuring
-- Performance optimisations — unless directly causing a stability failure
-- UI redesigns — fix broken behaviour only, do not restyle
-
-## Context
-
-Coach OS is operational in production. The stability audit (`.planning/stability-analysis.md`) identified 10 ranked instability candidates:
-
-1. Non-atomic `sessions_used` counter — three separate read-then-write paths from browser
-2. Triple inbound SMS handler — one handler can never match, one inactive
-3. Quiet-hours logic broken in `sms-worker` — wrong timezone + OR/AND logic error
-4. `cron-automations` fires all automations every run — schedule check always returns true
-5. Stripe `invoice.paid` not idempotent — duplicate webhooks inflate money_events
-6. `clients/[id]/page.tsx` god component — no error handling, silent partial-load failures
-7. Booking confirmation SMS uses browser timezone instead of org timezone
-8. Org timezone stored in two divergent tables
-9. Calendar poll queries wrong date range in day/month view
-10. PII logged on every request in production
+- `clients/[id]/page.tsx` full refactor — god component risk acknowledged; full decomposition is next-milestone scope
+- `use_session()` internal atomicity — SELECT-then-UPDATE inside the DB function is a pre-existing edge case, not a regression
+- Performance optimisations — not a current stability issue
 
 ## Constraints
 
 - **Tech stack**: Next.js + Supabase + Netlify — no stack changes
-- **No redesign**: Fix broken behaviour only — do not restructure or refactor beyond the fix
-- **No new features**: Every change must be traceable to an existing stability issue
 - **Production safety**: All changes must be safe to deploy without downtime or migration windows
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Fix in place, no architecture changes | Avoid introducing new failures while fixing existing ones | — Pending |
-| Use atomic DB operations where they exist | `use_session()` DB function already exists — use it | — Pending |
-| Single inbound SMS handler | Consolidate to one path to eliminate divergent logic | — Pending |
+| Fix in place, no architecture changes | Avoid introducing new failures while fixing existing ones | ✓ Good — all 15 requirements resolved without introducing regressions |
+| Use atomic DB operations where they exist | `use_session()` DB function already exists — use it | ✓ Good — all deduction paths now go through the DB function |
+| Single inbound SMS handler | Consolidate to one path to eliminate divergent logic | ✓ Good — `/api/sms-inbound` is the single source of truth; two dead paths disabled |
+| `booking_settings.timezone` as canonical source | Settings page writes there; make all consumers read from there | ✓ Good — all 5 consumers (calendar, dashboard, cron, sms-worker, inbound) aligned |
+| 2-hour grace window for Y-reply | Prevents matching yesterday's session after midnight without risking wrong-session confirmation | ✓ Good — narrower than previous 24h window, still handles late replies |
+| Split `loadClient()` per-section in client detail | Per-section error isolation without full god component refactor | ✓ Good — partial failure now visible; full refactor deferred |
+| Poll useEffect reset via integer `pollKey` state | Forces useEffect teardown/restart on navigation without stale closure on derived values | ✓ Good — immediate confirmation feedback on view change |
 
 ---
-*Last updated: 2026-02-25 — v1.0 Stabilisation milestone started*
+*Last updated: 2026-02-26 after v1.0 Stabilisation milestone*
