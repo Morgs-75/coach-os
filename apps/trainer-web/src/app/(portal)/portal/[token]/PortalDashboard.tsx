@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface Booking {
   id: string;
@@ -38,6 +39,9 @@ export default function PortalDashboard({
   upcomingBookings,
   pastBookings,
 }: Props) {
+  const searchParams = useSearchParams();
+  const justPurchased = searchParams.get("purchased") === "1";
+
   const [cancelled, setCancelled] = useState<Set<string>>(new Set());
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -102,16 +106,30 @@ export default function PortalDashboard({
             <p className="text-sm font-medium opacity-80">Sessions remaining</p>
             <p className="text-4xl font-bold mt-1">{sessionsRemaining}</p>
           </div>
-          {sessionsRemaining > 0 && (
+            <div className="flex flex-col gap-2 shrink-0">
+            {sessionsRemaining > 0 && (
+              <Link
+                href={`/portal/${token}/book`}
+                className="px-4 py-2 rounded-lg bg-white text-sm font-semibold text-center"
+                style={{ color: primaryColor }}
+              >
+                Book a session
+              </Link>
+            )}
             <Link
-              href={`/portal/${token}/book`}
-              className="shrink-0 px-4 py-2 rounded-lg bg-white text-sm font-semibold"
-              style={{ color: primaryColor }}
+              href={`/portal/${token}/packages`}
+              className="px-4 py-2 rounded-lg bg-white/20 text-sm font-medium text-white text-center"
             >
-              Book a session
+              Buy sessions
             </Link>
-          )}
+          </div>
         </div>
+
+        {justPurchased && (
+          <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">
+            Payment successful! Your sessions have been added. Book your first session below.
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">

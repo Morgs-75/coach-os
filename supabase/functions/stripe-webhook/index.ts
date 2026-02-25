@@ -149,6 +149,14 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  // Portal session pack purchase — identified by offer_id in metadata
+  const offerId = session.metadata?.offer_id;
+  if (offerId) {
+    await handlePortalPurchase(supabase, session, orgId, offerId);
+    return;
+  }
+
+  // Subscription checkout (existing flow)
   const customerId = session.customer as string;
   const subscriptionId = session.subscription as string;
   const clientReferenceId = session.client_reference_id;
@@ -170,6 +178,137 @@ async function handleCheckoutCompleted(
     },
     { onConflict: "org_id,client_id" }
   );
+}
+
+async function handlePortalPurchase(
+  supabase: ReturnType<typeof createClient>,
+  session: Stripe.Checkout.Session,
+  orgId: string,
+  offerId: string
+) {
+  const clientId = session.metadata?.client_id;
+  if (!clientId) {
+    console.error("Portal purchase missing client_id in metadata");
+    return;
+  }
+
+  // Fetch offer details
+  const { data: offer } = await supabase
+    .from("offers")
+    .select("id, name, sessions_included, bonus_sessions, pack_validity_days, price_cents, currency")
+    .eq("id", offerId)
+    .single();
+
+  if (!offer) {
+    console.error("Offer not found for portal purchase:", offerId);
+    return;
+  }
+
+  const paymentIntentId = session.payment_intent as string;
+
+  // Idempotency: skip if already recorded
+  const { data: existing } = await supabase
+    .from("client_purchases")
+    .select("id")
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .maybeSingle();
+
+  if (existing) {
+    console.log("Portal purchase already recorded — skipping:", paymentIntentId);
+    return;
+  }
+
+  const sessionsTotal = (offer.sessions_included ?? 1) + (offer.bonus_sessions ?? 0);
+  const expiresAt = offer.pack_validity_days
+    ? new Date(Date.now() + offer.pack_validity_days * 86_400_000).toISOString()
+    : null;
+
+  // Insert client_purchases record
+  await supabase.from("client_purchases").insert({
+    org_id: orgId,
+    client_id: clientId,
+    offer_id: offerId,
+    amount_paid_cents: session.amount_total ?? offer.price_cents,
+    currency: offer.currency ?? "aud",
+    sessions_total: sessionsTotal,
+    sessions_used: 0,
+    expires_at: expiresAt,
+    stripe_payment_intent_id: paymentIntentId,
+    payment_status: "succeeded",
+  });
+
+  // Record money events (INCOME + FEE + PLATFORM_FEE)
+  const eventDate = new Date().toISOString();
+  const amountPaid = session.amount_total ?? offer.price_cents;
+  const stripeFee = Math.round(amountPaid * 0.029 + 30);
+  const platformFee = Math.round(amountPaid * PLATFORM_FEE_PERCENT / 100);
+
+  await supabase.from("money_events").insert([
+    {
+      org_id: orgId,
+      event_date: eventDate,
+      type: "INCOME",
+      amount_cents: amountPaid,
+      currency: offer.currency ?? "aud",
+      tax_cat: "GST",
+      tax_cents: Math.round(amountPaid / 11),
+      source: "stripe",
+      reference_id: paymentIntentId,
+      client_id: clientId,
+      notes: `Portal purchase: ${offer.name}`,
+      payment_status: "succeeded",
+      stripe_payment_intent_id: paymentIntentId,
+    },
+    {
+      org_id: orgId,
+      event_date: eventDate,
+      type: "FEE",
+      amount_cents: -stripeFee,
+      currency: offer.currency ?? "aud",
+      tax_cat: "GST_FREE",
+      tax_cents: 0,
+      source: "stripe",
+      reference_id: paymentIntentId,
+      client_id: clientId,
+      notes: "Stripe processing fee",
+      payment_status: "succeeded",
+      stripe_payment_intent_id: paymentIntentId,
+    },
+    {
+      org_id: orgId,
+      event_date: eventDate,
+      type: "PLATFORM_FEE",
+      amount_cents: -platformFee,
+      currency: offer.currency ?? "aud",
+      tax_cat: "GST",
+      tax_cents: Math.round(platformFee / 11),
+      source: "stripe",
+      reference_id: paymentIntentId,
+      client_id: clientId,
+      notes: `Coach OS ${PLATFORM_FEE_PERCENT}% platform fee`,
+      payment_status: "succeeded",
+      stripe_payment_intent_id: paymentIntentId,
+    },
+  ]);
+
+  // Auto-generate portal token if client doesn't have one yet
+  // (covers the case where a client buys via an external Stripe link)
+  const portalToken = session.metadata?.portal_token;
+  if (!portalToken) {
+    const { data: clientRow } = await supabase
+      .from("clients")
+      .select("portal_token")
+      .eq("id", clientId)
+      .single();
+
+    if (clientRow && !clientRow.portal_token) {
+      const newToken = crypto.randomUUID();
+      await supabase.from("clients").update({ portal_token: newToken }).eq("id", clientId);
+      console.log("Auto-generated portal token for client:", clientId);
+    }
+  }
+
+  console.log(`Portal purchase recorded: ${sessionsTotal} sessions for client ${clientId}, offer ${offerId}`);
 }
 
 async function handleInvoicePaid(
