@@ -8,6 +8,19 @@ Coach OS is an end-to-end business management platform for personal trainers. Ea
 
 A coach can run their entire client-facing business from one place — bookings, payments, communications, and client management — without needing technical knowledge or external tools.
 
+## Current Milestone: v1.1 — Client Self-Booking
+
+**Goal:** Clients can book, cancel, and purchase packages from a magic-link portal without needing a login.
+
+**Target features:**
+- New `/portal/[token]` page — token-based, no client auth required
+- Client sees: available slots, upcoming bookings, sessions remaining, past sessions, purchasable packages
+- Self-booking: books from coach's configured availability, 2-hour minimum notice, requires active sessions
+- Self-cancellation: client can cancel own upcoming bookings
+- Package purchase: Stripe checkout for all coach's active products
+- Notifications: coach notified on booking/cancellation, client gets confirmation SMS
+- Link sharing: auto-sent on package activation + copy button on client profile
+
 ## Current State
 
 **Shipped:** v1.0 Stabilisation (2026-02-26)

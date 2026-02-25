@@ -5,15 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** A coach can run their entire client-facing business from one place.
-**Current focus:** Planning next milestone
+**Current focus:** v1.1 — Client Self-Booking
 
 ## Current Position
 
-Milestone: v1.0 Stabilisation — COMPLETE (shipped 2026-02-26)
-Status: All 5 phases, 12 plans complete. REQUIREMENTS.md archived. ROADMAP.md collapsed. Git tagged v1.0.
-Last activity: 2026-02-26 — v1.0 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v1.1
+Last activity: 2026-02-26 — Milestone v1.1 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
@@ -32,5 +33,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: v1.0 milestone archived and tagged
+Stopped at: Starting v1.1 milestone definition
 Resume file: None
