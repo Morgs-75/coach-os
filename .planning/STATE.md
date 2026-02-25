@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 3 of 5 (Background Jobs)
-Plan: Ready to execute — 03-01-PLAN.md + 03-02-PLAN.md both planned and verified
-Status: Awaiting execution
-Last activity: 2026-02-25 — Phase 2 complete. Phase 3 planned (2 plans, Wave 1 parallel). Stopped before execution due to context limit.
+Plan: Phase 3 complete — 03-01-PLAN.md + 03-02-PLAN.md both executed
+Status: Phase 3 complete, ready to plan Phase 4
+Last activity: 2026-02-25 — Phase 3 complete. Both plans executed (cron schedule gating + stripe-webhook idempotency).
 
 Progress: [█████░░░░░] ~55%
 
@@ -35,6 +35,8 @@ Progress: [█████░░░░░] ~55%
 - Trend: Fast execution
 
 *Updated after each plan completion*
+
+| Phase 03-background-jobs P02 | 1 min | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -61,6 +63,8 @@ Recent decisions affecting current work:
 - [02-02] Reschedule to org-local time by deriving UTC offset from Intl.DateTimeFormat parts and subtracting from Date.UTC construction
 - [Phase 02-03]: 2-hour grace window replaces 24h lookback in sms-inbound Y-reply handler — prevents matching yesterday's session after midnight
 - [Phase 02-03]: Single inbound handler /api/sms-inbound is authoritative — /api/sms/webhook and supabase/functions/sms-inbound disabled with comments, not deleted
+- [Phase 03-02]: INCOME row used as sentinel for dedup: if INCOME exists for invoice.id, all three rows (INCOME/FEE/PLATFORM_FEE) exist — single SELECT suffices
+- [Phase 03-02]: Subscription update kept unconditional outside the dedup if/else — status always reflects current state regardless of dedup outcome
 
 ### Pending Todos
 
@@ -73,5 +77,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Phase 3 plans verified and ready — run /gsd:execute-phase 3 in a fresh context window
+Stopped at: Completed 03-02-PLAN.md — Phase 3 (Background Jobs) fully complete
 Resume file: None

@@ -26,7 +26,7 @@
 
 ### STRIPE — Financial data integrity
 
-- [ ] **STRIPE-01**: Duplicate Stripe webhook deliveries do not create duplicate entries in money_events
+- [x] **STRIPE-01**: Duplicate Stripe webhook deliveries do not create duplicate entries in money_events
 
 ### UI — Client detail and calendar reliability
 
@@ -66,7 +66,7 @@
 | SMS-05 | Phase 2 | Complete |
 | CRON-01 | Phase 3 | Pending |
 | CRON-02 | Phase 3 | Pending |
-| STRIPE-01 | Phase 3 | Pending |
+| STRIPE-01 | Phase 3 | Complete |
 | UI-01 | Phase 4 | Pending |
 | UI-02 | Phase 4 | Pending |
 | INFRA-01 | Phase 5 | Pending |
