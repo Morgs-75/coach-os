@@ -81,7 +81,12 @@
       "Bash(claude:*)",
       "Bash(npm view:*)",
       "Bash(find:*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "Bash(sort:*)",
+      "Skill(gsd:execute-phase)",
+      "Skill(gsd:plan-phase)",
+      "Bash(node:*)",
+      "Skill(gsd:audit-milestone)"
     ]
   }
 }

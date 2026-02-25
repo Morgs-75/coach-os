@@ -46,13 +46,16 @@ serve(async (req) => {
       .update({ status: "sending", locked_until: lockUntil })
       .in("id", messageIds);
 
-    // Batch fetch sms_settings for all orgs in this batch
+    // Batch fetch sms_settings (quiet hours config) and booking_settings (canonical timezone)
     const orgIds = [...new Set(messages.map((m: any) => m.org_id))];
-    const { data: settingsRows } = await supabase
-      .from("sms_settings")
-      .select("*")
-      .in("org_id", orgIds);
-    const settingsMap = new Map((settingsRows || []).map((s: any) => [s.org_id, s]));
+    const [{ data: settingsRows }, { data: tzRows }] = await Promise.all([
+      supabase.from("sms_settings").select("*").in("org_id", orgIds),
+      supabase.from("booking_settings").select("org_id, timezone").in("org_id", orgIds),
+    ]);
+    const settingsMap = new Map((settingsRows || []).map((s: any) => [s.org_id, {
+      ...s,
+      timezone: (tzRows || []).find((t: any) => t.org_id === s.org_id)?.timezone ?? s.timezone,
+    }]));
 
     let processed = 0;
     for (const message of messages) {
