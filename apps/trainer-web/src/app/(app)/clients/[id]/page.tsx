@@ -144,6 +144,10 @@ export default function ClientDetailPage() {
   const [sendingOnboarding, setSendingOnboarding] = useState(false);
   const [onboardingLink, setOnboardingLink] = useState("");
 
+  // Client portal
+  const [sendingPortalLink, setSendingPortalLink] = useState(false);
+  const [portalLink, setPortalLink] = useState("");
+
   // Profile editing
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
@@ -453,6 +457,36 @@ export default function ClientDetailPage() {
     }
 
     setSendingOnboarding(false);
+  }
+
+  async function sendPortalLinkToClient() {
+    setSendingPortalLink(true);
+    setPortalLink("");
+
+    try {
+      const res = await fetch("/api/portal/send-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: clientId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert("Failed to send portal link: " + (data.error || "Unknown error"));
+      } else {
+        setPortalLink(data.portal_url);
+        if (data.sms_sent) {
+          alert("Portal link sent via SMS to " + (client?.phone || "client"));
+        } else {
+          alert("Portal link created. SMS could not be sent — share the link manually.");
+        }
+        loadClient();
+      }
+    } catch {
+      alert("Failed to send portal link");
+    }
+
+    setSendingPortalLink(false);
   }
 
   async function resendWaiver(waiverToken: string) {
@@ -1687,6 +1721,74 @@ ul { padding-left: 24px; }
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+            </div>
+
+            {/* Client Portal */}
+            <div className="card p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Client Portal</h3>
+              {client.portal_token ? (
+                <div className="space-y-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                    Active
+                  </span>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={sendPortalLinkToClient}
+                      disabled={sendingPortalLink || !client.phone}
+                      className="btn-primary flex-1 text-sm"
+                      title={!client.phone ? "Add a phone number to send via SMS" : undefined}
+                    >
+                      {sendingPortalLink ? "Sending..." : "Resend Link"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/portal/${client.portal_token}`;
+                        setPortalLink(url);
+                        navigator.clipboard.writeText(url);
+                        alert("Portal link copied to clipboard.");
+                      }}
+                      className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    Not sent
+                  </span>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={sendPortalLinkToClient}
+                      disabled={sendingPortalLink}
+                      className="btn-primary flex-1 text-sm"
+                    >
+                      {sendingPortalLink ? "Sending..." : "Send Portal Link"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {portalLink && (
+                <div className="mt-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Share this link:</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={portalLink}
+                      className="input flex-1 text-xs bg-white dark:bg-gray-800"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <button
+                      onClick={() => navigator.clipboard.writeText(portalLink)}
+                      className="px-2 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Copy
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

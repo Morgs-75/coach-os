@@ -3,7 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 // Public routes that don't need auth checks
 // TEMP: Added /dashboard to debug auth issue
-const publicRoutes = ["/", "/login", "/signup", "/api/"];
+const publicRoutes = ["/", "/login", "/signup", "/api/", "/portal/"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
