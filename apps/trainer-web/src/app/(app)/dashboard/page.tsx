@@ -86,9 +86,9 @@ export default async function DashboardPage({
   const { orgId, orgName } = org;
 
   // Timezone
-  const { data: smsSettings } = await supabase
-    .from("sms_settings").select("timezone").eq("org_id", orgId).maybeSingle();
-  const tz = smsSettings?.timezone || "Australia/Brisbane";
+  const { data: bookingSettings } = await supabase
+    .from("booking_settings").select("timezone").eq("org_id", orgId).maybeSingle();
+  const tz = bookingSettings?.timezone || "Australia/Brisbane";
 
   const { now, todayStart, todayEnd, weekStart, weekEnd, offsetMin } = getOrgDateBounds(tz);
 

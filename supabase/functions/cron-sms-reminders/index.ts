@@ -89,11 +89,18 @@ serve(async (req) => {
     } else if (upcomingBookings && upcomingBookings.length > 0) {
       const orgIds = [...new Set(upcomingBookings.map((b: any) => b.org_id))];
 
-      const { data: settingsRows } = await supabase
+      const { data: smsRows } = await supabase
         .from("sms_settings")
-        .select("org_id, enabled, timezone")
+        .select("org_id, enabled")
         .in("org_id", orgIds);
-      const settingsMap = new Map((settingsRows || []).map((s: any) => [s.org_id, s]));
+      const { data: tzRows } = await supabase
+        .from("booking_settings")
+        .select("org_id, timezone")
+        .in("org_id", orgIds);
+      const settingsMap = new Map((smsRows || []).map((s: any) => [s.org_id, {
+        ...s,
+        timezone: (tzRows || []).find((t: any) => t.org_id === s.org_id)?.timezone,
+      }]));
 
       const { data: scheduleRows } = await supabase
         .from("sms_schedules")
@@ -325,11 +332,18 @@ serve(async (req) => {
 
     if (unconfirmedBookings && unconfirmedBookings.length > 0) {
       const unconfirmedOrgIds = [...new Set(unconfirmedBookings.map((b: any) => b.org_id))];
-      const { data: unconfirmedSettings } = await supabase
+      const { data: unconfirmedSmsRows } = await supabase
         .from("sms_settings")
-        .select("org_id, enabled, timezone")
+        .select("org_id, enabled")
         .in("org_id", unconfirmedOrgIds);
-      const unconfirmedSettingsMap = new Map((unconfirmedSettings || []).map((s: any) => [s.org_id, s]));
+      const { data: unconfirmedTzRows } = await supabase
+        .from("booking_settings")
+        .select("org_id, timezone")
+        .in("org_id", unconfirmedOrgIds);
+      const unconfirmedSettingsMap = new Map((unconfirmedSmsRows || []).map((s: any) => [s.org_id, {
+        ...s,
+        timezone: (unconfirmedTzRows || []).find((t: any) => t.org_id === s.org_id)?.timezone,
+      }]));
 
       for (const booking of unconfirmedBookings as any[]) {
         try {
