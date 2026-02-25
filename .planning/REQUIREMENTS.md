@@ -35,7 +35,7 @@
 
 ### INFRA — Production hygiene
 
-- [ ] **INFRA-01**: PII (user IDs, session data) is not written to production logs on every request
+- [x] **INFRA-01**: PII (user IDs, session data) is not written to production logs on every request
 - [ ] **INFRA-02**: Org timezone is sourced from a single consistent location — not two divergent tables that can desync
 
 ## Future Requirements
@@ -69,7 +69,7 @@
 | STRIPE-01 | Phase 3 | Complete |
 | UI-01 | Phase 4 | Complete |
 | UI-02 | Phase 4 | Complete |
-| INFRA-01 | Phase 5 | Pending |
+| INFRA-01 | Phase 5 | Complete |
 | INFRA-02 | Phase 5 | Pending |
 
 **Coverage:**

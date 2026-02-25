@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Phase: 4 of 5 (UI Reliability)
-Plan: 04-01-PLAN.md complete (per-section error states on client detail page — human-verified)
-Status: Phase 4 in progress — 04-01 and 04-02 both complete
-Last activity: 2026-02-25 — 04-01 human-verify checkpoint approved. Per-section error states complete.
+Phase: 5 of 5 (Production Hygiene)
+Plan: 05-01-PLAN.md complete (remove PII-leaking console.log from auth middleware)
+Status: Phase 5 in progress — 05-01 complete
+Last activity: 2026-02-25 — 05-01 complete. Auth middleware no longer logs user IDs to Netlify function logs.
 
-Progress: [██████░░░░] ~65%
+Progress: [████████░░] ~80%
 
 ## Performance Metrics
 
@@ -76,6 +76,7 @@ Recent decisions affecting current work:
 - [Phase 04-02]: No Page Visibility API — keep poll simple per CONTEXT.md discretion note
 - [Phase 04-01]: SectionError placed as nested function after !client guard — avoids hoisting issues with existing IIFE pattern
 - [Phase 04-01]: sectionError pattern: per-section boolean flags, reset to false before fetch, set true on error — other section errors preserved via prev spread
+- [Phase 05-01]: No replacement logging for removed PII console.logs — auth state is implicit in redirect/header behaviour, structured logging adds no value here
 
 ### Pending Todos
 
@@ -88,5 +89,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 04-01-PLAN.md — human-verify approved, all tasks done
+Stopped at: Completed 05-01-PLAN.md — PII console.log removed from auth middleware
 Resume file: None
