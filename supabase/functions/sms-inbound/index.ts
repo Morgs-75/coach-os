@@ -23,60 +23,13 @@ serve(async (req) => {
       return twiml("");
     }
 
-    // Handle Y / YES — confirm the booking
+    // DISABLED: This edge function is not registered as the Twilio inbound webhook.
+    // The active inbound handler is the Netlify route at /api/sms-inbound.
+    // Keeping this file to preserve the function deployment, but confirmation logic
+    // is disabled to prevent divergent confirmation if this URL is ever mistakenly used.
     if (messageBody === "Y" || messageBody === "YES") {
-      // Find client by phone number
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
-        .select("id, full_name, org_id")
-        .or(`phone.eq.${fromPhone},phone.eq.${fromPhone.replace("+61", "0")}`)
-        .limit(1)
-        .maybeSingle();
-
-      console.log("Client lookup:", { client, clientError });
-
-      if (!client) {
-        return twiml("We couldn't find your booking. Please contact your trainer directly.");
-      }
-
-      // Find their most recent unconfirmed booking with confirmation requested
-      const { data: booking, error: bookingError } = await supabase
-        .from("bookings")
-        .select("id, start_time")
-        .eq("client_id", client.id)
-        .eq("status", "confirmed")
-        .eq("client_confirmed", false)
-        .not("confirmation_sent_at", "is", null)
-        .gte("start_time", new Date().toISOString())
-        .order("start_time", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      console.log("Booking lookup:", { booking, bookingError });
-
-      if (!booking) {
-        return twiml("No upcoming booking found to confirm. Please contact your trainer.");
-      }
-
-      const { error: updateError } = await supabase
-        .from("bookings")
-        .update({ client_confirmed: true })
-        .eq("id", booking.id);
-
-      console.log("Update result:", { updateError });
-
-      const dateStr = new Date(booking.start_time).toLocaleDateString("en-AU", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      });
-      const timeStr = new Date(booking.start_time).toLocaleTimeString("en-AU", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-
-      return twiml(`Confirmed! See you ${dateStr} at ${timeStr}.`);
+      console.log("sms-inbound edge function: Y reply received but handler is disabled — Twilio should point to /api/sms-inbound");
+      return twiml("");
     }
 
     // Ignore STOP/HELP — Twilio handles these automatically

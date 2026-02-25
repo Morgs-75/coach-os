@@ -46,44 +46,11 @@ export async function POST(request: NextRequest) {
     const isConfirmation = ["Y", "YES", "CONFIRM", "CONFIRMED", "YEP", "YEA", "YEAH"].includes(body);
 
     if (isConfirmation) {
-      // Find the most recent unconfirmed booking for this client
-      const { data: booking } = await supabase
-        .from("bookings")
-        .select("id, start_time")
-        .eq("client_id", client.id)
-        .eq("status", "confirmed")
-        .is("client_confirmed", null)
-        .not("confirmation_sent_at", "is", null)
-        .gte("start_time", new Date().toISOString())
-        .order("start_time", { ascending: true })
-        .limit(1)
-        .single();
-
-      if (booking) {
-        // Mark booking as confirmed by client
-        await supabase
-          .from("bookings")
-          .update({ client_confirmed: true })
-          .eq("id", booking.id);
-
-        // Log the confirmation in communications
-        await supabase.from("client_communications").insert({
-          org_id: client.org_id,
-          client_id: client.id,
-          type: "sms",
-          direction: "inbound",
-          subject: "Booking Confirmed",
-          content: `Client replied "${body}" to confirm their session on ${new Date(booking.start_time).toLocaleDateString("en-AU", {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit"
-          })}`,
-        });
-
-        console.log(`Booking ${booking.id} confirmed by client ${client.full_name}`);
-      }
+      // DISABLED: This handler is inactive. Twilio inbound webhook points to /api/sms-inbound.
+      // This route queried client_confirmed IS NULL but the column defaults to false — it could
+      // never match a booking. Keeping the route to avoid 404s on any stray Twilio retries,
+      // but confirmation is handled exclusively by /api/sms-inbound.
+      console.log("SMS webhook /api/sms/webhook: confirmation reply received but handler is disabled — use /api/sms-inbound");
     } else {
       // Log any other incoming SMS
       await supabase.from("client_communications").insert({
