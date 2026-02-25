@@ -157,9 +157,10 @@ async function processAutomation(
     }
 
     // Execute actions
-    const actionResults = await executeActions(supabase, automation.actions, client, automation.org_id);
+    const { executed: actionResults, anyFailed } = await executeActions(supabase, automation.actions, client, automation.org_id);
+    const runStatus = anyFailed ? "failed" : "ok";
 
-    await recordRun(supabase, automation, client.id, "ok", null, actionResults);
+    await recordRun(supabase, automation, client.id, runStatus, anyFailed ? "One or more actions failed" : null, actionResults);
     runsCreated++;
   }
 
@@ -363,8 +364,9 @@ async function executeActions(
   actions: ActionConfig[],
   client: ClientContext,
   orgId: string
-): Promise<ActionConfig[]> {
+): Promise<{ executed: ActionConfig[]; anyFailed: boolean }> {
   const executedActions: ActionConfig[] = [];
+  let anyFailed = false;
 
   for (const action of actions) {
     try {
@@ -372,10 +374,11 @@ async function executeActions(
       executedActions.push(action);
     } catch (err) {
       console.error(`Action ${action.type} failed:`, err);
+      anyFailed = true;
     }
   }
 
-  return executedActions;
+  return { executed: executedActions, anyFailed };
 }
 
 async function executeAction(
