@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** A coach can run their entire client-facing business from one place.
-**Current focus:** Phase 2 — SMS Correctness
+**Current focus:** Phase 3 — Background Jobs
 
 ## Current Position
 
-Phase: 2 of 5 (SMS Correctness)
-Plan: 02-01 + 02-02 + 02-03 complete
-Status: In progress
-Last activity: 2026-02-25 — Completed 02-03: Consolidated Y-reply handlers to single /api/sms-inbound with 2h grace window
+Phase: 3 of 5 (Background Jobs)
+Plan: Ready to execute — 03-01-PLAN.md + 03-02-PLAN.md both planned and verified
+Status: Awaiting execution
+Last activity: 2026-02-25 — Phase 2 complete. Phase 3 planned (2 plans, Wave 1 parallel). Stopped before execution due to context limit.
 
 Progress: [█████░░░░░] ~55%
 
@@ -73,5 +73,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 02-03-PLAN.md — Consolidate Y-reply handlers, tighten booking query to 2h grace window
+Stopped at: Phase 3 plans verified and ready — run /gsd:execute-phase 3 in a fresh context window
 Resume file: None
