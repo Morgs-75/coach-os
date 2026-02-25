@@ -506,8 +506,14 @@ export default function CalendarPage() {
         if (bookingForm.smsType === "custom" && bookingForm.customSmsMessage) {
           message = bookingForm.customSmsMessage;
         } else {
-          const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
-          const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
+          const { data: smsSetting } = await supabase
+            .from("sms_settings")
+            .select("timezone")
+            .eq("org_id", orgId)
+            .maybeSingle();
+          const orgTimezone = smsSetting?.timezone || "Australia/Brisbane";
+          const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: orgTimezone });
+          const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: orgTimezone });
           const calendarLink = `https://coach-os.netlify.app/api/calendar/${newBooking.id}`;
           message = `Hi ${client.full_name.split(" ")[0]}, your session is confirmed for ${dateStr} at ${timeStr}.${requestConfirm ? " Reply Y to confirm." : ""} Add to calendar: ${calendarLink} See you then!`;
         }
