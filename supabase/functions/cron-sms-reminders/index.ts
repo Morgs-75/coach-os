@@ -29,11 +29,42 @@ serve(async (req) => {
     // ========================================
     // 0. AUTO-COMPLETE PAST SESSIONS
     // ========================================
-    await supabase
+    // Fetch confirmed past bookings BEFORE marking complete, to capture purchase_ids
+    const { data: bookingsToComplete, error: fetchError } = await supabase
       .from("bookings")
-      .update({ status: "completed" })
+      .select("id, purchase_id")
       .eq("status", "confirmed")
       .lt("end_time", now.toISOString());
+
+    if (fetchError) {
+      console.error("Error fetching bookings to complete:", fetchError);
+    }
+
+    if (bookingsToComplete && bookingsToComplete.length > 0) {
+      const bookingIds = bookingsToComplete.map((b: any) => b.id);
+
+      // Mark all as completed in one batch update
+      const { error: completeError } = await supabase
+        .from("bookings")
+        .update({ status: "completed" })
+        .in("id", bookingIds);
+
+      if (completeError) {
+        console.error("Error marking bookings as completed:", completeError);
+      } else {
+        // Atomically deduct a session for each booking that has a package
+        for (const booking of bookingsToComplete) {
+          if (booking.purchase_id) {
+            const { error: deductError } = await supabase
+              .rpc("use_session", { p_purchase_id: booking.purchase_id });
+            if (deductError) {
+              console.error("Error deducting session for booking", booking.id, deductError);
+            }
+            // use_session() returns false if no sessions remain — acceptable, log nothing extra
+          }
+        }
+      }
+    }
 
     // ========================================
     // 1. SESSION REMINDERS (pre_session schedules)
@@ -184,17 +215,12 @@ serve(async (req) => {
           const orgSchedules = postSchedulesByOrg.get(booking.org_id) || [];
           if (orgSchedules.length === 0) continue;
 
-          // Fetch package info for template variables — sum across all active packages
+          // Fetch package info for template variables
           const { data: pkgRows } = await supabase
             .from("client_purchases")
-            .select("sessions_total, sessions_used, expires_at")
+            .select("sessions_total, sessions_used, expires_at, offers(name)")
             .eq("client_id", booking.client_id)
             .eq("payment_status", "succeeded");
-
-          const totalRemaining = (pkgRows || []).reduce((sum: number, p: any) => {
-            if (p.expires_at && new Date(p.expires_at) < now) return sum;
-            return sum + Math.max(0, (p.sessions_total || 0) - (p.sessions_used || 0));
-          }, 0);
 
           const { data: upcomingBookings } = await supabase
             .from("bookings")
@@ -203,6 +229,38 @@ serve(async (req) => {
             .in("status", ["confirmed", "pending"])
             .gt("start_time", now.toISOString());
 
+          // Active packages sorted by most-used first (same allocation logic as UI)
+          const activePkgs = (pkgRows || [])
+            .filter((p: any) => (p.sessions_total || 0) > 0 && !(p.expires_at && new Date(p.expires_at) < now))
+            .map((p: any) => ({
+              name: (p.offers as any)?.name || "your package",
+              total: p.sessions_total || 0,
+              used: p.sessions_used || 0,
+              remaining: Math.max(0, (p.sessions_total || 0) - (p.sessions_used || 0)),
+            }))
+            .sort((a: any, b: any) => b.used - a.used);
+
+          // Allocate upcoming bookings to packages in order
+          let toAllocate = upcomingBookings?.length ?? 0;
+          const allocated = activePkgs.map((p: any) => {
+            const booked = Math.min(toAllocate, p.remaining);
+            toAllocate -= booked;
+            return { ...p, booked, available: p.remaining - booked };
+          });
+
+          // Build session summary text
+          let sessionSummary = "";
+          if (allocated.length > 0) {
+            const primary = allocated[0];
+            sessionSummary = `You have used ${primary.used} of your ${primary.name} and have ${primary.booked} session${primary.booked !== 1 ? "s" : ""} booked leaving ${primary.available} more available.`;
+            for (const p of allocated.slice(1)) {
+              if (p.remaining > 0) {
+                sessionSummary += ` You also have ${p.remaining} remaining on ${p.name}.`;
+              }
+            }
+          }
+
+          const totalRemaining = allocated.reduce((s: number, p: any) => s + p.remaining, 0);
           const sessionsRemaining = String(totalRemaining);
           const sessionsBooked = String(upcomingBookings?.length ?? 0);
 
@@ -218,6 +276,7 @@ serve(async (req) => {
               feedback_link: `${webappUrl}/feedback/${booking.id}`,
               sessions_remaining: sessionsRemaining,
               sessions_booked: sessionsBooked,
+              session_summary: sessionSummary,
             });
 
             const { data: messageId, error: rpcError } = await supabase.rpc("insert_sms_direct", {
