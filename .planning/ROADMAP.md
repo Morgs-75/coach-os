@@ -87,7 +87,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Netlify function logs no longer contain user IDs or session data on routine authenticated requests
   2. Changing the org timezone in settings is reflected consistently in both booking confirmation SMS and reminder/follow-up SMS — the same time value appears in both message types
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Remove PII console.log from auth middleware (INFRA-01)
+- [ ] 05-02-PLAN.md — Fix timezone consumers to read from booking_settings (INFRA-02)
 
 ## Progress
 
@@ -100,4 +104,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. SMS Correctness | 3/3 | Complete    | 2026-02-25 |
 | 3. Background Jobs | 2/2 | Complete   | 2026-02-25 |
 | 4. UI Reliability | 2/2 | Complete   | 2026-02-25 |
-| 5. Production Hygiene | 0/TBD | Not started | - |
+| 5. Production Hygiene | 0/2 | Not started | - |
