@@ -35,7 +35,8 @@ export async function POST(request: Request) {
         return twiml("We couldn't find your booking. Please contact your trainer directly.");
       }
 
-      // Find their most recent unconfirmed booking
+      // Prefer nearest upcoming session; allow 2-hour grace for replies arriving just after session start
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .select("id, start_time")
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         .eq("status", "confirmed")
         .eq("client_confirmed", false)
         .not("confirmation_sent_at", "is", null)
-        .gte("start_time", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .gte("start_time", twoHoursAgo)
         .order("start_time", { ascending: true })
         .limit(1)
         .maybeSingle();
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
         .eq("status", "confirmed")
         .eq("client_confirmed", false)
         .not("confirmation_sent_at", "is", null)
-        .gte("start_time", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .gte("start_time", twoHoursAgo)
         .order("start_time", { ascending: true })
         .limit(1)
         .maybeSingle();
