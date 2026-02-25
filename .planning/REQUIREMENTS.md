@@ -7,9 +7,9 @@
 
 ### DATA — Session counter integrity
 
-- [ ] **DATA-01**: Session deductions always reflect accurate counts — no over- or under-counting from concurrent writes
-- [ ] **DATA-02**: Bookings completed without the calendar open (via cron) correctly deduct from the package session count
-- [ ] **DATA-03**: The existing atomic `use_session()` DB function is used for all session deductions
+- [x] **DATA-01**: Session deductions always reflect accurate counts — no over- or under-counting from concurrent writes
+- [x] **DATA-02**: Bookings completed without the calendar open (via cron) correctly deduct from the package session count
+- [x] **DATA-03**: The existing atomic `use_session()` DB function is used for all session deductions
 
 ### SMS — Notification correctness
 
@@ -56,9 +56,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
 | SMS-01 | Phase 2 | Pending |
 | SMS-02 | Phase 2 | Pending |
 | SMS-03 | Phase 2 | Pending |
@@ -79,4 +79,4 @@
 
 ---
 *Requirements defined: 2026-02-25*
-*Last updated: 2026-02-25 — traceability populated, roadmap created*
+*Last updated: 2026-02-25 — DATA-01, DATA-02, DATA-03 completed (Phase 1 done)*

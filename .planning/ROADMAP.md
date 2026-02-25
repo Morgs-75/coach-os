@@ -12,7 +12,7 @@ This milestone eliminates the most critical data integrity, SMS correctness, and
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Session Integrity** - All session deductions are atomic and accurate, regardless of which path triggers them
+- [x] **Phase 1: Session Integrity** - All session deductions are atomic and accurate, regardless of which path triggers them
 - [ ] **Phase 2: SMS Correctness** - All SMS uses org timezone, quiet hours are enforced correctly, and client Y-reply works reliably
 - [ ] **Phase 3: Background Jobs** - Cron automations fire on schedule, failures are recorded, Stripe duplicates are prevented
 - [ ] **Phase 4: UI Reliability** - Client detail page surfaces load failures, calendar poll queries the correct date range
@@ -32,8 +32,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Fix browser-side session writes in calendar and client detail to use atomic use_session() RPC (DATA-01, DATA-03)
-- [ ] 01-02-PLAN.md — Fix cron auto-complete to deduct sessions via use_session() after marking bookings complete (DATA-02, DATA-03)
+- [x] 01-01-PLAN.md — Fix browser-side session writes in calendar and client detail to use atomic use_session() RPC (DATA-01, DATA-03)
+- [x] 01-02-PLAN.md — Fix cron auto-complete to deduct sessions via use_session() after marking bookings complete (DATA-02, DATA-03)
 
 ### Phase 2: SMS Correctness
 **Goal**: All SMS messages show times in the org's configured timezone, quiet hours suppress messages in org local time, and a client's Y reply reliably confirms their booking
@@ -82,7 +82,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Session Integrity | 0/2 | Planned | - |
+| 1. Session Integrity | 2/2 | Complete | 2026-02-25 |
 | 2. SMS Correctness | 0/TBD | Not started | - |
 | 3. Background Jobs | 0/TBD | Not started | - |
 | 4. UI Reliability | 0/TBD | Not started | - |
