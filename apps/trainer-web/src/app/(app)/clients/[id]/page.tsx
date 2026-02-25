@@ -73,6 +73,12 @@ export default function ClientDetailPage() {
   const [communications, setCommunications] = useState<any[]>([]);
   const [clientBookings, setClientBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sectionError, setSectionError] = useState<{
+    profile: boolean;
+    bookings: boolean;
+    purchases: boolean;
+    notes: boolean;
+  }>({ profile: false, bookings: false, purchases: false, notes: false });
   const [activeTab, setActiveTab] = useState<"overview" | "sessions" | "profile" | "health" | "activity" | "payments" | "packages" | "comms" | "logs" | "waivers" | "marketing">("overview");
 
   // Package form
@@ -157,9 +163,68 @@ export default function ClientDetailPage() {
     loadClient();
   }, [clientId]);
 
+  async function loadBookings() {
+    setSectionError(prev => ({ ...prev, bookings: false }));
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("id, start_time, end_time, duration_mins, session_type, status, notes")
+      .eq("client_id", clientId)
+      .order("start_time", { ascending: false })
+      .limit(50);
+    if (error) {
+      console.error("Error loading bookings:", error);
+      setSectionError(prev => ({ ...prev, bookings: true }));
+      return;
+    }
+    if (data) setClientBookings(data);
+
+    const { data: upcomingData, error: upcomingError } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq("client_id", clientId)
+      .neq("status", "cancelled")
+      .gt("start_time", new Date().toISOString());
+    if (upcomingError) {
+      console.error("Error loading upcoming count:", upcomingError);
+      setSectionError(prev => ({ ...prev, bookings: true }));
+      return;
+    }
+    setUpcomingBookingCount(upcomingData?.length ?? 0);
+  }
+
+  async function loadPurchases() {
+    setSectionError(prev => ({ ...prev, purchases: false }));
+    const { data, error } = await supabase
+      .from("client_purchases")
+      .select("*, offers(name, offer_type, sessions_included, bonus_sessions)")
+      .eq("client_id", clientId)
+      .order("purchased_at", { ascending: false });
+    if (error) {
+      console.error("Error loading purchases:", error);
+      setSectionError(prev => ({ ...prev, purchases: true }));
+      return;
+    }
+    if (data) setClientPurchases(data);
+  }
+
+  async function loadNotes() {
+    setSectionError(prev => ({ ...prev, notes: false }));
+    const { data, error } = await supabase
+      .from("client_communications")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Error loading notes/communications:", error);
+      setSectionError(prev => ({ ...prev, notes: true }));
+      return;
+    }
+    if (data) setCommunications(data);
+  }
+
   async function loadClient() {
     // Get client details with related data
-    const { data: clientData } = await supabase
+    const { data: clientData, error: profileError } = await supabase
       .from("clients")
       .select(`
         *,
@@ -168,6 +233,13 @@ export default function ClientDetailPage() {
       `)
       .eq("id", clientId)
       .single();
+
+    if (profileError) {
+      console.error("Error loading client profile:", profileError);
+      setSectionError(prev => ({ ...prev, profile: true }));
+      setLoading(false);
+      return;
+    }
 
     if (clientData) {
       setClient(clientData);
@@ -229,24 +301,8 @@ export default function ClientDetailPage() {
 
     if (purchasePaymentData) setPurchasePayments(purchasePaymentData);
 
-    // Get bookings for this client
-    const { data: bookingsData } = await supabase
-      .from("bookings")
-      .select("id, start_time, end_time, duration_mins, session_type, status, notes")
-      .eq("client_id", clientId)
-      .order("start_time", { ascending: false })
-      .limit(50);
-
-    if (bookingsData) setClientBookings(bookingsData);
-
-    // Get upcoming booking count directly from server
-    const { data: upcomingData } = await supabase
-      .from("bookings")
-      .select("id")
-      .eq("client_id", clientId)
-      .neq("status", "cancelled")
-      .gt("start_time", new Date().toISOString());
-    setUpcomingBookingCount(upcomingData?.length ?? 0);
+    // Get bookings for this client (via individual fetch function for per-section error handling)
+    await loadBookings();
 
     // Get measurements
     const { data: measurementData } = await supabase
@@ -294,23 +350,11 @@ export default function ClientDetailPage() {
       }
     }
 
-    // Get client's purchases
-    const { data: purchasesData } = await supabase
-      .from("client_purchases")
-      .select("*, offers(name, offer_type, sessions_included, bonus_sessions)")
-      .eq("client_id", clientId)
-      .order("purchased_at", { ascending: false });
+    // Get client's purchases (via individual fetch function for per-section error handling)
+    await loadPurchases();
 
-    if (purchasesData) setClientPurchases(purchasesData);
-
-    // Get communications log
-    const { data: commsData } = await supabase
-      .from("client_communications")
-      .select("*")
-      .eq("client_id", clientId)
-      .order("created_at", { ascending: false });
-
-    if (commsData) setCommunications(commsData);
+    // Get communications log (via individual fetch function for per-section error handling)
+    await loadNotes();
 
     // Get waivers
     const { data: waiversData } = await supabase
