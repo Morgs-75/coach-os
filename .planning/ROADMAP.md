@@ -45,7 +45,12 @@ Plans:
   2. Reminder and follow-up SMS from the cron job show session times in the org's configured timezone consistently
   3. Messages are not sent during the org's configured quiet hours window (e.g., a 9 PM–8 AM window suppresses messages from 9 PM to 8 AM in org local time, not UTC)
   4. A client replying Y to a confirmation SMS sets their booking to confirmed — the confirmation indicator in the calendar updates within 15 seconds
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Fix calendar confirmation SMS timezone (fetch sms_settings.timezone) and verify cron reminder timezone (SMS-01, SMS-02)
+- [ ] 02-02-PLAN.md — Fix sms-worker quiet hours: org-local hour extraction and correct boolean logic (SMS-03, SMS-04)
+- [ ] 02-03-PLAN.md — Consolidate Y-reply handlers: tighten active /api/sms-inbound query, disable dead webhook and inactive edge function (SMS-05)
 
 ### Phase 3: Background Jobs
 **Goal**: Scheduled automations fire only when due, automation failures are recorded truthfully, and duplicate Stripe webhook deliveries do not inflate financial records
@@ -84,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Session Integrity | 3/3 | Complete    | 2026-02-25 |
-| 2. SMS Correctness | 0/TBD | Not started | - |
+| 2. SMS Correctness | 0/3 | Not started | - |
 | 3. Background Jobs | 0/TBD | Not started | - |
 | 4. UI Reliability | 0/TBD | Not started | - |
 | 5. Production Hygiene | 0/TBD | Not started | - |
