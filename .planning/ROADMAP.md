@@ -60,7 +60,11 @@ Plans:
   1. An automation configured to run weekly does not fire on every cron execution — it fires only when its schedule is next due
   2. An automation whose action fails (e.g., a message fails to send) is recorded as failed in automation_runs, not as successful
   3. Delivering the same Stripe invoice.paid webhook twice does not create duplicate rows in money_events — P&L figures remain accurate
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Fix cron-automations: schedule gating in shouldTriggerFire and failure-status threading (CRON-01, CRON-02)
+- [ ] 03-02-PLAN.md — Fix stripe-webhook: idempotency guard before money_events insert (STRIPE-01)
 
 ### Phase 4: UI Reliability
 **Goal**: The client detail page surfaces load failures visibly, and the calendar's booking confirmation poll queries the correct date range for the active view
@@ -90,6 +94,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Session Integrity | 3/3 | Complete    | 2026-02-25 |
 | 2. SMS Correctness | 3/3 | Complete    | 2026-02-25 |
-| 3. Background Jobs | 0/TBD | Not started | - |
+| 3. Background Jobs | 0/2 | Not started | - |
 | 4. UI Reliability | 0/TBD | Not started | - |
 | 5. Production Hygiene | 0/TBD | Not started | - |
