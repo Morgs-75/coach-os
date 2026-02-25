@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** A coach can run their entire client-facing business from one place.
-**Current focus:** Phase 3 — Background Jobs
+**Current focus:** Phase 4 — UI Reliability
 
 ## Current Position
 
-Phase: 3 of 5 (Background Jobs)
-Plan: Phase 3 complete — 03-01-PLAN.md + 03-02-PLAN.md both executed
-Status: Phase 3 complete, ready to plan Phase 4
-Last activity: 2026-02-25 — Phase 3 complete. Both plans executed (cron schedule gating + stripe-webhook idempotency).
+Phase: 4 of 5 (UI Reliability)
+Plan: 04-02-PLAN.md executed (view-aware calendar confirmation poll)
+Status: Phase 4 in progress — 04-02 complete
+Last activity: 2026-02-25 — 04-02 complete. Poll useEffect rewritten with view-aware range (day/month/week) and immediate-fire on navigation.
 
-Progress: [█████░░░░░] ~55%
+Progress: [██████░░░░] ~65%
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [█████░░░░░] ~55%
 *Updated after each plan completion*
 
 | Phase 03-background-jobs P02 | 1 min | 1 task | 1 file |
+| Phase 04-ui-reliability P02 | 1 min | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -69,6 +70,10 @@ Recent decisions affecting current work:
 - [Phase 03-01]: Return { executed, anyFailed } from executeActions() — avoids global state or exception rethrowing
 - [Phase 03-02]: INCOME row used as sentinel for dedup: if INCOME exists for invoice.id, all three rows (INCOME/FEE/PLATFORM_FEE) exist — single SELECT suffices
 - [Phase 03-02]: Subscription update kept unconditional outside the dedup if/else — status always reflects current state regardless of dedup outcome
+- [Phase 04-02]: pollKey integer state chosen to force poll useEffect reset on explicit navigation — avoids stale closure on weekStart (derived useMemo value)
+- [Phase 04-02]: currentDate included in poll deps directly — weekStart is derived from currentDate so both change together; no double-dep needed
+- [Phase 04-02]: doPoll() called immediately before setInterval — navigation gives instant feedback, not a 15s wait
+- [Phase 04-02]: No Page Visibility API — keep poll simple per CONTEXT.md discretion note
 
 ### Pending Todos
 
@@ -81,5 +86,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 03-02-PLAN.md — Phase 3 (Background Jobs) fully complete
+Stopped at: Completed 04-02-PLAN.md — view-aware confirmation poll fix
 Resume file: None

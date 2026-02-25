@@ -31,7 +31,7 @@
 ### UI — Client detail and calendar reliability
 
 - [ ] **UI-01**: Client detail page handles database load failures gracefully — partial-load states are visible, not silently empty
-- [ ] **UI-02**: Calendar booking confirmation poll queries the correct date range for the active view mode (day/month/week)
+- [x] **UI-02**: Calendar booking confirmation poll queries the correct date range for the active view mode (day/month/week)
 
 ### INFRA — Production hygiene
 
@@ -68,7 +68,7 @@
 | CRON-02 | Phase 3 | Complete |
 | STRIPE-01 | Phase 3 | Complete |
 | UI-01 | Phase 4 | Pending |
-| UI-02 | Phase 4 | Pending |
+| UI-02 | Phase 4 | Complete |
 | INFRA-01 | Phase 5 | Pending |
 | INFRA-02 | Phase 5 | Pending |
 
