@@ -74,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 04-02]: currentDate included in poll deps directly — weekStart is derived from currentDate so both change together; no double-dep needed
 - [Phase 04-02]: doPoll() called immediately before setInterval — navigation gives instant feedback, not a 15s wait
 - [Phase 04-02]: No Page Visibility API — keep poll simple per CONTEXT.md discretion note
+- [Phase 04-01]: SectionError placed as nested function after !client guard — avoids hoisting issues with existing IIFE pattern
+- [Phase 04-01]: sectionError pattern: per-section boolean flags, reset to false before fetch, set true on error — other section errors preserved via prev spread
 
 ### Pending Todos
 
@@ -86,5 +88,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 04-02-PLAN.md — view-aware confirmation poll fix
+Stopped at: Checkpoint — 04-01 Tasks 1+2 complete, awaiting human-verify (Task 3 visual verification)
 Resume file: None

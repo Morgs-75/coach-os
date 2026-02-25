@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Session Integrity** - All session deductions are atomic and accurate, regardless of which path triggers them
 - [x] **Phase 2: SMS Correctness** - All SMS uses org timezone, quiet hours are enforced correctly, and client Y-reply works reliably (completed 2026-02-25)
 - [x] **Phase 3: Background Jobs** - Cron automations fire on schedule, failures are recorded, Stripe duplicates are prevented (completed 2026-02-25)
-- [ ] **Phase 4: UI Reliability** - Client detail page surfaces load failures, calendar poll queries the correct date range
+- [x] **Phase 4: UI Reliability** - Client detail page surfaces load failures, calendar poll queries the correct date range (completed 2026-02-25)
 - [ ] **Phase 5: Production Hygiene** - PII removed from production logs, org timezone sourced from a single canonical location
 
 ## Phase Details
@@ -99,5 +99,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Session Integrity | 3/3 | Complete    | 2026-02-25 |
 | 2. SMS Correctness | 3/3 | Complete    | 2026-02-25 |
 | 3. Background Jobs | 2/2 | Complete   | 2026-02-25 |
-| 4. UI Reliability | 1/2 | In Progress|  |
+| 4. UI Reliability | 2/2 | Complete   | 2026-02-25 |
 | 5. Production Hygiene | 0/TBD | Not started | - |
