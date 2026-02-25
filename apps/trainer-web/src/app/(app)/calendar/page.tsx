@@ -255,23 +255,24 @@ export default function CalendarPage() {
 
       for (const booking of pastBookings) {
         // Mark booking as completed
-        await supabase
+        const { error: completeError } = await supabase
           .from("bookings")
           .update({ status: "completed" })
           .eq("id", booking.id);
 
-        // Deduct session from package
-        const { data: purchase } = await supabase
-          .from("client_purchases")
-          .select("sessions_used")
-          .eq("id", booking.purchase_id)
-          .single();
+        if (completeError) {
+          console.error("Error completing booking", booking.id, completeError);
+          continue;
+        }
 
-        if (purchase) {
-          await supabase
-            .from("client_purchases")
-            .update({ sessions_used: purchase.sessions_used + 1 })
-            .eq("id", booking.purchase_id);
+        // Atomically deduct session using DB function (prevents double-counting across tabs)
+        if (booking.purchase_id) {
+          const { error: deductError } = await supabase
+            .rpc("use_session", { p_purchase_id: booking.purchase_id });
+          if (deductError) {
+            console.error("Error deducting session for booking", booking.id, deductError);
+          }
+          // use_session() returns false if no sessions remain or pack is expired — that is acceptable
         }
       }
     }
