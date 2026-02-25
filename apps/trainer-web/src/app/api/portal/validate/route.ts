@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   const { data: client, error } = await supabase
     .from("clients")
-    .select("id, full_name, org_id, orgs(name)")
+    .select("id, full_name, org_id, orgs!clients_org_id_fkey(name)")
     .eq("portal_token", token)
     .single();
 

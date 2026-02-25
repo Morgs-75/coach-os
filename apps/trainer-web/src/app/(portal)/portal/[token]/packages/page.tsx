@@ -12,7 +12,7 @@ export default async function PackagesPage({ params }: Props) {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, org_id, orgs(name)")
+    .select("id, org_id, orgs!clients_org_id_fkey(name)")
     .eq("portal_token", token)
     .single();
 

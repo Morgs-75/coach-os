@@ -13,7 +13,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
   // Resolve client from token
   const { data: client } = await supabase
     .from("clients")
-    .select("id, full_name, org_id, orgs(name)")
+    .select("id, full_name, org_id, orgs!clients_org_id_fkey(name)")
     .eq("portal_token", token)
     .single();
 
