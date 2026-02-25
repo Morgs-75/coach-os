@@ -233,7 +233,19 @@ async function handleInvoicePaid(
     },
   ];
 
-  await supabase.from("money_events").insert(moneyEvents);
+  // Idempotency guard: skip insert if this invoice was already processed
+  const { data: existing } = await supabase
+    .from("money_events")
+    .select("id")
+    .eq("reference_id", invoice.id)
+    .eq("type", "INCOME")
+    .maybeSingle();
+
+  if (existing) {
+    console.log(`Invoice ${invoice.id} already recorded in money_events — skipping duplicate insert`);
+  } else {
+    await supabase.from("money_events").insert(moneyEvents);
+  }
 
   // Update subscription status
   if (invoice.subscription) {

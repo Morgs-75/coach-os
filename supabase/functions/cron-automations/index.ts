@@ -98,12 +98,39 @@ serve(async (req) => {
   }
 });
 
+function isScheduleDue(schedule: string, lastFiredAt: string | null): boolean {
+  if (!lastFiredAt) return true; // Never fired — always due
+  const now = Date.now();
+  const last = new Date(lastFiredAt).getTime();
+  const elapsed = now - last;
+  if (schedule === "daily") return elapsed >= 24 * 60 * 60 * 1000;
+  if (schedule === "weekly") return elapsed >= 7 * 24 * 60 * 60 * 1000;
+  // Unknown schedule strings: fire (safe default, matches current behaviour for event triggers)
+  return true;
+}
+
 async function processAutomation(
   supabase: ReturnType<typeof createClient>,
   automation: Automation
 ): Promise<number> {
   // Check if trigger should fire
-  if (!shouldTriggerFire(automation.trigger)) {
+  if (automation.trigger.type === "schedule") {
+    const { data: lastRun } = await supabase
+      .from("automation_runs")
+      .select("fired_at")
+      .eq("automation_id", automation.id)
+      .eq("status", "ok")
+      .order("fired_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const lastFiredAt = lastRun?.fired_at ?? null;
+    if (!isScheduleDue(automation.trigger.schedule ?? "", lastFiredAt)) {
+      return 0;
+    }
+  } else if (automation.trigger.type === "event") {
+    // Event triggers always proceed (evaluated by conditions)
+  } else {
     return 0;
   }
 
@@ -137,21 +164,6 @@ async function processAutomation(
   }
 
   return runsCreated;
-}
-
-function shouldTriggerFire(trigger: TriggerConfig): boolean {
-  if (trigger.type === "schedule") {
-    // For MVP, we run all scheduled automations when cron fires
-    // More sophisticated cron parsing can be added later
-    return true;
-  }
-
-  if (trigger.type === "event") {
-    // Event-based triggers are evaluated via conditions
-    return true;
-  }
-
-  return false;
 }
 
 async function getClientsWithContext(
