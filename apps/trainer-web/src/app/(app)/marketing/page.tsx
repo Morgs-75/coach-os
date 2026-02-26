@@ -69,7 +69,7 @@ interface SavedTemplate {
 }
 
 const STORAGE_KEY = "coachOS_marketing_templates";
-const DEFAULT_BODY = "Hi {name}, we have some special offers available:\n\n{offers}\n\nReply to book or for more info.\n\nReply STOP to opt out.";
+const DEFAULT_BODY = "Hi {name}, we have some special offers available:\n\n{offers}\n\nBook via your portal: {portal_link}\n\nReply STOP to opt out.";
 
 function loadStoredTemplates(): SavedTemplate[] {
   try {
