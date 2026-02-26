@@ -604,12 +604,12 @@ export default function MarketingPage() {
             )}
 
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              Type your message freely. Use <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{name}`}</code> for the recipient's first name and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{offers}`}</code> to insert the selected offer list. Emojis are supported.
+              Use <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{name}`}</code> for first name, <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{portal_link}`}</code> for each client's personal portal URL, and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{`{offers}`}</code> for the offer list.
             </p>
 
             {/* Quick-insert toolbar */}
             <div className="flex flex-wrap gap-1.5 mb-2">
-              {["{name}", "{coach_name}", "{offers}"].map(token => (
+              {["{name}", "{coach_name}", "{portal_link}", "{offers}"].map(token => (
                 <button key={token} onClick={() => insertAtCursor(token)}
                   className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-mono">
                   {token}
@@ -900,7 +900,7 @@ export default function MarketingPage() {
                 />
                 {newTplBody && (
                   <p className="text-xs text-gray-400 mt-1">
-                    {newTplBody.replace("{name}", "there").length} chars · use <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{name}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{offers}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{coach_name}`}</code>
+                    {newTplBody.replace("{name}", "there").length} chars · use <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{name}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{portal_link}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{offers}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{coach_name}`}</code>
                   </p>
                 )}
               </div>

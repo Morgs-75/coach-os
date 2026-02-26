@@ -12,6 +12,7 @@ interface Recipient {
   name: string;
   phone: string;
   client_id?: string;
+  portal_token?: string | null;
 }
 
 export async function POST(request: Request) {
@@ -52,10 +53,10 @@ export async function POST(request: Request) {
       // Fetch selected clients
       if (client_ids.length > 0) {
         const { data } = await supabase.from("clients")
-          .select("id, full_name, phone")
+          .select("id, full_name, phone, portal_token")
           .eq("org_id", org.orgId).in("id", client_ids)
           .not("phone", "is", null).neq("phone", "");
-        (data ?? []).forEach(c => recipients.push({ name: c.full_name, phone: c.phone!, client_id: c.id }));
+        (data ?? []).forEach(c => recipients.push({ name: c.full_name, phone: c.phone!, client_id: c.id, portal_token: c.portal_token }));
       }
       // Fetch selected leads
       if (lead_ids.length > 0) {
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       }
     } else {
       let clientsQuery = supabase.from("clients")
-        .select("id, full_name, phone")
+        .select("id, full_name, phone, portal_token")
         .eq("org_id", org.orgId)
         .not("phone", "is", null).neq("phone", "");
 
@@ -83,10 +84,25 @@ export async function POST(request: Request) {
 
       const { data, error } = await clientsQuery;
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      (data ?? []).forEach(c => recipients.push({ name: c.full_name, phone: c.phone!, client_id: c.id }));
+      (data ?? []).forEach(c => recipients.push({ name: c.full_name, phone: c.phone!, client_id: c.id, portal_token: c.portal_token }));
     }
 
     if (!recipients.length) return NextResponse.json({ sent: 0, failed: 0, total: 0 });
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://coach-os.netlify.app";
+    const needsPortalLink = message.includes("{portal_link}");
+
+    // Auto-generate portal tokens for any clients that don't have one
+    if (needsPortalLink) {
+      const missing = recipients.filter(r => r.client_id && !r.portal_token);
+      for (const r of missing) {
+        const token = crypto.randomUUID();
+        const { error } = await supabase.from("clients")
+          .update({ portal_token: token })
+          .eq("id", r.client_id!);
+        if (!error) r.portal_token = token;
+      }
+    }
 
     let sent = 0;
     let failed = 0;
@@ -94,9 +110,13 @@ export async function POST(request: Request) {
 
     for (const recipient of recipients) {
       const firstName = recipient.name?.split(" ")[0] ?? "there";
+      const portalLink = recipient.portal_token
+        ? `${appUrl}/portal/${recipient.portal_token}`
+        : "";
       const personalised = message
           .replace(/\{name\}/g, firstName)
-          .replace(/\{coach_name\}/g, coachName);
+          .replace(/\{coach_name\}/g, coachName)
+          .replace(/\{portal_link\}/g, portalLink);
 
       try {
         await twilioClient.messages.create({ body: personalised, from, to: recipient.phone });

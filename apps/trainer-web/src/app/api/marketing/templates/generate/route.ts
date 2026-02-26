@@ -27,6 +27,7 @@ ${context}
 Write a concise, friendly, and motivational SMS message body. Requirements:
 - Use {name} as a placeholder for the recipient's first name
 - Use {coach_name} for the coach's name where natural (e.g. signing off)
+- Use {portal_link} where the client's personal booking portal URL should appear (only if the template is about booking, scheduling, or account access — omit if not relevant)
 - Use {offers} where the offer list should appear (only if the template is about promotions/offers — omit if not relevant)
 - Keep it to 1-2 SMS segments (under 306 characters total, ideally under 160)
 - Friendly, motivational tone — not spammy
