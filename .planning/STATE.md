@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-26T23:24:20Z"
+last_updated: "2026-02-27T00:00:00Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 7 — Plan Builder + AI Generation (IN PROGRESS)
-Plan: 07-03 complete (3/4)
-Status: AI generation complete. Coach clicks "Generate with AI", provides goal/calories/macros, Claude generates a 7-day AFCD-matched plan inserted into DB. Plan builder reloads showing all days. Ready for Plan 04 (Publish + Share).
-Last activity: 2026-02-27 — 07-03 complete: AI plan generation endpoint and GenerateModal UI
+Phase: Phase 7 — Plan Builder + AI Generation (COMPLETE — awaiting human-verify checkpoint)
+Plan: 07-04 complete (4/4)
+Status: Publish button added to plan builder. Phase 7 code complete. Awaiting human verification of full end-to-end flow (manual build + AI generation + publish). Human-verify checkpoint active.
+Last activity: 2026-02-27 — 07-04 complete: Publish button in PlanBuilderClient.tsx
 
-Progress: [████████████████████████░░░░░░░░░░░░░] 62% (phase 7, plan 3/4)
+Progress: [████████████████████████████████████░] 75% (phase 7, plan 4/4 — awaiting checkpoint)
 
 ## Phase Summary
 
@@ -68,6 +68,8 @@ Progress: [███████████████████████
 - [07-02] 204 responses use new NextResponse(null, { status: 204 }) — avoids sending response body on DELETE/no-content routes
 - [Phase 07-plan-builder-ai-generation]: Validate all Claude food_item_ids against DB before insert — prevents FK errors from hallucinated UUIDs, skips invalid silently
 - [Phase 07-plan-builder-ai-generation]: DELETE existing days before AI-generated insert — CASCADE removes meals+components, simpler than diffing, acceptable since generate replaces entire plan
+- [07-04] Optimistic update via setPlan callback after PATCH status=published — avoids full loadPlan() reload for a two-field change
+- [07-04] Publish button disabled (not hidden) when no days — visible affordance with tooltip explaining the gate condition
 
 ### Pending Todos
 
@@ -83,5 +85,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 07-03-PLAN.md — AI plan generation endpoint and GenerateModal UI
+Stopped at: 07-04 checkpoint:human-verify — Phase 7 code complete, awaiting human verification of full end-to-end flow
 Resume file: None
