@@ -126,6 +126,8 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [addingDay, setAddingDay] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const loadPlan = useCallback(async () => {
     try {
@@ -177,6 +179,37 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
     setPlan((p) =>
       p ? { ...p, days: p.days.map((d) => (d.id === updatedDay.id ? updatedDay : d)) } : p
     );
+  }
+
+  async function handlePublish() {
+    if (!plan) return;
+    if (plan.days.length === 0) {
+      setPublishError("Add at least one day before publishing.");
+      return;
+    }
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      const res = await fetch(`/api/nutrition/plans/${planId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "published",
+          published_at: new Date().toISOString(),
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPlan((p) => p ? { ...p, status: data.plan.status, published_at: data.plan.published_at } : p);
+      } else {
+        const data = await res.json();
+        setPublishError(data.error ?? "Failed to publish");
+      }
+    } catch {
+      setPublishError("Failed to publish");
+    } finally {
+      setPublishing(false);
+    }
   }
 
   if (loading) {
@@ -236,16 +269,38 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
           >
             {plan.status}
           </span>
+          {/* Publish action */}
+          {plan.status === "published" ? (
+            <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+              ✓ Published
+            </span>
+          ) : (
+            <button
+              onClick={handlePublish}
+              disabled={publishing || plan.days.length === 0}
+              title={plan.days.length === 0 ? "Add at least one day before publishing" : undefined}
+              className="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+            >
+              {publishing && (
+                <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+              )}
+              Publish
+            </button>
+          )}
           <button
             onClick={() => setShowGenerateModal(true)}
             className="px-3 py-1.5 rounded-lg text-sm font-medium border border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
           >
             Generate with AI
           </button>
-          {/* Publish button rendered by Plan 04 */}
-          <div id="plan-action-slot" />
         </div>
       </div>
+
+      {publishError && (
+        <div className="mb-4 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+          {publishError}
+        </div>
+      )}
 
       {/* Main layout: days sidebar + day panel */}
       <div className="flex gap-6 min-h-[500px]">
