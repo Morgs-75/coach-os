@@ -221,9 +221,12 @@ export default function NutritionClient() {
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <a
+                      href={`/nutrition/${plan.id}`}
+                      className="font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                    >
                       {plan.name}
-                    </span>
+                    </a>
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                     {clientDisplayName(plan.client)}
