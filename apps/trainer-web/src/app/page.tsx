@@ -200,6 +200,132 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="py-32 bg-gradient-to-b from-gray-900 to-black">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-sm font-medium text-brand-400 uppercase tracking-widest mb-4">Pricing</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Flat rate. No per-client tax.</h2>
+            <p className="text-xl text-gray-400">Grow your client base — your subscription never changes.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Starter */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-8 flex flex-col">
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">Starter</p>
+                <div className="flex items-end gap-1 mb-1">
+                  <span className="text-5xl font-bold">$49</span>
+                  <span className="text-gray-400 mb-2">/mo</span>
+                </div>
+                <p className="text-sm text-gray-500">Everything to get started</p>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {[
+                  "Unlimited clients",
+                  "Client portal (magic link)",
+                  "Self-booking & scheduling",
+                  "Stripe payments",
+                  "Session packs & subscriptions",
+                  "Waivers & onboarding",
+                  "CRM / lead pipeline",
+                  "SMS & email",
+                  "Coach SMS on cancellation",
+                ].map((f, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="block text-center px-6 py-3 rounded-full border border-white/20 text-white font-medium hover:bg-white/5 transition-colors">
+                Start Free Trial
+              </Link>
+            </div>
+
+            {/* Pro — Most Popular */}
+            <div className="relative rounded-2xl bg-gradient-to-b from-brand-600/20 to-brand-900/20 border border-brand-500/50 p-8 flex flex-col">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="px-4 py-1.5 bg-brand-500 text-white text-xs font-bold uppercase tracking-widest rounded-full">
+                  Most Popular
+                </span>
+              </div>
+              <div className="mb-6">
+                <p className="text-sm font-medium text-brand-400 uppercase tracking-widest mb-2">Pro</p>
+                <div className="flex items-end gap-1 mb-1">
+                  <span className="text-5xl font-bold">$99</span>
+                  <span className="text-gray-400 mb-2">/mo</span>
+                </div>
+                <p className="text-sm text-gray-500">For PTs running a real business</p>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {[
+                  "Everything in Starter",
+                  "Built-in accounting (replaces Xero)",
+                  "Bank feed sync & GST tracking",
+                  "P&L reports & audit trail",
+                  "Nutrition coaching",
+                  "Automation engine",
+                  "AI SMS templates",
+                  "Risk scoring & churn alerts",
+                  "Referral program",
+                  "Newsletter generation",
+                ].map((f, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
+                    <svg className="w-4 h-4 text-brand-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="block text-center px-6 py-3 rounded-full bg-brand-500 hover:bg-brand-400 text-white font-medium transition-colors">
+                Start Free Trial
+              </Link>
+            </div>
+
+            {/* Business */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-8 flex flex-col">
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">Business</p>
+                <div className="flex items-end gap-1 mb-1">
+                  <span className="text-5xl font-bold">$149</span>
+                  <span className="text-gray-400 mb-2">/mo</span>
+                </div>
+                <p className="text-sm text-gray-500">Your full business OS</p>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {[
+                  "Everything in Pro",
+                  "AI market intelligence feed",
+                  "Revenue segmentation & KPI dashboard",
+                  "My EA — AI executive assistant",
+                  "My MBA — business education",
+                  "Priority support",
+                  "Early access to new features",
+                ].map((f, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="block text-center px-6 py-3 rounded-full border border-white/20 text-white font-medium hover:bg-white/5 transition-colors">
+                Start Free Trial
+              </Link>
+            </div>
+          </div>
+
+          <p className="text-center text-sm text-gray-500 mt-10">
+            All plans include a 14-day free trial. No credit card required. Cancel anytime.
+          </p>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-cyan-600 opacity-10" />
