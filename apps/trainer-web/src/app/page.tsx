@@ -117,13 +117,13 @@ export default function LandingPage() {
               },
               {
                 icon: "💰",
-                title: "myAccounts",
-                description: "Bank feeds, auto-categorization, P&L reports. Finance done for you."
+                title: "Accounting",
+                description: "Bank feeds, auto-categorization, P&L reports, and GST tracking. Your finances on autopilot."
               },
               {
-                icon: "🧠",
-                title: "AI Coach",
-                description: "Get insights, generate content, and make smarter business decisions."
+                icon: "🥗",
+                title: "Nutrition",
+                description: "Build meal plans, track client nutrition, and deliver food coaching alongside training."
               },
               {
                 icon: "📅",
