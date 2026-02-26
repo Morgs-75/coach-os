@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 6 — Nutrition Foundation (not started)
-Plan: 4 phases scoped (6–9), roadmap updated 2026-02-26
-Status: Ready to plan. v1.1 complete and deployed.
-Last activity: 2026-02-26 — v1.2 Nutrition Engine scoped, phases 6-9 added to roadmap
+Phase: Phase 6 — Nutrition Foundation (in progress)
+Plan: 06-01 complete (1/4), moving to 06-02
+Status: Active. Migration 0041 applied to production.
+Last activity: 2026-02-26 — 06-01 complete: nutrition DB schema (5 tables, RLS, GIN indexes) applied to Supabase
 
-Progress: [██████████] 100%
+Progress: [██████████] 25% (phase 6, plan 1/4)
 
 ## Phase Summary
 
@@ -33,6 +33,10 @@ Progress: [██████████] 100%
 - Stripe Connect: each org's `stripe_accounts.stripe_account_id` used for checkout
 - Webhook discriminant: `session.metadata.offer_id` present → portal purchase, else subscription
 - No DB migration needed for Phase 4 (client_purchases schema was already complete in 0010)
+- [06-01] food_items has no org_id — AFCD data is globally shared, public SELECT RLS enables food search without auth
+- [06-01] Child table RLS uses EXISTS subquery chains back to org_id (days -> plans -> org; meals -> days; components -> meals)
+- [06-01] pg_trgm extension added for trigram search alongside full-text GIN (handles short search terms <3 chars)
+- [06-01] food_item_id nullable in meal_plan_components — allows custom-only components without AFCD reference
 
 ### Pending Todos
 
@@ -48,5 +52,5 @@ None — code is complete, Stripe key setup is operator config.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: v1.1 live on Netlify. Portal link visible in Profile tab. WebSocket %0A bug outstanding (Netlify build cache not rebuilding Supabase client bundle).
+Stopped at: Completed 06-01-PLAN.md — nutrition DB schema applied to production. Ready for 06-02 (AFCD seed script).
 Resume file: None
