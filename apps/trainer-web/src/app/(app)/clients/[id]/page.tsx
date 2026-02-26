@@ -3095,6 +3095,52 @@ ul { padding-left: 24px; }
           </div>
         </div>
           )}
+
+          {/* Portal Link */}
+          <div className="card p-6">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Client Portal Link</h3>
+            {client.portal_token ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/portal/${client.portal_token}`}
+                    className="input flex-1 text-xs bg-gray-50 dark:bg-gray-800"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/portal/${client.portal_token}`;
+                      navigator.clipboard.writeText(url);
+                      alert("Copied!");
+                    }}
+                    className="px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <button
+                  onClick={sendPortalLinkToClient}
+                  disabled={sendingPortalLink || !client.phone}
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 underline"
+                >
+                  {sendingPortalLink ? "Sending..." : "Resend via SMS"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">No portal link generated yet.</p>
+                <button
+                  onClick={sendPortalLinkToClient}
+                  disabled={sendingPortalLink}
+                  className="btn-primary text-sm"
+                >
+                  {sendingPortalLink ? "Generating..." : "Generate & Send Portal Link"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
