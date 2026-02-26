@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-26T23:08:01.190Z"
+last_updated: "2026-02-27T00:12:00Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 7 — Plan Builder + AI Generation (IN PROGRESS)
-Plan: 07-01 complete (1/4)
-Status: Plan builder shell delivered. /nutrition/[planId] route live with days sidebar, day panel, plan header. API routes for plan detail and days CRUD complete. Ready for Plan 02 (Meal + Component Editor).
-Last activity: 2026-02-27 — 07-01 complete: plan builder shell, days sidebar, nested plan API
+Plan: 07-02 complete (2/4)
+Status: Meal CRUD and food search complete. Coach can add meals to days, search AFCD foods, edit component qty, see live macros at meal and day level. All persisted to Supabase. Ready for Plan 03 (AI Generation).
+Last activity: 2026-02-27 — 07-02 complete: meal CRUD, AFCD food search, inline macro totals
 
-Progress: [█████████░░░░░░░░░░░░░░░░░░░░░░░░░░░] 25% (phase 7, plan 1/4)
+Progress: [██████████████████░░░░░░░░░░░░░░░░░░░] 50% (phase 7, plan 2/4)
 
 ## Phase Summary
 
@@ -62,6 +62,10 @@ Progress: [█████████░░░░░░░░░░░░░░
 - [Phase 07-plan-builder-ai-generation]: Next.js 15 async params used throughout plan builder routes
 - [Phase 07-plan-builder-ai-generation]: loadPlan useEffect fires on [planId] only; useCallback has broader deps to satisfy linter without re-fetch on day selection
 - [Phase 07-plan-builder-ai-generation]: Slot divs (plan-action-slot, add-meal-slot-[dayId]) placed as placeholders for Plans 02 and 04
+- [07-02] Component POST returns food_item join immediately — no second fetch needed to display macros on add
+- [07-02] onMouseDown for food dropdown selection — fires before input blur, ensures item selection registers before dropdown closes
+- [07-02] Local state mutation callbacks replace full loadPlan() reloads — handleDayUpdated/handleMealUpdated/handleComponentUpdated chain avoids flicker
+- [07-02] 204 responses use new NextResponse(null, { status: 204 }) — avoids sending response body on DELETE/no-content routes
 
 ### Pending Todos
 
@@ -77,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 07-01-PLAN.md — plan builder shell, days sidebar, and plan detail API routes
+Stopped at: Completed 07-02-PLAN.md — meal CRUD, AFCD food search, inline macro totals
 Resume file: None
