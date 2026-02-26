@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 
 // --- Type definitions ---
@@ -63,6 +63,15 @@ interface Plan {
   days: Day[];
 }
 
+// --- Macro types ---
+
+interface MacroTotals {
+  kcal: number;
+  protein: number;
+  carb: number;
+  fat: number;
+}
+
 // --- Helpers ---
 
 function clientDisplayName(client: PlanClient | null): string {
@@ -92,6 +101,21 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
   evening_snack: "Evening Snack",
   other: "Other",
 };
+
+function computeTotals(components: Component[]): MacroTotals {
+  return components.reduce(
+    (acc, c) => {
+      const scale = c.qty_g / 100;
+      return {
+        kcal: acc.kcal + (c.food_item?.energy_kcal ?? 0) * scale,
+        protein: acc.protein + (c.food_item?.protein_g ?? 0) * scale,
+        carb: acc.carb + (c.food_item?.carb_g ?? 0) * scale,
+        fat: acc.fat + (c.food_item?.fat_g ?? 0) * scale,
+      };
+    },
+    { kcal: 0, protein: 0, carb: 0, fat: 0 }
+  );
+}
 
 // --- Component ---
 
@@ -146,6 +170,12 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
     } finally {
       setAddingDay(false);
     }
+  }
+
+  function handleDayUpdated(updatedDay: Day) {
+    setPlan((p) =>
+      p ? { ...p, days: p.days.map((d) => (d.id === updatedDay.id ? updatedDay : d)) } : p
+    );
   }
 
   if (loading) {
@@ -277,7 +307,11 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
               </p>
             </div>
           ) : (
-            <DayPanel day={selectedDay} planId={planId} onReload={loadPlan} />
+            <DayPanel
+              day={selectedDay}
+              planId={planId}
+              onDayUpdated={handleDayUpdated}
+            />
           )}
         </div>
       </div>
@@ -285,18 +319,75 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   );
 }
 
-// --- DayPanel: renders meals for a selected day ---
-// Phase 02 will add meal editing. Phase 01 renders a read-only scaffold.
+// --- DayPanel: interactive meal editing ---
 
 function DayPanel({
   day,
   planId,
-  onReload,
+  onDayUpdated,
 }: {
   day: Day;
   planId: string;
-  onReload: () => void;
+  onDayUpdated: (updatedDay: Day) => void;
 }) {
+  const [showAddMeal, setShowAddMeal] = useState(false);
+  const [mealType, setMealType] = useState<string>("breakfast");
+  const [mealTitle, setMealTitle] = useState("");
+  const [addingMeal, setAddingMeal] = useState(false);
+
+  // Compute day totals from all components across all meals
+  const dayTotals = computeTotals(day.meals.flatMap((m) => m.components));
+
+  async function handleAddMeal(e: React.FormEvent) {
+    e.preventDefault();
+    setAddingMeal(true);
+    try {
+      const res = await fetch(`/api/nutrition/plans/${planId}/meals`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          day_id: day.id,
+          meal_type: mealType,
+          title: mealTitle.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newMeal: Meal = { ...data.meal, components: [] };
+        onDayUpdated({ ...day, meals: [...day.meals, newMeal] });
+        setShowAddMeal(false);
+        setMealTitle("");
+        setMealType("breakfast");
+      }
+    } finally {
+      setAddingMeal(false);
+    }
+  }
+
+  function handleMealUpdated(updatedMeal: Meal) {
+    onDayUpdated({
+      ...day,
+      meals: day.meals.map((m) => (m.id === updatedMeal.id ? updatedMeal : m)),
+    });
+  }
+
+  function handleMealDeleted(mealId: string) {
+    onDayUpdated({ ...day, meals: day.meals.filter((m) => m.id !== mealId) });
+  }
+
+  const MEAL_TYPE_OPTIONS = [
+    { value: "breakfast", label: "Breakfast" },
+    { value: "morning_snack", label: "Morning Snack" },
+    { value: "lunch", label: "Lunch" },
+    { value: "afternoon_snack", label: "Afternoon Snack" },
+    { value: "dinner", label: "Dinner" },
+    { value: "evening_snack", label: "Evening Snack" },
+    { value: "other", label: "Other" },
+  ];
+
+  const inputClass =
+    "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-gray-100";
+
   return (
     <div className="space-y-4">
       {/* Day header */}
@@ -315,12 +406,66 @@ function DayPanel({
             </p>
           )}
         </div>
-        {/* Add Meal button — wired in Plan 02 */}
-        <div id={`add-meal-slot-${day.id}`} />
+        <button
+          onClick={() => setShowAddMeal(true)}
+          className="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+        >
+          + Add Meal
+        </button>
       </div>
 
-      {/* Meals list — empty state when no meals */}
-      {day.meals.length === 0 ? (
+      {/* Add meal form (inline) */}
+      {showAddMeal && (
+        <div className="bg-white dark:bg-gray-900 border border-brand-200 dark:border-brand-800 rounded-xl p-4">
+          <form onSubmit={handleAddMeal} className="space-y-3">
+            <div className="flex gap-3">
+              <select
+                value={mealType}
+                onChange={(e) => setMealType(e.target.value)}
+                className={inputClass + " flex-1"}
+              >
+                {MEAL_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Custom title (optional)"
+                value={mealTitle}
+                onChange={(e) => setMealTitle(e.target.value)}
+                className={inputClass + " flex-1"}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddMeal(false);
+                  setMealTitle("");
+                }}
+                className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={addingMeal}
+                className="bg-brand-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {addingMeal && (
+                  <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                )}
+                Add Meal
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Meals */}
+      {day.meals.length === 0 && !showAddMeal ? (
         <div className="bg-white dark:bg-gray-900 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center">
           <p className="text-gray-400 dark:text-gray-500 text-sm">
             No meals yet. Add a meal to get started.
@@ -329,21 +474,71 @@ function DayPanel({
       ) : (
         <div className="space-y-3">
           {day.meals.map((meal) => (
-            <MealCard key={meal.id} meal={meal} />
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              planId={planId}
+              onMealUpdated={handleMealUpdated}
+              onMealDeleted={handleMealDeleted}
+            />
           ))}
         </div>
+      )}
+
+      {/* Day totals */}
+      {day.meals.length > 0 && (
+        <MacroBar label="Day total" totals={dayTotals} highlight />
       )}
     </div>
   );
 }
 
-// --- MealCard: read-only in Plan 01; made editable in Plan 02 ---
+// --- MealCard: interactive version with food search and component editing ---
 
-function MealCard({ meal }: { meal: Meal }) {
+function MealCard({
+  meal,
+  planId,
+  onMealUpdated,
+  onMealDeleted,
+}: {
+  meal: Meal;
+  planId: string;
+  onMealUpdated: (m: Meal) => void;
+  onMealDeleted: (id: string) => void;
+}) {
   const label = MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type;
+  const mealTotals = computeTotals(meal.components);
+
+  async function handleDeleteMeal() {
+    if (!confirm("Delete this meal?")) return;
+    await fetch(`/api/nutrition/plans/${planId}/meals/${meal.id}`, {
+      method: "DELETE",
+    });
+    onMealDeleted(meal.id);
+  }
+
+  function handleComponentUpdated(updated: Component) {
+    onMealUpdated({
+      ...meal,
+      components: meal.components.map((c) => (c.id === updated.id ? updated : c)),
+    });
+  }
+
+  function handleComponentAdded(added: Component) {
+    onMealUpdated({ ...meal, components: [...meal.components, added] });
+  }
+
+  function handleComponentDeleted(id: string) {
+    onMealUpdated({
+      ...meal,
+      components: meal.components.filter((c) => c.id !== id),
+    });
+  }
+
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+      {/* Meal header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
             {label}
@@ -354,55 +549,284 @@ function MealCard({ meal }: { meal: Meal }) {
             </p>
           )}
         </div>
+        <button
+          onClick={handleDeleteMeal}
+          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+        >
+          Remove
+        </button>
       </div>
-      {meal.components.length === 0 ? (
-        <p className="text-xs text-gray-400 dark:text-gray-500">No components yet.</p>
-      ) : (
-        <table className="w-full text-xs mt-1">
-          <thead>
-            <tr className="text-gray-400 dark:text-gray-500">
-              <th className="text-left font-normal pb-1">Food</th>
-              <th className="text-right font-normal pb-1">Qty (g)</th>
-              <th className="text-right font-normal pb-1">kcal</th>
-              <th className="text-right font-normal pb-1">P</th>
-              <th className="text-right font-normal pb-1">C</th>
-              <th className="text-right font-normal pb-1">F</th>
-            </tr>
-          </thead>
-          <tbody>
-            {meal.components.map((c) => {
-              const scale = c.qty_g / 100;
-              const kcal =
-                c.food_item?.energy_kcal != null
-                  ? +(c.food_item.energy_kcal * scale).toFixed(1)
-                  : null;
-              const p =
-                c.food_item?.protein_g != null
-                  ? +(c.food_item.protein_g * scale).toFixed(1)
-                  : null;
-              const carb =
-                c.food_item?.carb_g != null
-                  ? +(c.food_item.carb_g * scale).toFixed(1)
-                  : null;
-              const fat =
-                c.food_item?.fat_g != null
-                  ? +(c.food_item.fat_g * scale).toFixed(1)
-                  : null;
-              const name = c.custom_name ?? c.food_item?.food_name ?? "Unknown";
-              return (
-                <tr key={c.id} className="text-gray-700 dark:text-gray-300">
-                  <td className="py-0.5 pr-2">{name}</td>
-                  <td className="text-right py-0.5">{c.qty_g}</td>
-                  <td className="text-right py-0.5">{kcal ?? "—"}</td>
-                  <td className="text-right py-0.5">{p ?? "—"}</td>
-                  <td className="text-right py-0.5">{carb ?? "—"}</td>
-                  <td className="text-right py-0.5">{fat ?? "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+
+      {/* Components table */}
+      <div className="px-4 pt-2 pb-1">
+        {meal.components.length > 0 && (
+          <table className="w-full text-xs mb-2">
+            <thead>
+              <tr className="text-gray-400 dark:text-gray-500">
+                <th className="text-left font-normal pb-1 pr-2">Food</th>
+                <th className="text-right font-normal pb-1 px-1 w-20">Qty (g)</th>
+                <th className="text-right font-normal pb-1 px-1 w-14">kcal</th>
+                <th className="text-right font-normal pb-1 px-1 w-12">P (g)</th>
+                <th className="text-right font-normal pb-1 px-1 w-12">C (g)</th>
+                <th className="text-right font-normal pb-1 px-1 w-12">F (g)</th>
+                <th className="w-6" />
+              </tr>
+            </thead>
+            <tbody>
+              {meal.components.map((c) => (
+                <ComponentRow
+                  key={c.id}
+                  component={c}
+                  planId={planId}
+                  mealId={meal.id}
+                  onUpdated={handleComponentUpdated}
+                  onDeleted={handleComponentDeleted}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
+        {/* Inline food search */}
+        <FoodSearchInput
+          planId={planId}
+          mealId={meal.id}
+          onAdded={handleComponentAdded}
+        />
+      </div>
+
+      {/* Meal totals */}
+      {meal.components.length > 0 && (
+        <div className="px-4 pb-3">
+          <MacroBar label="Meal total" totals={mealTotals} />
+        </div>
       )}
+    </div>
+  );
+}
+
+// --- ComponentRow: editable qty, delete button, live macro display ---
+
+function ComponentRow({
+  component,
+  planId,
+  mealId,
+  onUpdated,
+  onDeleted,
+}: {
+  component: Component;
+  planId: string;
+  mealId: string;
+  onUpdated: (c: Component) => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [qty, setQty] = useState(String(component.qty_g));
+
+  const scale = Number(qty) / 100;
+  const kcal =
+    component.food_item?.energy_kcal != null
+      ? +(component.food_item.energy_kcal * scale).toFixed(1)
+      : null;
+  const p =
+    component.food_item?.protein_g != null
+      ? +(component.food_item.protein_g * scale).toFixed(1)
+      : null;
+  const carb =
+    component.food_item?.carb_g != null
+      ? +(component.food_item.carb_g * scale).toFixed(1)
+      : null;
+  const fat =
+    component.food_item?.fat_g != null
+      ? +(component.food_item.fat_g * scale).toFixed(1)
+      : null;
+  const name = component.custom_name ?? component.food_item?.food_name ?? "Unknown";
+
+  async function handleQtyBlur() {
+    const newQty = Math.max(1, Number(qty) || 100);
+    setQty(String(newQty));
+    if (newQty === component.qty_g) return; // no change
+    const res = await fetch(
+      `/api/nutrition/plans/${planId}/meals/${mealId}/components/${component.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qty_g: newQty }),
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      onUpdated(data.component);
+    }
+  }
+
+  async function handleDelete() {
+    await fetch(
+      `/api/nutrition/plans/${planId}/meals/${mealId}/components/${component.id}`,
+      { method: "DELETE" }
+    );
+    onDeleted(component.id);
+  }
+
+  return (
+    <tr className="text-gray-700 dark:text-gray-300 group">
+      <td className="py-1 pr-2 text-xs">{name}</td>
+      <td className="text-right py-1 px-1">
+        <input
+          type="number"
+          min="1"
+          step="1"
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          onBlur={handleQtyBlur}
+          className="w-16 text-right text-xs px-1 py-0.5 border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-400 rounded focus:outline-none bg-transparent focus:bg-white dark:focus:bg-gray-800"
+        />
+      </td>
+      <td className="text-right py-1 px-1 text-xs">{kcal ?? "—"}</td>
+      <td className="text-right py-1 px-1 text-xs">{p ?? "—"}</td>
+      <td className="text-right py-1 px-1 text-xs">{carb ?? "—"}</td>
+      <td className="text-right py-1 px-1 text-xs">{fat ?? "—"}</td>
+      <td className="py-1 pl-1">
+        <button
+          onClick={handleDelete}
+          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity text-xs"
+        >
+          ✕
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+// --- FoodSearchInput: debounced AFCD food search + add component ---
+
+function FoodSearchInput({
+  planId,
+  mealId,
+  onAdded,
+}: {
+  planId: string;
+  mealId: string;
+  onAdded: (c: Component) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<FoodItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleQueryChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.length < 2) {
+      setResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(
+          `/api/nutrition/foods?q=${encodeURIComponent(val)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.foods ?? []);
+        }
+      } finally {
+        setSearching(false);
+      }
+    }, 200);
+  }
+
+  async function handleSelect(food: FoodItem) {
+    setAdding(true);
+    setResults([]);
+    setQuery("");
+    try {
+      const res = await fetch(
+        `/api/nutrition/plans/${planId}/meals/${mealId}/components`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ food_item_id: food.id, qty_g: 100 }),
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        onAdded(data.component);
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <div className="relative mb-2">
+      <input
+        type="text"
+        placeholder="+ Search food to add…"
+        value={query}
+        onChange={handleQueryChange}
+        disabled={adding}
+        className="w-full text-xs px-2 py-1.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 bg-transparent dark:text-gray-300 placeholder-gray-400 disabled:opacity-50"
+      />
+      {(results.length > 0 || searching) && (
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
+          {searching && (
+            <div className="px-3 py-2 text-xs text-gray-400">Searching…</div>
+          )}
+          {results.map((food) => (
+            <button
+              key={food.id}
+              onMouseDown={() => handleSelect(food)} // mouseDown fires before blur
+              className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                {food.food_name}
+              </p>
+              {food.food_group && (
+                <p className="text-xs text-gray-400">{food.food_group}</p>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- MacroBar: display macro totals for meal or day ---
+
+function MacroBar({
+  label,
+  totals,
+  highlight = false,
+}: {
+  label: string;
+  totals: MacroTotals;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={
+        "flex items-center gap-4 text-xs rounded-lg px-3 py-2 " +
+        (highlight
+          ? "bg-brand-50 dark:bg-brand-900/20 font-medium"
+          : "bg-gray-50 dark:bg-gray-800/50")
+      }
+    >
+      <span className="text-gray-500 dark:text-gray-400 w-20">{label}</span>
+      <span className="text-gray-800 dark:text-gray-200">
+        {totals.kcal.toFixed(0)} kcal
+      </span>
+      <span className="text-gray-600 dark:text-gray-400">
+        P: {totals.protein.toFixed(1)}g
+      </span>
+      <span className="text-gray-600 dark:text-gray-400">
+        C: {totals.carb.toFixed(1)}g
+      </span>
+      <span className="text-gray-600 dark:text-gray-400">
+        F: {totals.fat.toFixed(1)}g
+      </span>
     </div>
   );
 }
