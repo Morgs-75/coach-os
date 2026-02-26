@@ -54,6 +54,14 @@ Plans:
 
 **Goal:** Coach can build a meal plan day-by-day, adding meals and AFCD components with auto-calculated macros, or generate the full plan via AI.
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Plan builder shell: /nutrition/[planId] page, days sidebar, GET plan API with nested days/meals/components, POST days
+- [ ] 07-02-PLAN.md — Meal editing + food search + macro calculation: Add Meal modal, ComponentRow, FoodSearchInput, meal/day MacroBar totals
+- [ ] 07-03-PLAN.md — AI generation: POST /api/nutrition/plans/[planId]/generate calls claude-sonnet-4-6, GenerateModal UI
+- [ ] 07-04-PLAN.md — Publish action + human-verify checkpoint
+
 **Deliverables:**
 - Plan builder UI at `/nutrition/[planId]`: days sidebar, meal cards per day, component rows with qty input
 - Food search within component row (inline AFCD search)
@@ -111,6 +119,6 @@ Plans:
 | 4. UI Reliability | v1.0 | 2/2 | Complete | 2026-02-25 |
 | 5. Production Hygiene | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
-| 7. Plan Builder + AI Generation | v1.2 | 0/? | Planned | — |
+| 7. Plan Builder + AI Generation | v1.2 | 0/4 | Planned | — |
 | 8. Client Portal Nutrition View | v1.2 | 0/? | Planned | — |
 | 9. AI Feedback Loop + Versioning | v1.2 | 0/? | Planned | — |
