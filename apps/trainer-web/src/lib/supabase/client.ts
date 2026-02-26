@@ -18,6 +18,6 @@ export function createClient() {
     );
   }
 
-  client = createBrowserClient(url, key);
+  client = createBrowserClient(url, key.trim());
   return client;
 }
