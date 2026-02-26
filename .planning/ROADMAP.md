@@ -30,13 +30,13 @@
 
 **Goal:** Seed the AFCD food library into Supabase, define the meal plan data model, and scaffold the `/nutrition` section so coaches can create and list plans.
 
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans executed (awaiting checkpoint:human-verify on 06-04)
 
 Plans:
 - [x] 06-01-PLAN.md — DB migration 0041 (all 5 nutrition tables + RLS + indexes) ✅ 2026-02-26
 - [x] 06-02-PLAN.md — AFCD seed script + human-verify seeding (~1,588 rows) ✅ 2026-02-26
 - [x] 06-03-PLAN.md — Food search API GET /api/nutrition/foods?q=... ✅ 2026-02-27
-- [ ] 06-04-PLAN.md — /nutrition page scaffold (list + create modal + sidebar nav)
+- [x] 06-04-PLAN.md — /nutrition page scaffold (list + create modal + sidebar nav) ✅ 2026-02-27 (pending verify)
 
 **Deliverables:**
 - `food_items` table seeded from AFCD Release 3 Excel (1,588 AU foods, 58 nutrients — focus: energy_kcal, protein_g, fat_g, carb_g, food_name, food_group)
@@ -110,7 +110,7 @@ Plans:
 | 3. Background Jobs | v1.0 | 2/2 | Complete | 2026-02-25 |
 | 4. UI Reliability | v1.0 | 2/2 | Complete | 2026-02-25 |
 | 5. Production Hygiene | v1.0 | 2/2 | Complete | 2026-02-26 |
-| 6. Nutrition Foundation | 3/4 | In Progress|  | — |
+| 6. Nutrition Foundation | v1.2 | 4/4 | Pending Verify | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 0/? | Planned | — |
 | 8. Client Portal Nutrition View | v1.2 | 0/? | Planned | — |
 | 9. AI Feedback Loop + Versioning | v1.2 | 0/? | Planned | — |

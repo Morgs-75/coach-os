@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 6 — Nutrition Foundation (in progress)
-Plan: 06-03 complete (3/4), moving to 06-04
-Status: Active. Food search API live; AFCD seed confirmed (~1,588 rows in food_items).
-Last activity: 2026-02-27 — 06-03 complete: GET /api/nutrition/foods?q= food search endpoint created (5893217)
+Phase: Phase 6 — Nutrition Foundation (awaiting checkpoint verify)
+Plan: 06-04 complete (4/4) — checkpoint:human-verify pending
+Status: Active. Nutrition scaffold complete; /nutrition page + API live in codebase, awaiting dev server visual verify.
+Last activity: 2026-02-27 — 06-04 complete: /nutrition page + sidebar nav + /api/nutrition/plans GET+POST (acd99c5, 70435b9)
 
-Progress: [██████████████████████████████] 75% (phase 6, plan 3/4)
+Progress: [████████████████████████████████████] 100% (phase 6, plan 4/4 — pending verify)
 
 ## Phase Summary
 
@@ -43,6 +43,9 @@ Progress: [███████████████████████
 - [06-02] AFCD file NOT bundled in repo — user downloads from Food Standards Australia NZ; script accepts path as CLI arg
 - [06-03] Minimum 2-char query returns empty array (not error) — avoids full-table scan on single keystrokes, simplifies Phase 7 autocomplete
 - [06-03] Auth via org_members check (not food_items RLS) — endpoint is coach-only in Phase 6 despite food_items having public SELECT RLS
+- [06-04] getOrgAndUser replaces getOrgId in plans route — POST needs user.id for created_by; returning both avoids second auth.getUser() call
+- [06-04] Clients loaded via Supabase client-side query for filter dropdown — avoids building a separate /api/clients endpoint for this page
+- [06-04] useCallback on loadData with selectedClientId dependency — satisfies useEffect deps without infinite re-renders
 
 ### Pending Todos
 
@@ -53,10 +56,10 @@ Progress: [███████████████████████
 
 ### Blockers/Concerns
 
-None — code is complete. AFCD seed confirmed (~1,588 rows, 2026-02-27). Ready for 06-04.
+None — Phase 6 code is complete. Awaiting human verification of /nutrition page in dev server (checkpoint:human-verify from 06-04).
 
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 06-03-PLAN.md — GET /api/nutrition/foods food search endpoint created (5893217). Ready for 06-04 (nutrition scaffold page).
+Stopped at: Completed 06-04-PLAN.md tasks 1+2 — hit checkpoint:human-verify. Run dev server and visit http://localhost:3000/nutrition to verify, then type "approved".
 Resume file: None
