@@ -381,22 +381,22 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                quote: "I cancelled Xero, my booking app, and my SMS tool the same week I signed up. Coach OS does everything — and it actually talks to itself.",
-                name: "Sarah M.",
+                quote: "Honestly I was sceptical. I'd tried Trainerize and a couple of others and they all felt like they were built for gyms, not solo PTs. Coach OS is the first one where I feel like someone actually thought about how I run my day. The booking portal alone saved me probably 3 hours a week of back-and-forth messages.",
+                name: "Ash R.",
                 role: "Personal Trainer, Sydney",
-                stat: "Saves $180/mo on software"
+                stat: "~3hrs/week saved on scheduling"
               },
               {
-                quote: "The churn alerts are a game changer. I got notified a client was at risk, sent them a check-in, and kept them for another 6 months. That's never happened with any other tool.",
-                name: "James T.",
-                role: "Online Coach, Melbourne",
-                stat: "Retained 3 at-risk clients in first month"
+                quote: "I had a client who dropped from 3 sessions a week to 1 and I didn't really clock it. Coach OS flagged him as at risk and I reached out. Turns out he'd had a rough month financially — we sorted out a reduced pack and he's still with me 8 months later. Without that alert I probably would've lost him.",
+                name: "Matt K.",
+                role: "Strength Coach, Melbourne",
+                stat: "Saved a client he would have lost"
               },
               {
-                quote: "GST used to take me a full day every quarter. Now I just look at my P&L report and hand it to my accountant. Done in 10 minutes.",
-                name: "Brooke L.",
-                role: "PT & Nutrition Coach, Brisbane",
-                stat: "Quarterly BAS prep cut from 8hrs to 30mins"
+                quote: "BAS time used to stress me out every quarter. I'd spend a whole weekend going through bank statements trying to figure out what was coaching income vs personal stuff. Now it's all just... there. Categorised. My accountant actually commented on how clean my books were.",
+                name: "Jess W.",
+                role: "Online PT & Nutrition Coach, Brisbane",
+                stat: "First clean BAS in 3 years"
               },
             ].map((t, i) => (
               <div key={i} className="p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col">
