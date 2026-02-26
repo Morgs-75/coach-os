@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 6 — Nutrition Foundation (in progress)
-Plan: 06-02 complete (2/4), moving to 06-03
-Status: Active. AFCD seed script ready; food_items awaiting manual seed run.
-Last activity: 2026-02-26 — 06-02 complete: AFCD seed script written (checkpoint: user must download AFCD xlsx and run seed)
+Plan: 06-03 complete (3/4), moving to 06-04
+Status: Active. Food search API live; AFCD seed still awaiting manual run.
+Last activity: 2026-02-27 — 06-03 complete: GET /api/nutrition/foods?q= food search endpoint created (5893217)
 
-Progress: [████████████████████] 50% (phase 6, plan 2/4)
+Progress: [██████████████████████████████] 75% (phase 6, plan 3/4)
 
 ## Phase Summary
 
@@ -41,6 +41,8 @@ Progress: [████████████████████] 50% (ph
 - [06-02] Column detection is dynamic/fuzzy — AFCD Release 3 header names vary; partial case-insensitive match guards against breakage
 - [06-02] kJ-to-kcal fallback (divide by 4.184) if kcal column absent from a given AFCD release
 - [06-02] AFCD file NOT bundled in repo — user downloads from Food Standards Australia NZ; script accepts path as CLI arg
+- [06-03] Minimum 2-char query returns empty array (not error) — avoids full-table scan on single keystrokes, simplifies Phase 7 autocomplete
+- [06-03] Auth via org_members check (not food_items RLS) — endpoint is coach-only in Phase 6 despite food_items having public SELECT RLS
 
 ### Pending Todos
 
@@ -56,6 +58,6 @@ None — code is complete. AFCD seeding is a one-time operator task (not a block
 
 ## Session Continuity
 
-Last session: 2026-02-26
-Stopped at: Completed 06-02-PLAN.md — AFCD seed script written (a36c353). Checkpoint: user must download AFCD xlsx and run seed to verify ~1,588 rows. Ready for 06-03 (food search API).
+Last session: 2026-02-27
+Stopped at: Completed 06-03-PLAN.md — GET /api/nutrition/foods food search endpoint created (5893217). Ready for 06-04 (nutrition scaffold page).
 Resume file: None
