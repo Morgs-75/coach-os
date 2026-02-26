@@ -125,6 +125,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [addingDay, setAddingDay] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   const loadPlan = useCallback(async () => {
     try {
@@ -235,6 +236,12 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
           >
             {plan.status}
           </span>
+          <button
+            onClick={() => setShowGenerateModal(true)}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
+          >
+            Generate with AI
+          </button>
           {/* Publish button rendered by Plan 04 */}
           <div id="plan-action-slot" />
         </div>
@@ -315,6 +322,28 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
           )}
         </div>
       </div>
+
+      {showGenerateModal && (
+        <GenerateModal
+          planId={planId}
+          onClose={() => setShowGenerateModal(false)}
+          onGenerated={() => {
+            setShowGenerateModal(false);
+            // Reload plan from API to get generated days/meals/components
+            setLoading(true);
+            setSelectedDayId(null);
+            fetch(`/api/nutrition/plans/${planId}`)
+              .then((r) => r.json())
+              .then((data) => {
+                setPlan(data.plan);
+                if (data.plan.days?.length > 0) {
+                  setSelectedDayId(data.plan.days[0].id);
+                }
+              })
+              .finally(() => setLoading(false));
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -827,6 +856,208 @@ function MacroBar({
       <span className="text-gray-600 dark:text-gray-400">
         F: {totals.fat.toFixed(1)}g
       </span>
+    </div>
+  );
+}
+
+// --- GenerateModal: AI plan generation form ---
+
+function GenerateModal({
+  planId,
+  onClose,
+  onGenerated,
+}: {
+  planId: string;
+  onClose: () => void;
+  onGenerated: () => void;
+}) {
+  const [goal, setGoal] = useState("weight loss");
+  const [calorieTarget, setCalorieTarget] = useState(2000);
+  const [proteinPct, setProteinPct] = useState(30);
+  const [carbPct, setCarbPct] = useState(45);
+  const [fatPct, setFatPct] = useState(25);
+  const [restrictions, setRestrictions] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Auto-balance macros so they sum to 100
+  const macroSum = proteinPct + carbPct + fatPct;
+
+  const inputClass = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-gray-100";
+
+  async function handleGenerate(e: React.FormEvent) {
+    e.preventDefault();
+    if (macroSum !== 100) {
+      setError(`Macros must sum to 100% (currently ${macroSum}%)`);
+      return;
+    }
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/nutrition/plans/${planId}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          goal,
+          calorie_target: calorieTarget,
+          macro_split: { protein_pct: proteinPct, carb_pct: carbPct, fat_pct: fatPct },
+          dietary_restrictions: restrictions || null,
+        }),
+      });
+      if (res.ok) {
+        onGenerated();
+      } else {
+        const data = await res.json();
+        setError(data.error ?? "Generation failed");
+      }
+    } catch {
+      setError("Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-md shadow-xl">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Generate with AI
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Claude will create a 7-day meal plan using AFCD foods.
+              Any existing days will be replaced.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleGenerate} className="space-y-4">
+          {/* Goal */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Client Goal
+            </label>
+            <input
+              type="text"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="e.g. weight loss, muscle gain, general health"
+              className={inputClass}
+            />
+          </div>
+
+          {/* Calorie target */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Daily Calorie Target (kcal)
+            </label>
+            <input
+              type="number"
+              min="500"
+              max="6000"
+              step="50"
+              value={calorieTarget}
+              onChange={(e) => setCalorieTarget(Number(e.target.value))}
+              className={inputClass}
+            />
+          </div>
+
+          {/* Macro split */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Macro Split (must total 100%)
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Protein %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={proteinPct}
+                  onChange={(e) => setProteinPct(Number(e.target.value))}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Carbs %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={carbPct}
+                  onChange={(e) => setCarbPct(Number(e.target.value))}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Fat %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={fatPct}
+                  onChange={(e) => setFatPct(Number(e.target.value))}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <p className={`text-xs mt-1 ${macroSum === 100 ? "text-green-600" : "text-amber-600"}`}>
+              Total: {macroSum}%{macroSum !== 100 ? " (must equal 100)" : " ✓"}
+            </p>
+          </div>
+
+          {/* Dietary restrictions */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Dietary Restrictions
+            </label>
+            <input
+              type="text"
+              value={restrictions}
+              onChange={(e) => setRestrictions(e.target.value)}
+              placeholder="e.g. gluten-free, vegetarian, no dairy (optional)"
+              className={inputClass}
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+
+          {generating && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              Generating 7-day plan… this may take 20–40 seconds.
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={generating}
+              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={generating || macroSum !== 100}
+              className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              Generate Plan
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
