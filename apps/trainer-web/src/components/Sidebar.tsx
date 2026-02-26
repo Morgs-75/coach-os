@@ -18,6 +18,7 @@ const navigation = [
   { name: "Insights", href: "/insights", icon: "💡" },
   { name: "Calendar", href: "/calendar", icon: "📅" },
   { name: "Clients", href: "/clients", icon: "👥" },
+  { name: "Nutrition", href: "/nutrition", icon: "🥗" },
   { name: "Leads", href: "/leads", icon: "📋" },
   { name: "Pricing", href: "/pricing", icon: "💵" },
   { name: "myMarketing", href: "/marketing", icon: "📣" },
