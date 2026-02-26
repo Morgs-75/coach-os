@@ -103,42 +103,64 @@ export default function LandingPage() {
       {/* Features Section */}
       <section className="py-32 bg-gradient-to-b from-black to-gray-900">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Everything You Need</h2>
-            <p className="text-xl text-gray-400">One platform to run your entire PT business</p>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Built different from every competitor</h2>
+            <p className="text-xl text-gray-400">Every other platform delivers workouts. Coach OS runs your business.</p>
+          </div>
+
+          {/* Only Coach OS strip */}
+          <div className="grid md:grid-cols-3 gap-4 mb-20">
+            {[
+              { label: "The only PT platform with built-in accounting" },
+              { label: "The only PT platform with AI business insights" },
+              { label: "Flat pricing — we never charge per client" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 px-6 py-4 rounded-xl bg-brand-500/10 border border-brand-500/30">
+                <svg className="w-5 h-5 text-brand-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-medium text-brand-300">{item.label}</span>
+              </div>
+            ))}
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                icon: "👥",
-                title: "Client Management",
-                description: "Track progress, manage programs, and keep all client data in one place."
+                icon: "💰",
+                title: "Replaces Xero",
+                badge: "No competitor has this",
+                description: "Bank sync, auto-categorisation, P&L reports, and GST tracking. Cancel your accounting software."
               },
               {
-                icon: "💰",
-                title: "Accounting",
-                description: "Bank feeds, auto-categorization, P&L reports, and GST tracking. Your finances on autopilot."
+                icon: "🧠",
+                title: "AI Business Insights",
+                badge: "No competitor has this",
+                description: "Market intelligence, churn prediction, and revenue analytics. Know your business before problems hit."
+              },
+              {
+                icon: "⚡",
+                title: "Automation Engine",
+                badge: "No competitor has this",
+                description: "Set-and-forget workflows for SMS, email, and push. Re-engage clients automatically while you sleep."
+              },
+              {
+                icon: "👥",
+                title: "Full Client OS",
+                badge: "",
+                description: "Bookings, client portal, CRM pipeline, waivers, referrals, and risk scoring — all in one place."
               },
               {
                 icon: "🥗",
-                title: "Nutrition",
-                description: "Build meal plans, track client nutrition, and deliver food coaching alongside training."
-              },
-              {
-                icon: "📅",
-                title: "Smart Scheduling",
-                description: "Automated bookings, reminders, and calendar sync across all devices."
+                title: "Nutrition + Training",
+                badge: "",
+                description: "Manage food, training, and finances in a single platform. The complete picture, not just workouts."
               },
               {
                 icon: "📧",
-                title: "Email & SMS",
-                description: "Automated campaigns, follow-ups, and client communication."
-              },
-              {
-                icon: "📊",
-                title: "Analytics",
-                description: "Real-time insights into revenue, retention, and business health."
+                title: "Smart Comms",
+                badge: "",
+                description: "AI-generated SMS templates, broadcast campaigns, and newsletters. Built for PTs, not marketers."
               },
             ].map((feature, i) => (
               <div
@@ -146,9 +168,33 @@ export default function LandingPage() {
                 className="group p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-500/50 transition-all hover:-translate-y-1"
               >
                 <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="text-xl font-semibold">{feature.title}</h3>
+                  {feature.badge && (
+                    <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium bg-brand-500/20 text-brand-400 rounded-full border border-brand-500/30">
+                      Unique
+                    </span>
+                  )}
+                </div>
                 <p className="text-gray-400">{feature.description}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Replace Xero Section */}
+      <section className="py-24 bg-gray-900">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <p className="text-sm font-medium text-brand-400 uppercase tracking-widest mb-4">Only in Australia</p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Cancel Xero. Cancel your booking tool.<br />One subscription does it all.</h2>
+          <p className="text-lg text-gray-400 mb-10">
+            Coach OS is the only PT platform built for Australian trainers — with GST tracking, AUD bank feeds,
+            and BAS-ready reports built in. Stop paying for three tools when one does everything.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-400">
+            {["✅ Bank feed sync", "✅ GST tracking", "✅ P&L reports", "✅ AI transaction coding", "✅ Audit trail"].map((item, i) => (
+              <span key={i} className="px-4 py-2 rounded-full bg-white/5 border border-white/10">{item}</span>
             ))}
           </div>
         </div>
@@ -159,10 +205,10 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-cyan-600 opacity-10" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Transform Your Business?
+            Stop juggling tools.<br />Start running a business.
           </h2>
           <p className="text-xl text-gray-400 mb-10">
-            Join hundreds of trainers who&apos;ve streamlined their operations with Coach OS.
+            Join Australian personal trainers who&apos;ve replaced Xero, their booking tool, and their CRM with one flat-rate subscription.
           </p>
           <Link
             href="/signup"
