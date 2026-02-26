@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 6 — Nutrition Foundation (awaiting checkpoint verify)
-Plan: 06-04 complete (4/4) — checkpoint:human-verify pending
-Status: Active. Nutrition scaffold complete; /nutrition page + API live in codebase, awaiting dev server visual verify.
-Last activity: 2026-02-27 — 06-04 complete: /nutrition page + sidebar nav + /api/nutrition/plans GET+POST (acd99c5, 70435b9)
+Phase: Phase 6 — Nutrition Foundation (COMPLETE)
+Plan: 06-04 complete (4/4) — checkpoint:human-verify approved
+Status: Phase 6 done. /nutrition page verified end-to-end by user. Ready to begin Phase 7 — Plan Builder + AI Generation.
+Last activity: 2026-02-27 — 06-04 human-verify approved: sidebar nav, plan list, create modal, DB persistence all confirmed working
 
 Progress: [████████████████████████████████████] 100% (phase 6, plan 4/4 — pending verify)
 
@@ -56,10 +56,10 @@ Progress: [███████████████████████
 
 ### Blockers/Concerns
 
-None — Phase 6 code is complete. Awaiting human verification of /nutrition page in dev server (checkpoint:human-verify from 06-04).
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 06-04-PLAN.md tasks 1+2 — hit checkpoint:human-verify. Run dev server and visit http://localhost:3000/nutrition to verify, then type "approved".
+Stopped at: Phase 6 complete — all 4 plans done, 06-04 checkpoint approved. Begin Phase 7 (Plan Builder + AI Generation) next.
 Resume file: None
