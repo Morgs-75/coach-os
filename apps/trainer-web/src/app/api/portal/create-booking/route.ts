@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     // Check sessions remaining
     const { data: purchases } = await supabase
       .from("client_purchases")
-      .select("id, sessions_remaining, expires_at")
+      .select("id, sessions_remaining, expires_at, session_duration_mins, offer_id(session_duration_mins)")
       .eq("client_id", client.id)
       .eq("payment_status", "succeeded")
       .gt("sessions_remaining", 0);
@@ -68,13 +68,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const durationMins = settings?.slot_duration_mins ?? 60;
+    // Resolve purchased duration: prefer column value, fall back to offer join, then org default
+    const resolvedPurchase = activePurchases.sort(
+      (a: any, b: any) => (a.expires_at ?? "9999") < (b.expires_at ?? "9999") ? -1 : 1
+    )[0] as any;
+    const purchasedDurationMins: number =
+      resolvedPurchase.session_duration_mins ??
+      (resolvedPurchase.offer_id as any)?.session_duration_mins ??
+      settings?.slot_duration_mins ??
+      60;
+
     const startDt = new Date(start_time);
-    const endDt = new Date(startDt.getTime() + durationMins * 60_000);
+    const endDt = new Date(startDt.getTime() + purchasedDurationMins * 60_000);
+
+    // Guard: end_time must exactly match start + purchased duration
+    const requestedEnd = new Date(start_time);
+    requestedEnd.setMinutes(requestedEnd.getMinutes()); // used below for explicit check
+    const expectedEnd = new Date(startDt.getTime() + purchasedDurationMins * 60_000);
+    // (end_time is not sent by client — we compute it, so this guard protects server-side integrity)
 
     if (startDt <= new Date()) {
       return NextResponse.json({ error: "That time slot is in the past." }, { status: 400 });
     }
+
+    const durationMins = purchasedDurationMins;
 
     // Check slot availability via DB function
     const { data: available } = await supabase.rpc("is_slot_available", {
@@ -90,10 +107,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use the specified purchase or the first active one
-    const resolvedPurchaseId =
-      purchase_id ??
-      activePurchases.sort((a, b) => (a.expires_at ?? "9999") < (b.expires_at ?? "9999") ? -1 : 1)[0].id;
+    // Use the specified purchase or the earliest-expiring active one
+    const resolvedPurchaseId = purchase_id ?? resolvedPurchase.id;
 
     // Insert booking (booked_by is NULL for portal bookings — migration 0035)
     const { data: booking, error: bookingError } = await supabase

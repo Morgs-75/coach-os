@@ -4,11 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   generateAvailableDates,
-  generateTimeSlots,
   type Availability,
   type BookingSettings,
   type ExistingBooking,
 } from "@/lib/booking/slot-generator";
+
+type ScoredSlot = { start: string; end: string; score: number; recommended: boolean };
 
 // Note: this page intentionally uses client-side data fetching via the
 // /api/portal/validate endpoint so the token never touches the server render.
@@ -31,6 +32,7 @@ export default function PortalBookPage() {
   const [primaryColor, setPrimaryColor] = useState("#0ea5e9");
   const [displayName, setDisplayName] = useState("");
   const [sessionsRemaining, setSessionsRemaining] = useState(0);
+  const [purchasedDurationMins, setPurchasedDurationMins] = useState<number | null>(null);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [settings, setSettings] = useState<BookingSettings>({
     min_notice_hours: 24,
@@ -44,6 +46,8 @@ export default function PortalBookPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [step, setStep] = useState<"date" | "time" | "confirm" | "done">("date");
   const [booking, setBooking] = useState(false);
+  const [timeSlots, setTimeSlots] = useState<ScoredSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -103,7 +107,7 @@ export default function PortalBookPage() {
     // client-side, so call /api/portal/validate which returns the info we need.
     // Actually validate only returns client/org — fetch sessions separately.
     const sessRes = await fetch(
-      `${supaUrl}/rest/v1/client_purchases?select=sessions_remaining,expires_at&client_id=eq.${v.client_id}&payment_status=eq.succeeded&sessions_remaining=gt.0`,
+      `${supaUrl}/rest/v1/client_purchases?select=sessions_remaining,expires_at,session_duration_mins,offer_id(session_duration_mins)&client_id=eq.${v.client_id}&payment_status=eq.succeeded&sessions_remaining=gt.0`,
       { headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` } }
     );
     // This call will fail due to RLS (no auth) — that's expected. We rely on the
@@ -111,11 +115,20 @@ export default function PortalBookPage() {
     // anyway; the API will reject if 0 sessions remain.
     if (sessRes.ok) {
       const purchasesData = await sessRes.json();
-      const remaining = (purchasesData ?? []).reduce((sum: number, p: any) => {
-        if (p.expires_at && new Date(p.expires_at) < new Date()) return sum;
-        return sum + (p.sessions_remaining ?? 0);
-      }, 0);
+      const activePurchases = (purchasesData ?? []).filter((p: any) =>
+        !p.expires_at || new Date(p.expires_at) >= new Date()
+      );
+      const remaining = activePurchases.reduce((sum: number, p: any) => sum + (p.sessions_remaining ?? 0), 0);
       setSessionsRemaining(remaining);
+      // Use the duration from the earliest-expiring active purchase that has one
+      const withDuration = activePurchases.find((p: any) =>
+        (p.session_duration_mins ?? p.offer_id?.session_duration_mins) != null
+      );
+      if (withDuration) {
+        setPurchasedDurationMins(
+          withDuration.session_duration_mins ?? withDuration.offer_id?.session_duration_mins
+        );
+      }
     }
 
     // Load existing bookings for conflict detection
@@ -132,20 +145,26 @@ export default function PortalBookPage() {
   }
 
   const availableDates = useMemo(
-    () => generateAvailableDates(availability, settings),
+    () => generateAvailableDates(availability, settings, [], settings.slot_duration_mins, settings.buffer_between_mins),
     [availability, settings]
   );
 
-  const timeSlots = useMemo(() => {
-    if (!selectedDate) return [];
-    return generateTimeSlots(
-      selectedDate,
-      settings.slot_duration_mins,
-      availability,
-      settings,
-      existingBookings
-    );
-  }, [selectedDate, availability, settings, existingBookings]);
+  const effectiveDurationMins = purchasedDurationMins ?? settings.slot_duration_mins;
+
+  // When a date is selected, fetch scored slots from the server
+  useEffect(() => {
+    if (!selectedDate || !token) return;
+    const dateStr = selectedDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    setSlotsLoading(true);
+    fetch(`/api/portal/available-slots?token=${token}&date=${dateStr}`)
+      .then(r => r.json())
+      .then(data => {
+        setTimeSlots(data.slots ?? []);
+        if (data.durationMins) setPurchasedDurationMins(data.durationMins);
+      })
+      .catch(() => setTimeSlots([]))
+      .finally(() => setSlotsLoading(false));
+  }, [selectedDate, token]);
 
   async function handleConfirm() {
     if (!selectedTime) return;
@@ -262,17 +281,26 @@ export default function PortalBookPage() {
                 Select a time — {selectedDate.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}
               </h2>
             </div>
-            {timeSlots.length > 0 ? (
+            {slotsLoading ? (
+              <div className="px-5 py-8 flex justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+              </div>
+            ) : timeSlots.length > 0 ? (
               <div className="p-4 grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {timeSlots.map(slot => (
                   <button
-                    key={slot}
-                    onClick={() => { setSelectedTime(slot); setStep("confirm"); }}
+                    key={slot.start}
+                    onClick={() => { setSelectedTime(slot.start); setStep("confirm"); }}
                     className="p-3 rounded-lg border border-gray-200 text-center hover:border-gray-400 transition-all"
                   >
                     <p className="text-sm font-medium text-gray-900">
-                      {fmt(slot, { hour: "numeric", minute: "2-digit", hour12: true })}
+                      {fmt(slot.start, { hour: "numeric", minute: "2-digit", hour12: true })}
                     </p>
+                    {slot.recommended && (
+                      <span className="text-xs bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-full px-2 py-0.5 ml-2">
+                        Best
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -293,11 +321,11 @@ export default function PortalBookPage() {
                 {fmt(selectedTime, { hour: "numeric", minute: "2-digit", hour12: true })}
                 {" – "}
                 {fmt(
-                  new Date(new Date(selectedTime).getTime() + settings.slot_duration_mins * 60_000).toISOString(),
+                  new Date(new Date(selectedTime).getTime() + effectiveDurationMins * 60_000).toISOString(),
                   { hour: "numeric", minute: "2-digit", hour12: true }
                 )}
               </p>
-              <p className="text-sm text-gray-500">{settings.slot_duration_mins} mins · in person</p>
+              <p className="text-sm text-gray-500">{effectiveDurationMins} mins · in person</p>
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button

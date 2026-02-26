@@ -195,7 +195,7 @@ async function handlePortalPurchase(
   // Fetch offer details
   const { data: offer } = await supabase
     .from("offers")
-    .select("id, name, sessions_included, bonus_sessions, pack_validity_days, price_cents, currency")
+    .select("id, name, sessions_included, bonus_sessions, pack_validity_days, price_cents, currency, session_duration_mins")
     .eq("id", offerId)
     .single();
 
@@ -235,6 +235,7 @@ async function handlePortalPurchase(
     expires_at: expiresAt,
     stripe_payment_intent_id: paymentIntentId,
     payment_status: "succeeded",
+    session_duration_mins: offer.session_duration_mins ?? null,
   });
 
   // Record money events (INCOME + FEE + PLATFORM_FEE)
