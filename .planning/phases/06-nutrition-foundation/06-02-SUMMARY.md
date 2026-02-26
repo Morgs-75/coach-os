@@ -61,7 +61,7 @@ completed: 2026-02-26
 - **Duration:** 5 min
 - **Started:** 2026-02-26T13:55:09Z
 - **Completed:** 2026-02-26T14:00:00Z (checkpoint — awaiting human verification of seed run)
-- **Tasks:** 1/1 code tasks complete (checkpoint pending human action)
+- **Tasks:** 2/2 (code task + human-verify checkpoint — seed confirmed 2026-02-27)
 - **Files modified:** 2
 
 ## Accomplishments
@@ -70,6 +70,7 @@ completed: 2026-02-26
 - Added exceljs, dotenv, tsx dependencies; npm run seed-afcd script entry
 - Script auto-detects all 8 AFCD columns from header row (food ID, name, group, energy kcal, protein, fat, carb, fibre)
 - kJ-to-kcal fallback if kcal column not present in a given AFCD release
+- **Seed confirmed 2026-02-27:** ~1,588 rows successfully inserted into food_items table via user-run seed script
 
 ## Task Commits
 
@@ -77,7 +78,7 @@ Each task was committed atomically:
 
 1. **Task 1: Install tsx dependency and write seed script** - `a36c353` (feat)
 
-**Plan metadata:** (pending — will be committed with SUMMARY.md and STATE.md)
+**Plan metadata:** `e2532be` (docs: complete AFCD seed script plan)
 
 ## Files Created/Modified
 
@@ -126,9 +127,9 @@ To seed the food_items table, the user must:
 
 ## Next Phase Readiness
 
-- Seed script is ready; food_items will be populated once user runs the seed
-- 06-03 (food search API) can proceed in parallel — the GIN/trgm indexes are already live from 06-01
-- 07-nutrition-planner and 08-portal-nutrition should wait until food_items is seeded
+- food_items seeded: ~1,588 AFCD rows confirmed in production (2026-02-27)
+- 06-03 (food search API) complete — food search endpoint live against the seeded table
+- 07-nutrition-planner and 08-portal-nutrition can proceed — food library is populated
 
 ---
 *Phase: 06-nutrition-foundation*

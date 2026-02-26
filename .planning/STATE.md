@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 Phase: Phase 6 — Nutrition Foundation (in progress)
 Plan: 06-03 complete (3/4), moving to 06-04
-Status: Active. Food search API live; AFCD seed still awaiting manual run.
+Status: Active. Food search API live; AFCD seed confirmed (~1,588 rows in food_items).
 Last activity: 2026-02-27 — 06-03 complete: GET /api/nutrition/foods?q= food search endpoint created (5893217)
 
 Progress: [██████████████████████████████] 75% (phase 6, plan 3/4)
@@ -50,11 +50,10 @@ Progress: [███████████████████████
 - Add `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` to Supabase Edge Function secrets (for stripe-webhook)
 - Register Stripe webhook endpoint in Stripe dashboard pointing to Supabase Edge Function URL
 - Test end-to-end: buy a package → check client_purchases + money_events created
-- Run AFCD seed: `npx tsx scripts/seed-afcd.ts /path/to/AFCD-Release3.xlsx` from apps/trainer-web/
 
 ### Blockers/Concerns
 
-None — code is complete. AFCD seeding is a one-time operator task (not a blocker for 06-03 food search API development).
+None — code is complete. AFCD seed confirmed (~1,588 rows, 2026-02-27). Ready for 06-04.
 
 ## Session Continuity
 
