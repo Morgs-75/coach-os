@@ -409,7 +409,7 @@ export default function PricingPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pricing & Offers</h1>
-          <p className="text-gray-500 dark:text-gray-400">Configure your services and pricing for clients</p>
+          <p className="text-gray-500 dark:text-gray-400">The operating system that turns personal trainers into business owners.</p>
         </div>
         <button
           onClick={() => {

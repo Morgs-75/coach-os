@@ -48,20 +48,16 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight" style={{ textShadow: '0 0 7px rgba(14,165,233,0.9), 0 0 30px rgba(14,165,233,0.7), 0 0 70px rgba(14,165,233,0.55), 0 0 130px rgba(14,165,233,0.45), 0 0 200px rgba(14,165,233,0.3), 0 0 300px rgba(14,165,233,0.2)' }}>
-            Your PT Business
+            The Operating System That Turns Personal Trainers
           </h1>
-          <p className="text-lg md:text-xl text-gray-400 mb-4">
-            Have your PT or online coaching business set up in 15 mins
-          </p>
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
             <span className="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent" style={{ filter: 'drop-shadow(0 0 7px rgba(14,165,233,0.9)) drop-shadow(0 0 30px rgba(14,165,233,0.8)) drop-shadow(0 0 70px rgba(14,165,233,0.6)) drop-shadow(0 0 140px rgba(6,182,212,0.45)) drop-shadow(0 0 220px rgba(6,182,212,0.3))' }}>
-              Supercharged
+              Into Business Owners.
             </span>
           </h2>
 
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            The all-in-one platform for personal trainers. Manage clients, track finances,
-            automate bookings, and grow your business with AI.
+            Manage your clients, their nutrition, and your business finances — all in one place.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -181,7 +177,7 @@ export default function LandingPage() {
       <footer className="py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-sm text-gray-500">
-            © 2024 Coach OS. All rights reserved.
+            © 2026 Coach OS. All rights reserved.
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
