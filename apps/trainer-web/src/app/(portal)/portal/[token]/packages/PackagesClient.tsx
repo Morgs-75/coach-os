@@ -22,13 +22,15 @@ interface Props {
   primaryColor: string;
   offers: Offer[];
   stripeReady: boolean;
+  gstRegistered: boolean;
+  passStripeFees: boolean;
 }
 
 function fmtPrice(cents: number) {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(cents / 100);
 }
 
-export default function PackagesClient({ token, displayName, primaryColor, offers, stripeReady }: Props) {
+export default function PackagesClient({ token, displayName, primaryColor, offers, stripeReady, gstRegistered, passStripeFees }: Props) {
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -84,8 +86,18 @@ export default function PackagesClient({ token, displayName, primaryColor, offer
         )}
 
         {offers.map(offer => {
+          const displayCents = passStripeFees
+            ? Math.ceil((offer.price_cents + 30) / (1 - 0.0175))
+            : offer.price_cents;
+          const priceLabel = gstRegistered && passStripeFees
+            ? "incl. GST + card surcharge"
+            : gstRegistered
+            ? "incl. GST"
+            : passStripeFees
+            ? "incl. card surcharge"
+            : null;
           const totalSessions = (offer.sessions_included ?? 1) + (offer.bonus_sessions ?? 0);
-          const pricePerSession = totalSessions > 0 ? offer.price_cents / totalSessions : offer.price_cents;
+          const pricePerSession = totalSessions > 0 ? displayCents / totalSessions : displayCents;
           const isBuying = buying === offer.id;
 
           return (
@@ -129,7 +141,10 @@ export default function PackagesClient({ token, displayName, primaryColor, offer
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-2xl font-bold text-gray-900">{fmtPrice(offer.price_cents)}</p>
+                    <p className="text-2xl font-bold text-gray-900">{fmtPrice(displayCents)}</p>
+                    {priceLabel && (
+                      <p className="text-xs text-gray-400 mt-0.5">{priceLabel}</p>
+                    )}
                   </div>
                 </div>
 

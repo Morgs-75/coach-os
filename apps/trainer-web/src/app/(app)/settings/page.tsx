@@ -13,6 +13,12 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("Australia/Brisbane");
   const [orgId, setOrgId] = useState("");
 
+  // Payment processing settings
+  const [gstRegistered, setGstRegistered] = useState(false);
+  const [passStripeFees, setPassStripeFees] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState("");
+
   // Payout settings
   const [payoutMethod, setPayoutMethod] = useState("bank_transfer");
   const [bankAccountName, setBankAccountName] = useState("");
@@ -62,10 +68,12 @@ export default function SettingsPage() {
     // Load booking settings
     const { data: bookingSettings } = await supabase
       .from("booking_settings")
-      .select("timezone")
+      .select("timezone, gst_registered, pass_stripe_fees")
       .eq("org_id", membership.org_id)
       .maybeSingle();
     if (bookingSettings?.timezone) setTimezone(bookingSettings.timezone);
+    if (bookingSettings?.gst_registered != null) setGstRegistered(bookingSettings.gst_registered);
+    if (bookingSettings?.pass_stripe_fees != null) setPassStripeFees(bookingSettings.pass_stripe_fees);
 
     // Load org
     const { data: org } = await supabase
@@ -204,6 +212,17 @@ export default function SettingsPage() {
     setSavingPayout(false);
   }
 
+  async function handleSavePaymentSettings() {
+    setSavingPayment(true);
+    setPaymentMessage("");
+    const { error } = await supabase
+      .from("booking_settings")
+      .update({ gst_registered: gstRegistered, pass_stripe_fees: passStripeFees })
+      .eq("org_id", orgId);
+    setPaymentMessage(error ? "Failed to save" : "Payment settings saved!");
+    setSavingPayment(false);
+  }
+
   async function handleSaveWaiver() {
     setSavingWaiver(true);
     setWaiverMessage("");
@@ -283,7 +302,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Platform Fee (5%)</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Platform Fee (3.3%)</p>
               <p className="text-2xl font-bold text-gray-500 dark:text-gray-400">
                 -{formatCurrency(earnings.commission_cents || 0)}
               </p>
@@ -454,7 +473,7 @@ export default function SettingsPage() {
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Payout Settings</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Configure how you want to receive your earnings (minus 5% platform fee).
+            Configure how you want to receive your earnings (minus 3.3% platform fee on ex-GST amount).
           </p>
 
           <div className="space-y-4">
@@ -566,6 +585,63 @@ export default function SettingsPage() {
           )}
         </div>
       </form>
+
+      {/* Payment Processing */}
+      <div className="card p-6 mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Payment Processing</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Coach OS charges a 3.3% platform fee on the ex-GST sale amount.
+        </p>
+
+        <div className="space-y-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={gstRegistered}
+              onChange={e => setGstRegistered(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">GST Registered</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Your package prices include 10% GST. Clients will see &quot;incl. GST&quot; at checkout.
+              </p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={passStripeFees}
+              onChange={e => setPassStripeFees(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Pass card processing fees to clients</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                A 1.75% + $0.30 Stripe processing fee is added to the checkout price.
+                Your listed price is what you receive.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-4 mt-4">
+          <button
+            type="button"
+            onClick={handleSavePaymentSettings}
+            disabled={savingPayment}
+            className="btn-primary"
+          >
+            {savingPayment ? "Saving..." : "Save Payment Settings"}
+          </button>
+          {paymentMessage && (
+            <span className={paymentMessage.includes("Failed") ? "text-red-600 text-sm" : "text-green-600 text-sm"}>
+              {paymentMessage}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Recent Payouts */}
       {recentPayouts.length > 0 && (

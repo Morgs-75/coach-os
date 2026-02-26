@@ -18,7 +18,7 @@ export default async function PackagesPage({ params }: Props) {
 
   if (!client) notFound();
 
-  const [brandingRes, offersRes, stripeRes] = await Promise.all([
+  const [brandingRes, offersRes, stripeRes, paymentSettingsRes] = await Promise.all([
     supabase.from("branding").select("display_name, primary_color").eq("org_id", client.org_id).single(),
     supabase
       .from("offers")
@@ -32,12 +32,19 @@ export default async function PackagesPage({ params }: Props) {
       .select("stripe_account_id, charges_enabled")
       .eq("org_id", client.org_id)
       .single(),
+    supabase
+      .from("booking_settings")
+      .select("gst_registered, pass_stripe_fees")
+      .eq("org_id", client.org_id)
+      .single(),
   ]);
 
   const displayName = brandingRes.data?.display_name ?? (client.orgs as any)?.name ?? "Your Coach";
   const primaryColor = brandingRes.data?.primary_color ?? "#0ea5e9";
   const offers = offersRes.data ?? [];
   const stripeReady = stripeRes.data?.charges_enabled ?? false;
+  const gstRegistered = paymentSettingsRes.data?.gst_registered ?? false;
+  const passStripeFees = paymentSettingsRes.data?.pass_stripe_fees ?? false;
 
   return (
     <PackagesClient
@@ -46,6 +53,8 @@ export default async function PackagesPage({ params }: Props) {
       primaryColor={primaryColor}
       offers={offers}
       stripeReady={stripeReady}
+      gstRegistered={gstRegistered}
+      passStripeFees={passStripeFees}
     />
   );
 }

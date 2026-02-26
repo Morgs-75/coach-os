@@ -62,11 +62,31 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch payment settings for this org
+    const { data: paymentSettings } = await supabase
+      .from("booking_settings")
+      .select("gst_registered, pass_stripe_fees")
+      .eq("org_id", client.org_id)
+      .maybeSingle();
+
+    const gstRegistered = paymentSettings?.gst_registered ?? false;
+    const passStripeFees = paymentSettings?.pass_stripe_fees ?? false;
+
+    // Platform fee: 3.3% of ex-GST base
+    const exGstCents = gstRegistered
+      ? Math.round(offer.price_cents / 1.1)
+      : offer.price_cents;
+    const platformFeeCents = Math.round(exGstCents * 0.033);
+
+    // Gross-up if passing Stripe fees to client: (base + 30) / (1 - 0.0175)
+    const chargeAmountCents = passStripeFees
+      ? Math.ceil((offer.price_cents + 30) / (1 - 0.0175))
+      : offer.price_cents;
+
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
     const currency = offer.currency ?? "aud";
-    const platformFee = Math.round(offer.price_cents * 0.05);
 
     const session = await stripe.checkout.sessions.create(
       {
@@ -79,13 +99,13 @@ export async function POST(request: Request) {
                 name: offer.name,
                 description: offer.description ?? undefined,
               },
-              unit_amount: offer.price_cents,
+              unit_amount: chargeAmountCents,
             },
             quantity: 1,
           },
         ],
         payment_intent_data: {
-          application_fee_amount: platformFee,
+          application_fee_amount: platformFeeCents,
           metadata: {
             offer_id: offer.id,
             client_id: client.id,
