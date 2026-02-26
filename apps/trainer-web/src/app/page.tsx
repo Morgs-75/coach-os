@@ -13,6 +13,9 @@ export default function LandingPage() {
             Coach<span className="text-brand-500">OS</span>
           </div>
           <div className="flex items-center gap-6">
+            <a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">
+              Pricing
+            </a>
             <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
               Sign In
             </Link>
@@ -201,7 +204,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-32 bg-gradient-to-b from-gray-900 to-black">
+      <section id="pricing" className="py-32 bg-gradient-to-b from-gray-900 to-black">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <p className="text-sm font-medium text-brand-400 uppercase tracking-widest mb-4">Pricing</p>
