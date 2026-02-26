@@ -65,6 +65,7 @@ interface SavedTemplate {
   name: string;
   body: string;
   offerEmojis: Record<string, string>;
+  fromDb?: boolean;
 }
 
 const STORAGE_KEY = "coachOS_marketing_templates";
@@ -92,6 +93,15 @@ export default function MarketingPage() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [showTemplatePanel, setShowTemplatePanel] = useState(false);
+
+  // New Template modal
+  const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
+  const [newTplName, setNewTplName] = useState("");
+  const [newTplDescription, setNewTplDescription] = useState("");
+  const [newTplBody, setNewTplBody] = useState("");
+  const [newTplGenerating, setNewTplGenerating] = useState(false);
+  const [newTplSaving, setNewTplSaving] = useState(false);
+  const [newTplError, setNewTplError] = useState<string | null>(null);
   const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>("all");
   const [clientCount, setClientCount] = useState<number | null>(null);
 
@@ -113,6 +123,7 @@ export default function MarketingPage() {
   useEffect(() => {
     load();
     setSavedTemplates(loadStoredTemplates());
+    loadDbTemplates();
   }, []);
 
   useEffect(() => {
@@ -147,6 +158,78 @@ export default function MarketingPage() {
     if (clientsRes.data) setAllClients(clientsRes.data);
     if (leadsRes.data) setAllLeads(leadsRes.data);
     setLoading(false);
+  }
+
+  async function loadDbTemplates() {
+    try {
+      const res = await fetch("/api/marketing/templates");
+      if (!res.ok) return;
+      const data = await res.json();
+      const dbTemplates: SavedTemplate[] = (data.templates ?? []).map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        body: t.body,
+        offerEmojis: {},
+        fromDb: true,
+      }));
+      if (dbTemplates.length > 0) {
+        setSavedTemplates(prev => {
+          // Merge: DB templates override localStorage ones with same name
+          const localOnly = prev.filter(lt => !dbTemplates.some(dt => dt.name === lt.name));
+          return [...dbTemplates, ...localOnly];
+        });
+      }
+    } catch { /* non-blocking */ }
+  }
+
+  async function generateNewTemplate() {
+    if (!newTplName.trim()) return;
+    setNewTplGenerating(true);
+    setNewTplError(null);
+    try {
+      const res = await fetch("/api/marketing/templates/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newTplName, description: newTplDescription }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Generation failed");
+      setNewTplBody(data.body);
+    } catch (err) {
+      setNewTplError(err instanceof Error ? err.message : "Failed to generate");
+    } finally {
+      setNewTplGenerating(false);
+    }
+  }
+
+  async function saveNewTemplate() {
+    if (!newTplName.trim() || !newTplBody.trim()) return;
+    setNewTplSaving(true);
+    setNewTplError(null);
+    try {
+      const res = await fetch("/api/marketing/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newTplName, body: newTplBody, description: newTplDescription }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Save failed");
+      const saved: SavedTemplate = { id: data.template.id, name: data.template.name, body: data.template.body, offerEmojis: {}, fromDb: true };
+      setSavedTemplates(prev => [saved, ...prev.filter(t => t.name !== saved.name)]);
+      // Load into editor
+      setTemplate(saved.body);
+      setOfferEmojis({});
+      setActiveTemplateId(saved.id);
+      // Reset modal
+      setShowNewTemplateModal(false);
+      setNewTplName("");
+      setNewTplDescription("");
+      setNewTplBody("");
+    } catch (err) {
+      setNewTplError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setNewTplSaving(false);
+    }
   }
 
   async function fetchClientCount() {
@@ -192,10 +275,15 @@ export default function MarketingPage() {
     setShowTemplatePanel(false);
   }
 
-  function deleteTemplate(id: string) {
+  async function deleteTemplate(id: string) {
+    const tpl = savedTemplates.find(t => t.id === id);
+    if (tpl?.fromDb) {
+      await fetch(`/api/marketing/templates?id=${id}`, { method: "DELETE" }).catch(() => {});
+    }
     const next = savedTemplates.filter(t => t.id !== id);
     setSavedTemplates(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const localOnly = next.filter(t => !t.fromDb);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(localOnly));
     if (activeTemplateId === id) setActiveTemplateId(null);
   }
 
@@ -459,7 +547,13 @@ export default function MarketingPage() {
               <div className="mb-3 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Saved Templates</span>
-                  <button onClick={newTemplate} className="text-xs text-blue-600 hover:underline">+ New blank</button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={newTemplate} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Blank</button>
+                    <button onClick={() => { setShowNewTemplateModal(true); setShowTemplatePanel(false); setNewTplError(null); }}
+                      className="text-xs px-2 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-700">
+                      + New Template
+                    </button>
+                  </div>
                 </div>
                 {savedTemplates.length === 0 ? (
                   <p className="text-xs text-gray-400 text-center py-4">No saved templates yet. Compose a message and click Save.</p>
@@ -741,6 +835,97 @@ export default function MarketingPage() {
         </div>
 
       </div>
+
+      {/* New Template Modal */}
+      {showNewTemplateModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">New SMS Template</h2>
+              <button onClick={() => setShowNewTemplateModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none">&times;</button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Template Name *</label>
+                <input
+                  type="text"
+                  value={newTplName}
+                  onChange={e => setNewTplName(e.target.value)}
+                  placeholder="e.g. Summer Promo, Referral Invite, Re-engagement"
+                  className="input text-sm"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  What should this template do? <span className="font-normal text-gray-400">(optional — helps AI generate better copy)</span>
+                </label>
+                <textarea
+                  value={newTplDescription}
+                  onChange={e => setNewTplDescription(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. Invite lapsed clients back with a 10% discount on session packs"
+                  className="input text-sm resize-none"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Message Body *</label>
+                  <button
+                    onClick={generateNewTemplate}
+                    disabled={!newTplName.trim() || newTplGenerating}
+                    className="text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-40 flex items-center gap-1"
+                  >
+                    {newTplGenerating ? (
+                      <>
+                        <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        Generating…
+                      </>
+                    ) : "✨ Generate with AI"}
+                  </button>
+                </div>
+                <textarea
+                  value={newTplBody}
+                  onChange={e => setNewTplBody(e.target.value)}
+                  rows={6}
+                  placeholder="Click 'Generate with AI' above, or write your message here…"
+                  className="input text-sm font-mono leading-relaxed resize-y"
+                />
+                {newTplBody && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {newTplBody.replace("{name}", "there").length} chars · use <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{name}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{offers}`}</code>, <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded">{`{coach_name}`}</code>
+                  </p>
+                )}
+              </div>
+
+              {newTplError && (
+                <p className="text-xs text-red-600 dark:text-red-400">{newTplError}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+              <button onClick={() => setShowNewTemplateModal(false)}
+                className="px-4 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                Cancel
+              </button>
+              <button
+                onClick={saveNewTemplate}
+                disabled={!newTplName.trim() || !newTplBody.trim() || newTplSaving}
+                className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+              >
+                {newTplSaving ? "Saving…" : "Save & Use Template"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
