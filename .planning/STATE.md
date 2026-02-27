@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Nutrition Engine
 status: in_progress
-last_updated: "2026-02-27T07:29:06.000Z"
+last_updated: "2026-02-27T07:37:30.000Z"
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 9 — AI Feedback Loop + Versioning
-Plan: 09-02 COMPLETE
-Status: 09-02 complete — three API routes live: GET/PATCH /api/nutrition/feedback/[id], POST /api/nutrition/feedback/[id]/draft (Claude AI swap), POST /api/nutrition/plans/[planId]/version (deep-copy). Ready for Plan 03 (coach review UI).
-Last activity: 2026-02-27 — 09-02 complete: AI draft endpoint + versioning endpoint created, TypeScript clean
+Plan: 09-03 COMPLETE
+Status: 09-03 complete — coach feedback inbox (GET /api/nutrition/feedback), FeedbackInbox.tsx, DraftReviewModal.tsx with state machine (idle/drafting/draft_ready/approving/approved/rejected/error) and edit overrides, NutritionClient tabs. Ready for Plan 04 (batch runner or phase close).
+Last activity: 2026-02-27 — 09-03 complete: feedback inbox UI + draft review modal created, TypeScript clean
 
-Progress: [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 50% (2/4 plans complete in phase 9)
+Progress: [█████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 75% (3/4 plans complete in phase 9)
 
 ## Phase Summary
 
@@ -93,6 +93,10 @@ Progress: [██████░░░░░░░░░░░░░░░░░
 - [09-02] ILIKE + first-word fallback for food matching — Claude may suggest "Chicken breast, skinless" but AFCD has "Chicken, breast"
 - [09-02] No rollback on deep-copy failure — Supabase JS client lacks transaction support; partial plans acceptable for coach-triggered action
 - [09-02] Return 422 when Claude suggests a food name not found in AFCD — expected data mismatch, not infrastructure error
+- [09-03] Two-step feedback query: fetch plan_ids for org first, then .in("plan_id", planIds) — avoids Supabase filter-on-joined-column limitations
+- [09-03] orgId stored in NutritionClient state from membership.org_id set during loadData — passed as prop to FeedbackInbox
+- [09-03] DraftReviewModal initial state determined by item.ai_draft_food_item_id presence — jump to draft_ready if draft already exists
+- [09-03] Feedback tab lazy-mounted with conditional render — no API call until coach navigates to the tab
 
 ### Pending Todos
 
@@ -108,5 +112,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: 09-02 complete — AI draft endpoint + versioning endpoint created. Phase 9 Plan 03 is next (coach review UI).
+Stopped at: 09-03 complete — Feedback inbox UI + DraftReviewModal state machine created. Phase 9 Plan 04 is next.
 Resume file: None
