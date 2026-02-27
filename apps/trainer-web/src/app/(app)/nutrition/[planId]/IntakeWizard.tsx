@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ export interface IntakeData {
 
 interface IntakeWizardProps {
   planId: string;
+  clientId: string | null;
   onClose: () => void;
   onGenerated: () => void;
 }
@@ -412,6 +414,72 @@ function StepEnergy({
   );
 }
 
+// ─── Food checkbox grid ───────────────────────────────────────────────────────
+
+const FOOD_CATEGORIES = [
+  { label: "Proteins", items: ["Chicken breast", "Beef mince", "Salmon", "Tuna", "Eggs", "Greek yoghurt", "Tofu"] },
+  { label: "Carbs", items: ["Oats", "White rice", "Sweet potato", "Potato", "Wholegrain bread", "Banana"] },
+  { label: "Vegetables", items: ["Broccoli", "Spinach", "Mixed salad", "Capsicum", "Carrot", "Zucchini"] },
+  { label: "Fruits", items: ["Apple", "Orange", "Berries", "Mango"] },
+  { label: "Dairy & Fats", items: ["Skim milk", "Cheese", "Avocado", "Almonds", "Peanut butter"] },
+];
+
+function parseItems(s: string): string[] {
+  return s ? s.split(",").map((x) => x.trim()).filter(Boolean) : [];
+}
+
+function FoodCheckboxGrid({
+  value,
+  onChange,
+  accent = "green",
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  accent?: "green" | "red";
+}) {
+  const selected = parseItems(value);
+  const activeCls =
+    accent === "green"
+      ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+      : "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400";
+  const inactiveCls =
+    "border-gray-200 dark:border-white/10 text-gray-500 dark:text-[rgba(238,240,255,0.55)] hover:border-gray-300 dark:hover:border-white/20";
+
+  function toggle(item: string) {
+    const next = selected.includes(item)
+      ? selected.filter((x) => x !== item)
+      : [...selected, item];
+    onChange(next.join(", "));
+  }
+
+  return (
+    <div className="space-y-2.5">
+      {FOOD_CATEGORIES.map((cat) => (
+        <div key={cat.label}>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[rgba(238,240,255,0.35)] mb-1.5">
+            {cat.label}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {cat.items.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => toggle(item)}
+                className={
+                  "px-2.5 py-1 rounded-lg border text-[12px] font-medium transition-colors " +
+                  (selected.includes(item) ? activeCls : inactiveCls)
+                }
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function StepDietPreferences({
   data,
   onChange,
@@ -436,23 +504,19 @@ function StepDietPreferences({
         </div>
       </div>
       <div>
-        <Label>Foods the client likes</Label>
-        <input
-          type="text"
+        <Label>Foods the client enjoys</Label>
+        <FoodCheckboxGrid
           value={data.likes_foods ?? ""}
-          onChange={(e) => onChange({ likes_foods: e.target.value })}
-          className={inputCls}
-          placeholder="e.g. chicken, rice, eggs, oats, fruit"
+          onChange={(val) => onChange({ likes_foods: val })}
+          accent="green"
         />
       </div>
       <div>
-        <Label>Foods they dislike or avoid</Label>
-        <input
-          type="text"
+        <Label>Foods to avoid</Label>
+        <FoodCheckboxGrid
           value={data.dislikes_foods ?? ""}
-          onChange={(e) => onChange({ dislikes_foods: e.target.value })}
-          className={inputCls}
-          placeholder="e.g. fish, mushrooms, capsicum"
+          onChange={(val) => onChange({ dislikes_foods: val })}
+          accent="red"
         />
       </div>
       <div>
@@ -801,10 +865,37 @@ const STEPS = [
   { id: "verify", title: "Final check" },
 ];
 
+// ─── Goal mapping for client pre-fill ────────────────────────────────────────
+
+const CLIENT_GOAL_MAP: Record<string, IntakeData["primary_goal"]> = {
+  "lose weight": "fat_loss",
+  "weight loss": "fat_loss",
+  "fat loss": "fat_loss",
+  "build muscle": "muscle_gain",
+  "muscle gain": "muscle_gain",
+  "improve body composition": "recomposition",
+  "body recomposition": "recomposition",
+  "increase strength": "performance",
+  "sports performance": "performance",
+  "general fitness": "maintenance",
+  "maintain weight": "maintenance",
+};
+
+function calcAgeFromDob(dob: string): number {
+  const d = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+  return age;
+}
+
 // ─── Main wizard ──────────────────────────────────────────────────────────────
 
-export default function IntakeWizard({ planId, onClose, onGenerated }: IntakeWizardProps) {
+export default function IntakeWizard({ planId, clientId, onClose, onGenerated }: IntakeWizardProps) {
+  const supabase = createClient();
   const [step, setStep] = useState(0);
+  const [prefilled, setPrefilled] = useState(false);
   const [data, setData] = useState<Partial<IntakeData>>({
     primary_goal: "fat_loss",
     timeframe_weeks: 12,
@@ -840,6 +931,37 @@ export default function IntakeWizard({ planId, onClose, onGenerated }: IntakeWiz
   });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-fill from client profile on mount
+  useEffect(() => {
+    if (!clientId) return;
+    supabase
+      .from("clients")
+      .select("gender, date_of_birth, weight_kg, height_cm, target_weight_kg, dietary_restrictions, health_conditions, goals")
+      .eq("id", clientId)
+      .single()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then(({ data: c }: { data: Record<string, any> | null }) => {
+        if (!c) return;
+        const patch: Partial<IntakeData> = {};
+        if (c.gender === "male" || c.gender === "female") patch.sex = c.gender as "male" | "female";
+        if (c.date_of_birth) patch.age = calcAgeFromDob(c.date_of_birth);
+        if (c.weight_kg) patch.current_weight_kg = c.weight_kg;
+        if (c.height_cm) patch.height_cm = c.height_cm;
+        if (c.target_weight_kg) patch.target_weight_kg = c.target_weight_kg;
+        if (c.dietary_restrictions?.length) patch.allergies = (c.dietary_restrictions as string[]).join(", ");
+        if (c.health_conditions?.length) patch.medical_conditions = (c.health_conditions as string[]).join(", ");
+        if (c.goals?.length) {
+          const mapped = CLIENT_GOAL_MAP[(c.goals[0] as string).toLowerCase()];
+          if (mapped) patch.primary_goal = mapped;
+        }
+        if (Object.keys(patch).length > 0) {
+          setData((prev) => ({ ...prev, ...patch }));
+          setPrefilled(true);
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
 
   function patch(patch: Partial<IntakeData>) {
     setData((prev) => ({ ...prev, ...patch }));
@@ -895,9 +1017,16 @@ export default function IntakeWizard({ planId, onClose, onGenerated }: IntakeWiz
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10 flex-shrink-0">
           <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-[#eef0ff]">
-              {currentStep.title}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-gray-900 dark:text-[#eef0ff]">
+                {currentStep.title}
+              </h2>
+              {prefilled && step === 0 && (
+                <span className="text-[10px] bg-brand-50 dark:bg-[rgba(255,179,74,0.1)] text-brand-600 dark:text-[#ffb34a] border border-brand-100 dark:border-[rgba(255,179,74,0.25)] px-2 py-0.5 rounded-full font-medium">
+                  Profile pre-filled
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-gray-400 dark:text-[rgba(238,240,255,0.45)] mt-0.5">
               Step {step + 1} of {STEPS.length}
             </p>
