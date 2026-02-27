@@ -7,9 +7,7 @@ import FeedbackInbox from "./FeedbackInbox";
 
 interface Client {
   id: string;
-  name: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
+  full_name: string | null;
 }
 
 interface MealPlan {
@@ -32,11 +30,7 @@ interface FormState {
 
 function clientDisplayName(client: Client | null): string {
   if (!client) return "Unassigned";
-  return (
-    client.name ||
-    [client.first_name, client.last_name].filter(Boolean).join(" ") ||
-    "Unknown"
-  );
+  return client.full_name || "Unknown";
 }
 
 function formatDateRange(start: string | null, end: string | null): string {

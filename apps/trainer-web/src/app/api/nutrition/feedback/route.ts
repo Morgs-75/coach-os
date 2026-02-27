@@ -73,7 +73,7 @@ export async function GET(request: Request) {
           id,
           name,
           version,
-          client:clients(id, name, first_name, last_name)
+          client:clients(id, full_name)
         ),
         meal:meal_plan_meals(id, meal_type, title)
       `)

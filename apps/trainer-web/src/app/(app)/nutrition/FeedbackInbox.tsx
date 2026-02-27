@@ -22,9 +22,7 @@ export interface FeedbackItem {
     version: number;
     client: {
       id: string;
-      name: string | null;
-      first_name?: string | null;
-      last_name?: string | null;
+      full_name: string | null;
     } | null;
   };
   meal: { id: string; meal_type: string; title: string | null } | null;
@@ -35,14 +33,10 @@ interface Props {
 }
 
 function clientDisplayName(
-  client: { name: string | null; first_name?: string | null; last_name?: string | null } | null
+  client: { full_name: string | null } | null
 ): string {
   if (!client) return "Unknown";
-  return (
-    client.name ||
-    [client.first_name, client.last_name].filter(Boolean).join(" ") ||
-    "Unknown"
-  );
+  return client.full_name || "Unknown";
 }
 
 function formatScope(scope: string): string {

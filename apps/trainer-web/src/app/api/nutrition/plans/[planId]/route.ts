@@ -29,7 +29,7 @@ export async function GET(
       .from("meal_plans")
       .select(`
         *,
-        client:clients(id, name, first_name, last_name),
+        client:clients(id, full_name),
         days:meal_plan_days(
           *,
           meals:meal_plan_meals(

@@ -46,9 +46,7 @@ interface Day {
 
 interface PlanClient {
   id: string;
-  name: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
+  full_name: string | null;
 }
 
 interface Plan {
@@ -85,11 +83,7 @@ interface MacroTotals {
 
 function clientDisplayName(client: PlanClient | null): string {
   if (!client) return "Unassigned";
-  return (
-    client.name ||
-    [client.first_name, client.last_name].filter(Boolean).join(" ") ||
-    "Unknown"
-  );
+  return client.full_name || "Unknown";
 }
 
 function formatDate(d: string | null): string {
