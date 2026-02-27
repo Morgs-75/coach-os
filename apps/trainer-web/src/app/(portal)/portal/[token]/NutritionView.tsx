@@ -359,7 +359,14 @@ export default function NutritionView({ plan, token: _token, primaryColor, onFee
     <div className="space-y-4">
       {/* Plan header */}
       <div className="px-1">
-        <h2 className="font-semibold text-gray-900">{plan.name}</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="font-semibold text-gray-900">{plan.name}</h2>
+          {plan.version != null && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+              v{plan.version}
+            </span>
+          )}
+        </div>
         <p className="text-xs text-gray-400 mt-0.5">
           {fmtShortDate(plan.start_date)} – {fmtShortDate(plan.end_date)}
         </p>
