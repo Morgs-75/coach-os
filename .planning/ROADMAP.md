@@ -79,18 +79,25 @@ Plans:
 
 **Goal:** Client sees their active meal plan in the portal with the UI shown in the reference design, and can submit feedback on individual meals.
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — DB migration 0042 (meal_plan_feedback table + RLS)
+- [ ] 08-02-PLAN.md — Portal nutrition API (GET published plan + POST feedback + coach SMS)
+- [ ] 08-03-PLAN.md — Portal nutrition UI (Nutrition tab, NutritionView, FeedbackDrawer) + human-verify checkpoint
+
 **Deliverables:**
 - Nutrition tab in `/portal/[token]` page
 - 7-day collapsible view: day header + date, meals, component table (Component / Qty / Unit / C / P / F / kcal), meal totals row
 - Day totals panel: KPI boxes (total carbs, protein, fat, calories) + stacked bar macro chart (CSS segments, no chart library)
 - Feedback drawer: type (substitution/dislike/allergy/portion/schedule/other), meal scope select, comment textarea, going-forward select
 - `meal_plan_feedback` table: id, plan_id, meal_id, client_id, type, scope, comment, forward, status (pending/reviewed), created_at
-- Submit feedback → stored + coach receives in-app notification (reuse existing notification system)
+- Submit feedback → stored + coach receives SMS notification via existing Twilio pattern
 
 **Verification:**
 - Client portal shows Nutrition tab when active published plan exists
 - All 7 days render with correct macro values
-- Client submits feedback → row in `meal_plan_feedback`, coach sees notification
+- Client submits feedback → row in `meal_plan_feedback`, coach receives SMS
 
 ### Phase 9: AI Feedback Loop + Versioning
 
@@ -120,5 +127,5 @@ Plans:
 | 5. Production Hygiene | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
-| 8. Client Portal Nutrition View | v1.2 | 0/? | Planned | — |
+| 8. Client Portal Nutrition View | v1.2 | 0/3 | Planned | — |
 | 9. AI Feedback Loop + Versioning | v1.2 | 0/? | Planned | — |
