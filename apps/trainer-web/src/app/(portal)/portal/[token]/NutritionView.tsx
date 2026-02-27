@@ -561,11 +561,13 @@ export default function NutritionView({
 
   return (
     <div style={{
-      background: t.pageBg, minHeight: "100%", padding: "0 0 48px",
+      background: t.pageBg, minHeight: "100vh", padding: "0 0 64px",
       color: t.text,
       fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
       transition: "background .25s, color .25s",
     }}>
+      {/* Inner wrap — matches Engine_Nutrition .wrap */}
+      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 18px 0" }}>
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
@@ -576,6 +578,7 @@ export default function NutritionView({
         boxShadow: t.cardShadow,
         backdropFilter: "blur(12px)",
         flexWrap: "wrap",
+        position: "sticky", top: 14, zIndex: 10,
       }}>
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -632,6 +635,7 @@ export default function NutritionView({
 
       {/* Two-column layout */}
       <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1.4fr 0.6fr", gap: 16 }} className="nutrition-main-grid">
+
         {/* LEFT: Plan card */}
         <section style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 18, boxShadow: t.cardShadow, overflow: "hidden" }}>
           <div style={{ padding: "16px 16px 12px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
@@ -695,6 +699,7 @@ export default function NutritionView({
       <style>{`
         @media (max-width: 980px) { .nutrition-main-grid { grid-template-columns: 1fr !important; } }
       `}</style>
+      </div>{/* /inner wrap */}
     </div>
   );
 }
