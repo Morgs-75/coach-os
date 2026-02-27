@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
 import FeedbackInbox from "./FeedbackInbox";
@@ -47,6 +48,7 @@ function formatDateRange(start: string | null, end: string | null): string {
 }
 
 export default function NutritionClient() {
+  const router = useRouter();
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
@@ -124,9 +126,8 @@ export default function NutritionClient() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        setShowModal(false);
-        setForm({ client_id: "", name: "", start_date: "", end_date: "" });
-        await loadData();
+        const data = await res.json();
+        router.push(`/nutrition/${data.plan.id}`);
       } else {
         const err = await res.json();
         setError(err.error || "Failed to create plan");
@@ -153,29 +154,20 @@ export default function NutritionClient() {
         </p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700 mb-6">
-        {(["plans", "feedback"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-2 text-sm font-medium capitalize transition-colors ${
-              activeTab === tab
-                ? "border-b-2 border-brand-600 text-brand-600"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            }`}
-          >
-            {tab === "plans" ? "Plans" : "Feedback"}
-          </button>
-        ))}
-      </div>
-
-      {/* Feedback tab content */}
+      {/* Feedback inbox — hidden by default, toggled via link */}
       {activeTab === "feedback" && orgId && (
-        <FeedbackInbox orgId={orgId} />
+        <div className="mb-6">
+          <button
+            onClick={() => setActiveTab("plans")}
+            className="mb-4 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+          >
+            ← Back to plans
+          </button>
+          <FeedbackInbox orgId={orgId} />
+        </div>
       )}
 
-      {/* Plans tab content */}
+      {/* Plans view */}
       {activeTab === "plans" && (
         <>
 
@@ -194,12 +186,20 @@ export default function NutritionClient() {
           ))}
         </select>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
-        >
-          New Plan
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveTab("feedback")}
+            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            Client feedback
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+          >
+            New Plan
+          </button>
+        </div>
       </div>
 
       {/* Plan list */}
