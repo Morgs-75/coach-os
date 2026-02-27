@@ -134,6 +134,8 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   const [publishError, setPublishError] = useState<string | null>(null);
   const [versions, setVersions] = useState<VersionSummary[]>([]);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [notifying, setNotifying] = useState(false);
+  const [notifyStatus, setNotifyStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const loadVersions = useCallback(async () => {
     const res = await fetch(`/api/nutrition/plans/${planId}/versions`);
@@ -231,6 +233,24 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
     }
   }
 
+  async function handleNotify() {
+    setNotifying(true);
+    setNotifyStatus(null);
+    try {
+      const res = await fetch(`/api/nutrition/plans/${planId}/notify`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setNotifyStatus({ ok: true, msg: "SMS sent to client ✓" });
+      } else {
+        setNotifyStatus({ ok: false, msg: data.error ?? "Failed to send" });
+      }
+    } catch {
+      setNotifyStatus({ ok: false, msg: "Network error" });
+    } finally {
+      setNotifying(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -306,14 +326,28 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
           >
             {plan.status}
           </span>
-          {/* Preview link — only when published */}
+          {/* Preview + Send to Client — only when published */}
           {plan.status === "published" && (
-            <Link
-              href={`/nutrition/${planId}/preview`}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-            >
-              Preview
-            </Link>
+            <>
+              <Link
+                href={`/nutrition/${planId}/preview`}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+              >
+                Preview
+              </Link>
+              {plan.client && (
+                <button
+                  onClick={handleNotify}
+                  disabled={notifying}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+                >
+                  {notifying && (
+                    <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                  )}
+                  Send to Client
+                </button>
+              )}
+            </>
           )}
           {/* Publish action */}
           {plan.status === "published" ? (
@@ -352,6 +386,13 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
         <div className="mb-4 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400 flex items-center justify-between">
           <span>{mutationError}</span>
           <button onClick={() => setMutationError(null)} className="ml-3 text-red-400 hover:text-red-600">✕</button>
+        </div>
+      )}
+
+      {notifyStatus && (
+        <div className={`mb-4 px-3 py-2 rounded-lg text-sm flex items-center justify-between ${notifyStatus.ok ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"}`}>
+          <span>{notifyStatus.msg}</span>
+          <button onClick={() => setNotifyStatus(null)} className="ml-3 opacity-60 hover:opacity-100">✕</button>
         </div>
       )}
 

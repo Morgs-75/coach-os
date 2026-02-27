@@ -369,6 +369,37 @@ export async function POST(
       }
     }
 
+    // ── Per-day calorie scaling ───────────────────────────────────────────────
+    // The AI often over/under-shoots portions. Scale every component's qty_g
+    // proportionally so each day lands within 3% of the calorie target.
+    const targetKcal = useIntake && body.intake_data
+      ? (body.intake_data.target_calories ?? 2000)
+      : (body.calorie_target ?? 2000);
+
+    // Build UUID → kcal/100g lookup from the food sample used in this request
+    const realIdToEnergy = new Map<string, number>();
+    for (const f of foodSample) {
+      if (f.energy_kcal != null) realIdToEnergy.set(f.id, f.energy_kcal);
+    }
+
+    for (const day of allDays) {
+      let actualKcal = 0;
+      for (const meal of day.meals ?? []) {
+        for (const comp of meal.components ?? []) {
+          const kcalPer100 = realIdToEnergy.get(comp.food_item_id);
+          if (kcalPer100) actualKcal += (kcalPer100 / 100) * comp.qty_g;
+        }
+      }
+      if (actualKcal <= 0) continue;
+      const scale = targetKcal / actualKcal;
+      if (Math.abs(scale - 1) <= 0.03) continue; // already within 3%
+      for (const meal of day.meals ?? []) {
+        for (const comp of meal.components ?? []) {
+          comp.qty_g = Math.max(10, Math.min(800, Math.round(comp.qty_g * scale)));
+        }
+      }
+    }
+
     // ── Collect valid food IDs ────────────────────────────────────────────────
     const validFoodIds = new Set<string>(shortIdToRealId.values());
 
