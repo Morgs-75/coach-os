@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
             id, meal_type, title, note, sort_order,
             components:meal_plan_components(
               id, qty_g, custom_name, sort_order,
-              food_item:food_items(id, food_name, energy_kcal, protein_g, fat_g, carb_g)
+              food_item:food_items(id, food_name, energy_kcal, protein_g, fat_g, carb_g, fibre_g)
             )
           )
         )
