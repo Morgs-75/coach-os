@@ -683,57 +683,58 @@ function MealCard({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-[rgba(16,20,58,0.55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden">
       {/* Meal header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-[#ffb34a]">
             {label}
           </span>
           {meal.title && (
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-semibold text-gray-900 dark:text-[#eef0ff] mt-0.5">
               {meal.title}
             </p>
           )}
         </div>
         <button
           onClick={handleDeleteMeal}
-          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+          className="text-[11px] text-gray-400 dark:text-white/30 hover:text-red-500 dark:hover:text-[#fb7185] transition-colors border border-gray-100 dark:border-white/10 px-2.5 py-1 rounded-full"
         >
           Remove
         </button>
       </div>
 
-      {/* Components table */}
-      <div className="px-4 pt-2 pb-1">
-        {meal.components.length > 0 && (
-          <table className="w-full text-xs mb-2">
-            <thead>
-              <tr className="text-gray-400 dark:text-gray-500">
-                <th className="text-left font-normal pb-1 pr-2">Food</th>
-                <th className="text-right font-normal pb-1 px-1 w-20">Qty (g)</th>
-                <th className="text-right font-normal pb-1 px-1 w-14">kcal</th>
-                <th className="text-right font-normal pb-1 px-1 w-12">P (g)</th>
-                <th className="text-right font-normal pb-1 px-1 w-12">C (g)</th>
-                <th className="text-right font-normal pb-1 px-1 w-12">F (g)</th>
-                <th className="w-6" />
-              </tr>
-            </thead>
-            <tbody>
-              {meal.components.map((c) => (
-                <ComponentRow
-                  key={c.id}
-                  component={c}
-                  planId={planId}
-                  mealId={meal.id}
-                  onUpdated={handleComponentUpdated}
-                  onDeleted={handleComponentDeleted}
-                />
-              ))}
-            </tbody>
-          </table>
-        )}
-        {/* Inline food search */}
+      {/* Components table — edge-to-edge */}
+      {meal.components.length > 0 && (
+        <table className="w-full text-[13px] border-collapse">
+          <thead>
+            <tr className="border-b border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+              <th className="text-left font-bold py-2 px-4 text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.7)]">Component</th>
+              <th className="text-right font-bold py-2 px-3 text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.7)] w-20">Qty (g)</th>
+              <th className="text-right font-bold py-2 px-3 text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.7)] w-14">kcal</th>
+              <th className="text-right font-bold py-2 px-3 text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.7)] w-12">P</th>
+              <th className="text-right font-bold py-2 px-3 text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.7)] w-12">C</th>
+              <th className="text-right font-bold py-2 px-3 text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.7)] w-12">F</th>
+              <th className="w-8 px-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {meal.components.map((c) => (
+              <ComponentRow
+                key={c.id}
+                component={c}
+                planId={planId}
+                mealId={meal.id}
+                onUpdated={handleComponentUpdated}
+                onDeleted={handleComponentDeleted}
+              />
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Food search — padded */}
+      <div className="px-4 pt-2 pb-2">
         <FoodSearchInput
           planId={planId}
           mealId={meal.id}
@@ -744,7 +745,7 @@ function MealCard({
 
       {/* Meal totals */}
       {meal.components.length > 0 && (
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-4">
           <MacroBar label="Meal total" totals={mealTotals} />
         </div>
       )}
@@ -815,9 +816,9 @@ function ComponentRow({
   }
 
   return (
-    <tr className="text-gray-700 dark:text-gray-300 group">
-      <td className="py-1 pr-2 text-xs">{name}</td>
-      <td className="text-right py-1 px-1">
+    <tr className="border-b border-gray-50 dark:border-white/[0.06] last:border-0 group">
+      <td className="py-2.5 px-4 text-[13px] text-gray-800 dark:text-[#eef0ff]">{name}</td>
+      <td className="text-right py-2.5 px-3">
         <input
           type="number"
           min="1"
@@ -825,17 +826,17 @@ function ComponentRow({
           value={qty}
           onChange={(e) => setQty(e.target.value)}
           onBlur={handleQtyBlur}
-          className="w-16 text-right text-xs px-1 py-0.5 border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand-400 rounded focus:outline-none bg-transparent focus:bg-white dark:focus:bg-gray-800"
+          className="w-16 text-right text-[13px] tabular-nums px-1 py-0.5 border border-transparent hover:border-gray-300 dark:hover:border-white/20 focus:border-brand-400 dark:focus:border-[#ffb34a] rounded focus:outline-none bg-transparent focus:bg-white dark:focus:bg-white/5 text-gray-800 dark:text-[#eef0ff]"
         />
       </td>
-      <td className="text-right py-1 px-1 text-xs">{kcal ?? "—"}</td>
-      <td className="text-right py-1 px-1 text-xs">{p ?? "—"}</td>
-      <td className="text-right py-1 px-1 text-xs">{carb ?? "—"}</td>
-      <td className="text-right py-1 px-1 text-xs">{fat ?? "—"}</td>
-      <td className="py-1 pl-1">
+      <td className="text-right py-2.5 px-3 text-[13px] tabular-nums text-gray-800 dark:text-[#eef0ff]">{kcal ?? "—"}</td>
+      <td className="text-right py-2.5 px-3 text-[13px] tabular-nums text-gray-500 dark:text-[rgba(238,240,255,0.7)]">{p ?? "—"}</td>
+      <td className="text-right py-2.5 px-3 text-[13px] tabular-nums text-gray-500 dark:text-[rgba(238,240,255,0.7)]">{carb ?? "—"}</td>
+      <td className="text-right py-2.5 px-3 text-[13px] tabular-nums text-gray-500 dark:text-[rgba(238,240,255,0.7)]">{fat ?? "—"}</td>
+      <td className="py-2.5 px-2 text-right">
         <button
           onClick={handleDelete}
-          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity text-xs"
+          className="opacity-0 group-hover:opacity-100 text-gray-400 dark:text-white/30 hover:text-red-500 dark:hover:text-[#fb7185] transition-opacity text-[11px]"
         >
           ✕
         </button>
@@ -915,31 +916,31 @@ function FoodSearchInput({
   }
 
   return (
-    <div className="relative mb-2">
+    <div className="relative">
       <input
         type="text"
         placeholder="+ Search food to add…"
         value={query}
         onChange={handleQueryChange}
         disabled={adding}
-        className="w-full text-xs px-2 py-1.5 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 bg-transparent dark:text-gray-300 placeholder-gray-400 disabled:opacity-50"
+        className="w-full text-[13px] px-3 py-2 border border-dashed border-gray-300 dark:border-white/20 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-400 dark:focus:ring-[#ffb34a] focus:border-brand-400 dark:focus:border-[#ffb34a] bg-transparent text-gray-700 dark:text-[rgba(238,240,255,0.7)] placeholder-gray-400 dark:placeholder-white/25 disabled:opacity-50"
       />
       {(results.length > 0 || searching) && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#0f1230] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto">
           {searching && (
-            <div className="px-3 py-2 text-xs text-gray-400">Searching…</div>
+            <div className="px-3 py-2.5 text-[12px] text-gray-400 dark:text-[rgba(238,240,255,0.55)]">Searching…</div>
           )}
           {results.map((food) => (
             <button
               key={food.id}
               onMouseDown={() => handleSelect(food)} // mouseDown fires before blur
-              className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors border-b border-gray-50 dark:border-white/[0.06] last:border-0"
             >
-              <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-[13px] font-semibold text-gray-900 dark:text-[#eef0ff]">
                 {food.food_name}
               </p>
               {food.food_group && (
-                <p className="text-xs text-gray-400">{food.food_group}</p>
+                <p className="text-[11px] text-gray-400 dark:text-[rgba(238,240,255,0.55)] mt-0.5">{food.food_group}</p>
               )}
             </button>
           ))}
@@ -952,7 +953,7 @@ function FoodSearchInput({
 // --- MacroBar: display macro totals for meal or day ---
 
 function MacroBar({
-  label,
+  label: _label,
   totals,
   highlight = false,
 }: {
@@ -960,28 +961,89 @@ function MacroBar({
   totals: MacroTotals;
   highlight?: boolean;
 }) {
+  const carbKcal = totals.carb * 4;
+  const proteinKcal = totals.protein * 4;
+  const fatKcal = totals.fat * 9;
+  const macroKcal = carbKcal + proteinKcal + fatKcal;
+  const carbPct = macroKcal > 0 ? Math.round((carbKcal / macroKcal) * 100) : 0;
+  const proteinPct = macroKcal > 0 ? Math.round((proteinKcal / macroKcal) * 100) : 0;
+  const fatPct = macroKcal > 0 ? 100 - carbPct - proteinPct : 0;
+
+  if (!highlight) {
+    // Compact version — sits inside the meal card
+    return (
+      <div className="mt-1">
+        <div className="flex items-center gap-3 text-[12px] text-gray-500 dark:text-[rgba(238,240,255,0.55)] mb-1.5">
+          <span className="font-bold text-gray-700 dark:text-[rgba(238,240,255,0.85)]">{totals.kcal.toFixed(0)} kcal</span>
+          <span>P {totals.protein.toFixed(1)}g</span>
+          <span>C {totals.carb.toFixed(1)}g</span>
+          <span>F {totals.fat.toFixed(1)}g</span>
+        </div>
+        {macroKcal > 0 && (
+          <div className="h-1.5 rounded-full overflow-hidden flex border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-black/25">
+            <div style={{ width: `${carbPct}%` }} className="bg-green-400/90" />
+            <div style={{ width: `${proteinPct}%` }} className="bg-blue-500/90" />
+            <div style={{ width: `${fatPct}%` }} className="bg-amber-400/90" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Full version — day total panel styled after Engine_Nutrition
   return (
-    <div
-      className={
-        "flex items-center gap-4 text-xs rounded-lg px-3 py-2 " +
-        (highlight
-          ? "bg-brand-50 dark:bg-brand-900/20 font-medium"
-          : "bg-gray-50 dark:bg-gray-800/50")
-      }
-    >
-      <span className="text-gray-500 dark:text-gray-400 w-20">{label}</span>
-      <span className="text-gray-800 dark:text-gray-200">
-        {totals.kcal.toFixed(0)} kcal
-      </span>
-      <span className="text-gray-600 dark:text-gray-400">
-        P: {totals.protein.toFixed(1)}g
-      </span>
-      <span className="text-gray-600 dark:text-gray-400">
-        C: {totals.carb.toFixed(1)}g
-      </span>
-      <span className="text-gray-600 dark:text-gray-400">
-        F: {totals.fat.toFixed(1)}g
-      </span>
+    <div className="mt-3 bg-white dark:bg-[rgba(16,20,58,0.55)] border border-gray-200 dark:border-white/10 rounded-2xl p-3">
+      {/* KPI boxes */}
+      <div className="flex gap-2 flex-wrap mb-3">
+        {[
+          { l: "Calories", v: `${totals.kcal.toFixed(0)} kcal` },
+          { l: "Protein", v: `${totals.protein.toFixed(1)}g` },
+          { l: "Carbs", v: `${totals.carb.toFixed(1)}g` },
+          { l: "Fat", v: `${totals.fat.toFixed(1)}g` },
+        ].map(({ l, v }) => (
+          <div
+            key={l}
+            className="flex-1 min-w-[100px] border border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/[0.03] rounded-xl px-2.5 py-2"
+          >
+            <div className="text-[11px] text-gray-500 dark:text-[rgba(238,240,255,0.55)]">{l}</div>
+            <div className="text-[16px] font-black text-gray-900 dark:text-[#eef0ff] mt-0.5 tabular-nums">{v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Stacked macro bar */}
+      {macroKcal > 0 && (
+        <>
+          <div className="h-3.5 rounded-full overflow-hidden flex border border-gray-100 dark:border-white/10 bg-gray-100 dark:bg-black/25">
+            <div style={{ width: `${carbPct}%` }} className="bg-gradient-to-r from-green-400 to-green-400/60" />
+            <div style={{ width: `${proteinPct}%` }} className="bg-gradient-to-r from-blue-500 to-blue-500/60" />
+            <div style={{ width: `${fatPct}%` }} className="bg-gradient-to-r from-amber-400 to-amber-400/60" />
+          </div>
+
+          {/* Legend */}
+          <div className="grid grid-cols-3 gap-2 mt-2.5">
+            {[
+              { dot: "bg-green-400", label: "Carbs", g: totals.carb, pct: carbPct, kcal: carbKcal },
+              { dot: "bg-blue-500", label: "Protein", g: totals.protein, pct: proteinPct, kcal: proteinKcal },
+              { dot: "bg-amber-400", label: "Fat", g: totals.fat, pct: fatPct, kcal: fatKcal },
+            ].map(({ dot, label: macroLabel, g, pct, kcal: macroKcalVal }) => (
+              <div
+                key={macroLabel}
+                className="border border-gray-100 dark:border-white/10 bg-black/[0.02] dark:bg-black/[0.18] rounded-xl px-2.5 py-2 flex items-center justify-between gap-2"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dot}`} />
+                  <div>
+                    <div className="text-[12px] font-bold text-gray-900 dark:text-[#eef0ff]">{macroLabel}</div>
+                    <div className="text-[11px] text-gray-400 dark:text-[rgba(238,240,255,0.55)] tabular-nums">{g.toFixed(1)}g · {macroKcalVal.toFixed(0)}</div>
+                  </div>
+                </div>
+                <div className="text-[13px] font-black text-gray-700 dark:text-[#eef0ff] tabular-nums">{pct}%</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

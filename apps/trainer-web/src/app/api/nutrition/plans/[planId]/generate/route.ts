@@ -57,13 +57,14 @@ export async function POST(
     const macroPct = body.macro_split ?? { protein_pct: 30, carb_pct: 45, fat_pct: 25 };
     const restrictions = body.dietary_restrictions?.trim() || "none";
 
-    // Fetch a diverse sample of food_items for the prompt — 40 foods across groups
+    // Fetch a diverse sample of food_items for the prompt — 80 foods across groups
     const { data: foodSample } = await supabase
       .from("food_items")
       .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
+      .not("energy_kcal", "is", null)
       .order("food_group", { ascending: true })
       .order("food_name", { ascending: true })
-      .limit(40);
+      .limit(80);
 
     const foodList = (foodSample ?? [])
       .map((f) => `${f.id} | ${f.food_name} | ${f.food_group ?? "General"} | kcal/100g: ${f.energy_kcal ?? "?"} | P: ${f.protein_g ?? "?"} | C: ${f.carb_g ?? "?"} | F: ${f.fat_g ?? "?"}`)
@@ -117,7 +118,7 @@ Respond with ONLY valid JSON in this exact structure — no commentary, no markd
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 600,
+        max_tokens: 2048,
         messages: [{ role: "user", content: prompt }],
       }),
     });
