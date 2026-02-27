@@ -106,3 +106,15 @@ Files confirmed on disk:
 
 Commits confirmed in git log:
 - 9d00abd feat(07-04): add Publish button to PlanBuilderClient — FOUND
+
+## Human Verification Result
+
+**Checkpoint resolved:** User confirmed "approved" — Phase 7 plan builder verified end-to-end.
+
+All flows confirmed working:
+- Days: Add Day button creates Day N in sidebar
+- Meals: Add Meal form, meal cards render with type/title
+- Food search: Inline AFCD autocomplete, component row with qty + macros
+- Macro calculation: Meal total bar and day total bar auto-sum correctly
+- AI generation: Generate with AI modal, ~30s Claude response, Day 1-7 filled with AFCD-matched components
+- Publish: Publish button PATCHes status, status badge turns green, "Published" persists on reload
