@@ -618,13 +618,34 @@ function StepSchedule({
       </FieldGroup>
       <div>
         <Label>Training days</Label>
-        <input
-          type="text"
-          value={data.training_days ?? ""}
-          onChange={(e) => onChange({ training_days: e.target.value })}
-          className={inputCls}
-          placeholder="e.g. Mon, Wed, Fri, Sat"
-        />
+        <div className="flex gap-1.5">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
+            const selected = parseItems(data.training_days ?? "").includes(day);
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => {
+                  const days = parseItems(data.training_days ?? "");
+                  const next = selected
+                    ? days.filter((d) => d !== day)
+                    : [...days, day];
+                  // preserve Mon–Sun order
+                  const order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                  onChange({ training_days: order.filter((d) => next.includes(d)).join(", ") });
+                }}
+                className={
+                  "flex-1 py-2 rounded-xl border text-[12px] font-semibold transition-colors " +
+                  (selected
+                    ? "border-brand-500 dark:border-[#ffb34a] bg-brand-50 dark:bg-[rgba(255,179,74,0.12)] text-brand-700 dark:text-[#ffb34a]"
+                    : "border-gray-200 dark:border-white/15 text-gray-500 dark:text-[rgba(238,240,255,0.55)] hover:border-gray-300 dark:hover:border-white/25")
+                }
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
