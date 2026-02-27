@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import IntakeWizard from "./IntakeWizard";
 
 // --- Type definitions ---
 
@@ -432,7 +433,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
       </div>
 
       {showGenerateModal && (
-        <GenerateModal
+        <IntakeWizard
           planId={planId}
           onClose={() => setShowGenerateModal(false)}
           onGenerated={() => {
