@@ -107,7 +107,7 @@ Plans:
 
 Plans:
 - [x] 09-01-PLAN.md — DB migration 0043 (parent_plan_id FK on meal_plans + ai_draft columns on meal_plan_feedback) ✅ 2026-02-27
-- [ ] 09-02-PLAN.md — AI draft endpoint + feedback detail API + version creation endpoint
+- [x] 09-02-PLAN.md — AI draft endpoint + feedback detail API + version creation endpoint ✅ 2026-02-27
 - [ ] 09-03-PLAN.md — Feedback inbox coach UI + DraftReviewModal (Feedback tab in /nutrition)
 - [ ] 09-04-PLAN.md — Version selector in coach plan builder + version badge in portal + human-verify checkpoint
 
@@ -136,4 +136,4 @@ Plans:
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 8. Client Portal Nutrition View | v1.2 | 3/3 | Complete | 2026-02-27 |
-| 9. AI Feedback Loop + Versioning | v1.2 | 1/4 | In Progress | — |
+| 9. AI Feedback Loop + Versioning | v1.2 | 2/4 | In Progress | — |

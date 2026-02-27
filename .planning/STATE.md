@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Nutrition Engine
 status: in_progress
-last_updated: "2026-02-27T07:30:00.000Z"
+last_updated: "2026-02-27T07:29:06.000Z"
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 9 — AI Feedback Loop + Versioning
-Plan: 09-01 COMPLETE
-Status: 09-01 complete — migration 0043 applied to Supabase: parent_plan_id FK on meal_plans, ai_draft_* columns on meal_plan_feedback. Ready for Plan 02 (AI draft endpoint).
-Last activity: 2026-02-27 — 09-01 complete: versioning + AI draft schema columns live in DB
+Plan: 09-02 COMPLETE
+Status: 09-02 complete — three API routes live: GET/PATCH /api/nutrition/feedback/[id], POST /api/nutrition/feedback/[id]/draft (Claude AI swap), POST /api/nutrition/plans/[planId]/version (deep-copy). Ready for Plan 03 (coach review UI).
+Last activity: 2026-02-27 — 09-02 complete: AI draft endpoint + versioning endpoint created, TypeScript clean
 
-Progress: [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 25% (1/4 plans complete in phase 9)
+Progress: [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 50% (2/4 plans complete in phase 9)
 
 ## Phase Summary
 
@@ -88,6 +88,11 @@ Progress: [███░░░░░░░░░░░░░░░░░░░░
 - [09-01] ai_draft_* columns are all nullable — draft populated only after coach triggers AI endpoint, not on feedback creation
 - [09-01] Supabase Management API requires requests library with browser User-Agent — urllib.request gets Cloudflare 403 (error 1010); requests bypasses this
 - [09-01] PAT decodes as UTF-8 (raw blob bytes), not UTF-16-LE — 44-char sbp_... token confirmed
+- [09-02] Two-query approach for draft_food_item: fetch feedback first, then food_items by ai_draft_food_item_id — avoids fighting Supabase join naming for non-standard FK field
+- [09-02] max_tokens: 512 for draft endpoint — focused single-food suggestion needs far less context than full plan generation (8192)
+- [09-02] ILIKE + first-word fallback for food matching — Claude may suggest "Chicken breast, skinless" but AFCD has "Chicken, breast"
+- [09-02] No rollback on deep-copy failure — Supabase JS client lacks transaction support; partial plans acceptable for coach-triggered action
+- [09-02] Return 422 when Claude suggests a food name not found in AFCD — expected data mismatch, not infrastructure error
 
 ### Pending Todos
 
@@ -103,5 +108,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: 09-01 complete — Migration 0043 applied. Phase 9 Plan 02 is next (AI draft endpoint).
+Stopped at: 09-02 complete — AI draft endpoint + versioning endpoint created. Phase 9 Plan 03 is next (coach review UI).
 Resume file: None
