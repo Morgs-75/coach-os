@@ -183,43 +183,61 @@ export async function POST(
     const useIntake = !!body.intake_data;
     const numDays = Math.min(14, Math.max(1, body.plan_length_days ?? 1));
 
-    // Fetch a curated food sample biased toward common PT meal-plan ingredients.
-    // Two-pass: priority keywords first, then fill with general variety.
-    const PRIORITY_KEYWORDS = [
-      "chicken","salmon","tuna","beef","pork","turkey","lamb","egg",
-      "milk","yoghurt","yogurt","cheese","ricotta","cottage",
-      "oat","rice","pasta","bread","potato","sweet potato","quinoa",
-      "broccoli","spinach","capsicum","carrot","zucchini","tomato",
-      "lettuce","salad","cucumber","onion","mushroom","asparagus",
-      "apple","banana","berry","berries","orange","mango","grape",
-      "almond","peanut","avocado","olive oil","nut","seed",
-      "tofu","lentil","bean","chickpea","protein powder",
+    // Fetch a curated food sample using group-based queries.
+    // AUSNUT naming: "Ingredient, preparation, detail" — starts-with "Ingredient, "
+    // targets simple/raw foods; compound dishes (e.g. "Chicken burger") start with
+    // multi-word prefixes and are excluded.
+    const TARGET_GROUPS: { label: string; limit: number; prefixes: string[] }[] = [
+      { label: "Poultry",      limit: 18, prefixes: ["Chicken, ", "Turkey, ", "Duck, "] },
+      { label: "Meat",         limit: 18, prefixes: ["Beef, ", "Lamb, ", "Pork, "] },
+      { label: "Seafood",      limit: 15, prefixes: ["Salmon, ", "Tuna, ", "Prawn, ", "Barramundi, "] },
+      { label: "Dairy",        limit: 12, prefixes: ["Milk, ", "Yoghurt, ", "Cheese, "] },
+      { label: "Eggs",         limit:  8, prefixes: ["Egg, "] },
+      { label: "Cereals",      limit: 18, prefixes: ["Oats, ", "Rice, ", "Pasta, ", "Porridge, ", "Quinoa, "] },
+      {
+        label: "Vegetables", limit: 25,
+        prefixes: [
+          "Potato, ", "Sweet potato, ", "Broccoli, ", "Spinach, ", "Carrot, ",
+          "Cabbage, ", "Tomato, ", "Mushroom, ", "Onion, ", "Capsicum, ",
+          "Asparagus, ", "Cauliflower, ", "Zucchini, ", "Cucumber, ", "Beetroot, ",
+          "Snow pea, ", "Lettuce, ", "Corn, ", "Pumpkin, ", "Celery, ",
+          "Brussels sprout, ", "Kale, ", "Leek, ",
+        ],
+      },
+      {
+        label: "Fruit", limit: 15,
+        prefixes: [
+          "Apple, ", "Banana, ", "Blueberry, ", "Strawberry, ", "Mango, ",
+          "Pear, ", "Melon, ", "Peach, ", "Apricot, ", "Orange, ",
+          "Grape, ", "Cherry, ", "Pineapple, ",
+        ],
+      },
+      { label: "Nuts & Seeds", limit: 12, prefixes: ["Nut, ", "Mixed nuts, "] },
+      { label: "Legumes",      limit: 10, prefixes: ["Bean, ", "Lentil, ", "Chickpea, "] },
+      { label: "Fats & Oils",  limit:  8, prefixes: ["Avocado, ", "Oil, ", "Butter, "] },
     ];
-    const orFilter = PRIORITY_KEYWORDS.map((k) => `food_name.ilike.%${k}%`).join(",");
 
-    const [{ data: priorityFoods }, { data: generalFoods }] = await Promise.all([
-      supabase
-        .from("food_items")
-        .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
-        .not("energy_kcal", "is", null)
-        .or(orFilter)
-        .order("food_name", { ascending: true })
-        .limit(150),
-      supabase
-        .from("food_items")
-        .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
-        .not("energy_kcal", "is", null)
-        .order("food_group", { ascending: true })
-        .order("food_name", { ascending: true })
-        .limit(60),
-    ]);
+    // One parallel query per group. Values containing commas are double-quoted
+    // so PostgREST doesn't misparse them as OR separators.
+    const groupResults = await Promise.all(
+      TARGET_GROUPS.map(({ label: _label, limit, prefixes }) => {
+        const orFilter = prefixes.map((p) => `food_name.ilike."${p}%"`).join(",");
+        return supabase
+          .from("food_items")
+          .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
+          .not("energy_kcal", "is", null)
+          .or(orFilter)
+          .order("food_name", { ascending: true })
+          .limit(limit);
+      })
+    );
 
-    // Merge: priority foods first, then general foods not already included
-    const priorityIds = new Set((priorityFoods ?? []).map((f) => f.id));
-    const foodSample = [
-      ...(priorityFoods ?? []),
-      ...(generalFoods ?? []).filter((f) => !priorityIds.has(f.id)),
-    ];
+    const foodSample = groupResults.flatMap((r, i) => {
+      const rows = r.data ?? [];
+      const label = TARGET_GROUPS[i].label;
+      // Stamp group label so the AI prompt shows a meaningful group column
+      return rows.map((f) => ({ ...f, food_group: f.food_group ?? label }));
+    });
 
     // Use short IDs (F1, F2…) in the prompt so the AI never has to copy a UUID.
     // Build a map to translate back after parsing.
