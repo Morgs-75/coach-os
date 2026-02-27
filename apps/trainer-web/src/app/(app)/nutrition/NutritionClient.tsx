@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { clsx } from "clsx";
+import FeedbackInbox from "./FeedbackInbox";
 
 interface Client {
   id: string;
@@ -65,6 +66,8 @@ export default function NutritionClient() {
     start_date: "",
     end_date: "",
   });
+  const [activeTab, setActiveTab] = useState<"plans" | "feedback">("plans");
+  const [orgId, setOrgId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -83,6 +86,8 @@ export default function NutritionClient() {
         .single();
 
       if (membership?.org_id) {
+        setOrgId(membership.org_id);
+
         const { data: clientsData } = await supabase
           .from("clients")
           .select("id, name, first_name, last_name")
@@ -153,6 +158,32 @@ export default function NutritionClient() {
           Create and manage meal plans for your clients
         </p>
       </div>
+
+      {/* Tab bar */}
+      <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700 mb-6">
+        {(["plans", "feedback"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 text-sm font-medium capitalize transition-colors ${
+              activeTab === tab
+                ? "border-b-2 border-brand-600 text-brand-600"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            }`}
+          >
+            {tab === "plans" ? "Plans" : "Feedback"}
+          </button>
+        ))}
+      </div>
+
+      {/* Feedback tab content */}
+      {activeTab === "feedback" && orgId && (
+        <FeedbackInbox orgId={orgId} />
+      )}
+
+      {/* Plans tab content */}
+      {activeTab === "plans" && (
+        <>
 
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 gap-4">
@@ -375,6 +406,8 @@ export default function NutritionClient() {
             </form>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
