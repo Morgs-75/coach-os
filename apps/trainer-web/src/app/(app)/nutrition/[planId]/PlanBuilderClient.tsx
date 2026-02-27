@@ -132,6 +132,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [versions, setVersions] = useState<VersionSummary[]>([]);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const loadVersions = useCallback(async () => {
     const res = await fetch(`/api/nutrition/plans/${planId}/versions`);
@@ -169,6 +170,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   async function handleAddDay() {
     if (!plan) return;
     setAddingDay(true);
+    setMutationError(null);
     try {
       const res = await fetch(`/api/nutrition/plans/${planId}/days`, {
         method: "POST",
@@ -180,9 +182,12 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
         const newDay: Day = { ...data.day, meals: [] };
         setPlan((p) => (p ? { ...p, days: [...p.days, newDay] } : p));
         setSelectedDayId(data.day.id);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setMutationError(data.error ?? `Failed to add day (${res.status})`);
       }
-    } catch {
-      // Silently fail; could add error toast in later plan
+    } catch (e) {
+      setMutationError("Failed to add day — network error");
     } finally {
       setAddingDay(false);
     }
@@ -342,6 +347,13 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
         </div>
       )}
 
+      {mutationError && (
+        <div className="mb-4 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400 flex items-center justify-between">
+          <span>{mutationError}</span>
+          <button onClick={() => setMutationError(null)} className="ml-3 text-red-400 hover:text-red-600">✕</button>
+        </div>
+      )}
+
       {/* Main layout: days sidebar + day panel */}
       <div className="flex gap-6 min-h-[500px]">
         {/* Days sidebar */}
@@ -413,6 +425,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
               day={selectedDay}
               planId={planId}
               onDayUpdated={handleDayUpdated}
+              onError={setMutationError}
             />
           )}
         </div>
@@ -449,10 +462,12 @@ function DayPanel({
   day,
   planId,
   onDayUpdated,
+  onError,
 }: {
   day: Day;
   planId: string;
   onDayUpdated: (updatedDay: Day) => void;
+  onError: (msg: string) => void;
 }) {
   const [showAddMeal, setShowAddMeal] = useState(false);
   const [mealType, setMealType] = useState<string>("breakfast");
@@ -482,7 +497,12 @@ function DayPanel({
         setShowAddMeal(false);
         setMealTitle("");
         setMealType("breakfast");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        onError(data.error ?? `Failed to add meal (${res.status})`);
       }
+    } catch {
+      onError("Failed to add meal — network error");
     } finally {
       setAddingMeal(false);
     }
@@ -604,6 +624,7 @@ function DayPanel({
               planId={planId}
               onMealUpdated={handleMealUpdated}
               onMealDeleted={handleMealDeleted}
+              onError={onError}
             />
           ))}
         </div>
@@ -624,11 +645,13 @@ function MealCard({
   planId,
   onMealUpdated,
   onMealDeleted,
+  onError,
 }: {
   meal: Meal;
   planId: string;
   onMealUpdated: (m: Meal) => void;
   onMealDeleted: (id: string) => void;
+  onError: (msg: string) => void;
 }) {
   const label = MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type;
   const mealTotals = computeTotals(meal.components);
@@ -715,6 +738,7 @@ function MealCard({
           planId={planId}
           mealId={meal.id}
           onAdded={handleComponentAdded}
+          onError={onError}
         />
       </div>
 
@@ -826,10 +850,12 @@ function FoodSearchInput({
   planId,
   mealId,
   onAdded,
+  onError,
 }: {
   planId: string;
   mealId: string;
   onAdded: (c: Component) => void;
+  onError: (msg: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FoodItem[]>([]);
@@ -877,7 +903,12 @@ function FoodSearchInput({
       if (res.ok) {
         const data = await res.json();
         onAdded(data.component);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        onError(data.error ?? `Failed to add food (${res.status})`);
       }
+    } catch {
+      onError("Failed to add food — network error");
     } finally {
       setAdding(false);
     }

@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("meal_plans")
-      .select(`*, client:clients(id, full_name)`)
+      .select(`*, client:clients!meal_plans_client_id_fkey(id, full_name)`)
       .eq("org_id", orgId)
       .order("created_at", { ascending: false });
 
