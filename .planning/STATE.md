@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-27T00:58:07.517Z"
+last_updated: "2026-02-27T04:14:58Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 8 — Client Portal Nutrition View (next)
-Plan: 08-01 (0/?)
-Status: Phase 7 fully complete and human-verified. User approved end-to-end flow: days, meals, food search, macro calculation, AI generation (7 days), publish. Ready for Phase 8.
-Last activity: 2026-02-27 — Phase 7 complete: human-verified, all flows confirmed
+Phase: Phase 8 — Client Portal Nutrition View
+Plan: 08-02 (1/3 complete)
+Status: 08-01 complete. meal_plan_feedback migration applied to Supabase. Ready for 08-02 (portal nutrition view).
+Last activity: 2026-02-27 — 08-01 complete: meal_plan_feedback table live in Supabase
 
 Progress: [████████████████████████████████████░] 75% (phase 7 complete, phase 8 next)
 
@@ -71,6 +71,10 @@ Progress: [███████████████████████
 - [07-04] Optimistic update via setPlan callback after PATCH status=published — avoids full loadPlan() reload for a two-field change
 - [07-04] Publish button disabled (not hidden) when no days — visible affordance with tooltip explaining the gate condition
 - [Phase 07]: [07-04] Human-verified Phase 7 end-to-end: days, meals, food search, macro calc, AI generation, publish all confirmed working
+- [08-01] meal_plan_feedback.meal_id is nullable (ON DELETE SET NULL) — feedback can reference a specific meal or just the plan
+- [08-01] forward column allows NULL — covers plan-level feedback without carry-forward preference
+- [08-01] No client INSERT RLS policy — portal API uses service role key which bypasses RLS entirely
+- [08-01] Migration path is supabase/migrations/ (project root) not apps/trainer-web/supabase/migrations/ — plan had wrong path, corrected at execution time
 
 ### Pending Todos
 
@@ -86,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: 07-04 complete — Phase 7 fully human-verified. Next: Phase 8 Client Portal Nutrition View.
+Stopped at: 08-01 complete — meal_plan_feedback migration applied. Next: 08-02 portal nutrition view.
 Resume file: None

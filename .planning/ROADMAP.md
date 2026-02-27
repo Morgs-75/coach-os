@@ -82,7 +82,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — DB migration 0042 (meal_plan_feedback table + RLS)
+- [x] 08-01-PLAN.md — DB migration 0042 (meal_plan_feedback table + RLS) ✅ 2026-02-27
 - [ ] 08-02-PLAN.md — Portal nutrition API (GET published plan + POST feedback + coach SMS)
 - [ ] 08-03-PLAN.md — Portal nutrition UI (Nutrition tab, NutritionView, FeedbackDrawer) + human-verify checkpoint
 
@@ -127,5 +127,5 @@ Plans:
 | 5. Production Hygiene | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
-| 8. Client Portal Nutrition View | v1.2 | 0/3 | Planned | — |
+| 8. Client Portal Nutrition View | v1.2 | 1/3 | In Progress | — |
 | 9. AI Feedback Loop + Versioning | v1.2 | 0/? | Planned | — |
