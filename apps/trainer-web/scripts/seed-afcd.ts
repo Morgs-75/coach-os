@@ -98,13 +98,21 @@ async function main() {
     auth: { persistSession: false },
   });
 
+  // Clear existing food items before re-seeding to avoid stale data from previous runs
+  console.log('Clearing existing food_items...');
+  const { error: deleteError } = await supabase.from('food_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  if (deleteError) { console.error('Failed to clear food_items:', deleteError.message); process.exit(1); }
+  console.log('Cleared.');
+
   console.log('Loading Excel file:', filePath);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
-  // Find the right worksheet — AFCD Release 3 uses "Food details" or similar
+  // Find the right worksheet — supports AUSNUT 2023, AFCD R3, and legacy formats
   let worksheet: ExcelJS.Worksheet | undefined;
   const targetSheetPatterns = [
+    'food nutrient profile',
+    'nutrient profile',
     'food details',
     'food detail',
     'all solids',
@@ -173,8 +181,12 @@ async function main() {
   if (colFat === -1) {
     // Broader search if specific "total" not found
   }
-  const colCarb = findColumn(headerRow, ['carbohydrate'], ['fructose', 'glucose', 'sucrose', 'lactose', 'maltose', 'starch', 'sugars', 'fibre']);
-  const colFibre = findColumn(headerRow, ['dietary fibre', 'fibre, total', 'fiber, total', 'total dietary fibre', 'fibre_total']);
+  // Prefer "without sugar alcohols" over "with sugar alcohols" (AUSNUT 2023)
+  let colCarb = findColumn(headerRow, ['carbohydrate'], ['fructose', 'glucose', 'sucrose', 'lactose', 'maltose', 'starch', 'sugars', 'fibre', 'with sugar alcohol']);
+  if (colCarb === -1) {
+    colCarb = findColumn(headerRow, ['carbohydrate'], ['fructose', 'glucose', 'sucrose', 'lactose', 'maltose', 'starch', 'sugars', 'fibre']);
+  }
+  const colFibre = findColumn(headerRow, ['dietary fibre', 'fibre, total', 'fiber, total', 'total dietary fibre', 'fibre_total'], ['energy']);
 
   console.log('\nColumn mapping:');
   console.log(`  Food ID:     col ${colFoodId}`);
