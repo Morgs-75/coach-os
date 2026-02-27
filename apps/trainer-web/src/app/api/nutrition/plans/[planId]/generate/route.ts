@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const maxDuration = 60;
+
 async function getOrgAndUser(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { orgId: null, userId: null };
@@ -55,20 +57,19 @@ export async function POST(
     const macroPct = body.macro_split ?? { protein_pct: 30, carb_pct: 45, fat_pct: 25 };
     const restrictions = body.dietary_restrictions?.trim() || "none";
 
-    // Fetch a diverse sample of food_items for the prompt
-    // Get up to 250 foods ordered by food_group then food_name for variety
+    // Fetch a diverse sample of food_items for the prompt — 80 foods across groups
     const { data: foodSample } = await supabase
       .from("food_items")
       .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
       .order("food_group", { ascending: true })
       .order("food_name", { ascending: true })
-      .limit(250);
+      .limit(80);
 
     const foodList = (foodSample ?? [])
       .map((f) => `${f.id} | ${f.food_name} | ${f.food_group ?? "General"} | kcal/100g: ${f.energy_kcal ?? "?"} | P: ${f.protein_g ?? "?"} | C: ${f.carb_g ?? "?"} | F: ${f.fat_g ?? "?"}`)
       .join("\n");
 
-    const prompt = `You are a sports nutrition expert. Generate a 7-day meal plan for a personal training client.
+    const prompt = `You are a sports nutrition expert. Generate a 3-day meal plan for a personal training client.
 
 CLIENT GOAL: ${goal}
 DAILY CALORIE TARGET: ${calorieTarget} kcal
@@ -79,7 +80,7 @@ AVAILABLE FOODS (id | name | group | kcal/100g | protein_g | carb_g | fat_g):
 ${foodList}
 
 INSTRUCTIONS:
-- Create exactly 7 days (day_number 1 through 7).
+- Create exactly 3 days (day_number 1 through 3).
 - Each day must have 3–5 meals using these meal_type values only: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
 - Each meal should have 2–5 food components.
 - Use ONLY food_item_ids from the list above — do NOT invent UUIDs.
@@ -115,8 +116,8 @@ Respond with ONLY valid JSON in this exact structure — no commentary, no markd
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 8192,
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2500,
         messages: [{ role: "user", content: prompt }],
       }),
     });

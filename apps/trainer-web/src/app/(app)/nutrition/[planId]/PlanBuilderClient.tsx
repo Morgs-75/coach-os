@@ -1012,7 +1012,7 @@ function GenerateModal({
               Generate with AI
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Claude will create a 7-day meal plan using AFCD foods.
+              Claude will create a 3-day meal plan using AFCD foods.
               Any existing days will be replaced.
             </p>
           </div>
