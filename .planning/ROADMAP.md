@@ -23,7 +23,7 @@
 
 - [x] **Phase 6: Nutrition Foundation** — AFCD food library import, DB schema (meal_plans, days, meals, components), /nutrition section scaffold, plan CRUD with date range + client assignment
 - [x] **Phase 7: Plan Builder + AI Generation** — Coach plan builder UI (add days/meals/components, food search), AI generation from client goal/calories/macros/restrictions, macro auto-calculation, publish to portal (completed 2026-02-26)
-- [ ] **Phase 8: Client Portal Nutrition View** — Nutrition tab in portal/[token], collapsible day view, per-meal macro tables, day totals + stacked bar chart, feedback drawer (submit + coach notified)
+- [x] **Phase 8: Client Portal Nutrition View** — Nutrition tab in portal/[token], collapsible day view, per-meal macro tables, day totals + stacked bar chart, feedback drawer (submit + coach notified) (completed 2026-02-27)
 - [ ] **Phase 9: AI Feedback Loop + Versioning** — Coach feedback inbox, AI drafts component swap from AFCD, coach approves/edits draft, new plan version published, version history for coach + client
 
 ### Phase 6: Nutrition Foundation
@@ -79,7 +79,7 @@ Plans:
 
 **Goal:** Client sees their active meal plan in the portal with the UI shown in the reference design, and can submit feedback on individual meals.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 08-01-PLAN.md — DB migration 0042 (meal_plan_feedback table + RLS) ✅ 2026-02-27
@@ -127,5 +127,5 @@ Plans:
 | 5. Production Hygiene | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
-| 8. Client Portal Nutrition View | 2/3 | In Progress|  | — |
+| 8. Client Portal Nutrition View | 3/3 | Complete   | 2026-02-27 | — |
 | 9. AI Feedback Loop + Versioning | v1.2 | 0/? | Planned | — |
