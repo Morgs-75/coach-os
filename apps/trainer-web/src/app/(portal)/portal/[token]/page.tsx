@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
 import PortalDashboard from "./PortalDashboard";
+import { NutritionPlan } from "./NutritionView";
 
 interface PortalPageProps {
   params: Promise<{ token: string }>;
@@ -24,7 +25,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
 
   // Run all data fetches in parallel
   const now = new Date().toISOString();
-  const [brandingRes, upcomingRes, pastRes, purchasesRes, settingsRes] = await Promise.all([
+  const [brandingRes, upcomingRes, pastRes, purchasesRes, settingsRes, planRes] = await Promise.all([
     supabase.from("branding").select("display_name, primary_color").eq("org_id", orgId).single(),
     supabase
       .from("bookings")
@@ -51,6 +52,26 @@ export default async function PortalPage({ params }: PortalPageProps) {
       .select("cancel_notice_hours, allow_client_cancel")
       .eq("org_id", orgId)
       .single(),
+    supabase
+      .from("meal_plans")
+      .select(`
+        id, name, start_date, end_date, published_at, version,
+        days:meal_plan_days(
+          id, day_number, date,
+          meals:meal_plan_meals(
+            id, meal_type, title, sort_order,
+            components:meal_plan_components(
+              id, qty_g, custom_name, sort_order,
+              food_item:food_items(id, food_name, energy_kcal, protein_g, fat_g, carb_g)
+            )
+          )
+        )
+      `)
+      .eq("client_id", client.id)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const displayName = brandingRes.data?.display_name ?? orgName;
@@ -63,6 +84,28 @@ export default async function PortalPage({ params }: PortalPageProps) {
 
   const cancelNoticeHours = settingsRes.data?.cancel_notice_hours ?? 24;
 
+  // Sort nested plan data
+  let mealPlan: NutritionPlan | null = null;
+  if (planRes.data) {
+    const raw = planRes.data as any;
+    mealPlan = {
+      ...raw,
+      days: (raw.days ?? [])
+        .sort((a: any, b: any) => a.day_number - b.day_number)
+        .map((day: any) => ({
+          ...day,
+          meals: (day.meals ?? [])
+            .sort((a: any, b: any) => a.sort_order - b.sort_order)
+            .map((meal: any) => ({
+              ...meal,
+              components: (meal.components ?? []).sort(
+                (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+              ),
+            })),
+        })),
+    };
+  }
+
   return (
     <PortalDashboard
       token={token}
@@ -73,6 +116,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
       cancelNoticeHours={cancelNoticeHours}
       upcomingBookings={upcomingRes.data ?? []}
       pastBookings={pastRes.data ?? []}
+      mealPlan={mealPlan}
     />
   );
 }
