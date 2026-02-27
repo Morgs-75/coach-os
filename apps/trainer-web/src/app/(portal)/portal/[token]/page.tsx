@@ -55,7 +55,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
     supabase
       .from("meal_plans")
       .select(`
-        id, name, start_date, end_date, published_at, version,
+        id, name, start_date, end_date, published_at, version, notes,
         days:meal_plan_days(
           id, day_number, date,
           meals:meal_plan_meals(

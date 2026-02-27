@@ -8,7 +8,7 @@ interface FeedbackDrawerProps {
   meal: Meal | null;
   planId: string;
   token: string;
-  primaryColor: string;
+  primaryColor: string; // kept for backwards compatibility — not used for main styling
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -19,12 +19,38 @@ type ForwardPreference = "yes" | "no" | "ask_me" | "";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+// --- Style tokens matching the HTML spec ---
+const TEXT = "#eef0ff";
+const MUTED = "rgba(238,240,255,0.70)";
+const MUTED2 = "rgba(238,240,255,0.55)";
+const BORDER_INPUT = "rgba(255,255,255,0.12)";
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  border: `1px solid ${BORDER_INPUT}`,
+  background: "rgba(255,255,255,0.04)",
+  color: TEXT,
+  borderRadius: 14,
+  padding: "10px 12px",
+  outline: "none",
+  fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+  fontSize: 13,
+  boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  color: MUTED,
+  fontSize: 12,
+  marginBottom: 6,
+};
+
 export default function FeedbackDrawer({
   isOpen,
   meal,
   planId,
   token,
-  primaryColor,
+  primaryColor: _primaryColor,
   onClose,
   onSuccess,
 }: FeedbackDrawerProps) {
@@ -36,7 +62,6 @@ export default function FeedbackDrawer({
   const [errorMsg, setErrorMsg] = useState("");
 
   function handleClose() {
-    // Reset state on close
     setStatus("idle");
     setErrorMsg("");
     setFeedbackType("other");
@@ -55,7 +80,7 @@ export default function FeedbackDrawer({
       const body: Record<string, string | undefined> = {
         token,
         plan_id: planId,
-        meal_id: meal?.id,
+        meal_id: meal?.id || undefined,
         type: feedbackType,
         scope,
         comment: comment.trim() || undefined,
@@ -93,150 +118,274 @@ export default function FeedbackDrawer({
 
   if (!isOpen) return null;
 
-  const mealLabel = meal?.meal_type
-    ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)
-    : "Meal";
+  const mealLabel =
+    meal && meal.meal_type && meal.meal_type !== "general"
+      ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)
+      : null;
+
+  const mealSubtitle = mealLabel
+    ? `Feedback for ${mealLabel}${meal?.title ? ` — ${meal.title}` : ""}`
+    : "Send one request at a time. Your coach will review and publish updates.";
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/40"
         onClick={handleClose}
         aria-hidden="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.55)",
+          zIndex: 30,
+        }}
       />
 
-      {/* Bottom sheet panel */}
+      {/* Right slide-in drawer panel */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl p-5 shadow-xl max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
-        aria-label={`Feedback for ${mealLabel}`}
+        aria-label="Meal plan feedback"
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          height: "100%",
+          width: "min(460px, 92vw)",
+          background: "linear-gradient(180deg, rgba(15,18,48,.98), rgba(11,13,36,.98))",
+          borderLeft: "1px solid rgba(255,255,255,.10)",
+          boxShadow: "-30px 0 80px rgba(0,0,0,.55)",
+          zIndex: 40,
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+          color: TEXT,
+        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-gray-900 text-base">
-            Feedback for {mealLabel}
-            {meal?.title && (
-              <span className="font-normal text-gray-500"> — {meal.title}</span>
-            )}
-          </h2>
+        {/* Drawer header */}
+        <div
+          style={{
+            padding: 16,
+            borderBottom: "1px solid rgba(255,255,255,.10)",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 10,
+            flexShrink: 0,
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: TEXT }}>
+              Meal plan feedback
+            </h3>
+            <div style={{ marginTop: 4, color: MUTED2, fontSize: 12, lineHeight: 1.45 }}>
+              {mealSubtitle}
+            </div>
+          </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            style={{
+              border: "1px solid rgba(255,255,255,.12)",
+              background: "rgba(255,255,255,.04)",
+              color: TEXT,
+              borderRadius: 12,
+              padding: "8px 10px",
+              cursor: "pointer",
+              fontSize: 13,
+              flexShrink: 0,
+            }}
             aria-label="Close"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            Close
           </button>
         </div>
 
         {status === "success" ? (
-          <div className="text-center py-6">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          /* Success state — fills remaining space */
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 32,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: "50%",
+                background: "rgba(74,222,128,0.15)",
+                border: "1px solid rgba(74,222,128,0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="rgba(74,222,128,0.9)" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="font-semibold text-gray-900">Thank you!</p>
-            <p className="text-sm text-gray-500 mt-1">Your coach has been notified.</p>
+            <p style={{ fontWeight: 700, fontSize: 15, color: TEXT, margin: "0 0 6px" }}>Thank you!</p>
+            <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Your coach has been notified.</p>
             <button
               onClick={handleSuccessClose}
-              className="mt-5 px-6 py-2.5 rounded-lg text-sm font-semibold text-white"
-              style={{ backgroundColor: primaryColor }}
+              style={{
+                marginTop: 24,
+                padding: "10px 24px",
+                borderRadius: 14,
+                border: "1px solid rgba(255,179,74,.35)",
+                background: "linear-gradient(180deg, rgba(255,179,74,.22), rgba(255,179,74,.10))",
+                color: TEXT,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontSize: 13,
+              }}
             >
               Close
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Type of feedback
-              </label>
-              <select
-                value={feedbackType}
-                onChange={(e) => setFeedbackType(e.target.value as FeedbackType)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-1"
-                style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
-                required
-              >
-                <option value="substitution">Substitution request</option>
-                <option value="dislike">I dislike this</option>
-                <option value="allergy">Allergy concern</option>
-                <option value="portion">Portion size</option>
-                <option value="schedule">Scheduling issue</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            {/* Scope */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                How does this affect you?
-              </label>
-              <select
-                value={scope}
-                onChange={(e) => setScope(e.target.value as FeedbackScope)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-1"
-                required
-              >
-                <option value="this_meal">Just this instance</option>
-                <option value="going_forward">Going forward</option>
-                <option value="all_occurrences">All occurrences</option>
-              </select>
-            </div>
-
-            {/* Comment */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Comment <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Tell your coach more (optional)"
-                rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-offset-1"
-              />
-            </div>
-
-            {/* Forward preference */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Would you like your coach to act on this?{" "}
-                <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <select
-                value={forward}
-                onChange={(e) => setForward(e.target.value as ForwardPreference)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-offset-1"
-              >
-                <option value="">— Select —</option>
-                <option value="yes">Yes please</option>
-                <option value="no">Not right now</option>
-                <option value="ask_me">Ask me</option>
-              </select>
-            </div>
-
-            {/* Error message */}
-            {status === "error" && (
-              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 text-sm text-red-700">
-                {errorMsg}
+          /* Form — flex column so footer stays at bottom */
+          <form
+            onSubmit={handleSubmit}
+            style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}
+          >
+            {/* Scrollable form body */}
+            <div style={{ padding: 16, overflowY: "auto", flex: 1 }}>
+              {/* Type + Applies to — two columns */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={labelStyle}>Type</label>
+                  <select
+                    value={feedbackType}
+                    onChange={(e) => setFeedbackType(e.target.value as FeedbackType)}
+                    style={inputStyle}
+                    required
+                  >
+                    <option value="substitution">Substitution</option>
+                    <option value="dislike">Don&apos;t like</option>
+                    <option value="allergy">Allergy / intolerance</option>
+                    <option value="portion">Portion</option>
+                    <option value="schedule">Schedule</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Applies to</label>
+                  <select
+                    value={scope}
+                    onChange={(e) => setScope(e.target.value as FeedbackScope)}
+                    style={inputStyle}
+                    required
+                  >
+                    <option value="this_meal">This meal only</option>
+                    <option value="going_forward">Going forward</option>
+                    <option value="all_occurrences">All occurrences</option>
+                  </select>
+                </div>
               </div>
-            )}
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={status === "submitting"}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-60 transition-opacity"
-              style={{ backgroundColor: primaryColor }}
+              {/* Comment */}
+              <div style={{ marginTop: 10 }}>
+                <label style={labelStyle}>Comment</label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Describe what you want changed. Be specific."
+                  style={{ ...inputStyle, minHeight: 110, resize: "vertical" }}
+                />
+              </div>
+
+              {/* Going forward */}
+              <div style={{ marginTop: 10 }}>
+                <label style={labelStyle}>Going forward</label>
+                <select
+                  value={forward}
+                  onChange={(e) => setForward(e.target.value as ForwardPreference)}
+                  style={inputStyle}
+                >
+                  <option value="">— Select —</option>
+                  <option value="yes">Apply going forward</option>
+                  <option value="no">This week only</option>
+                  <option value="ask_me">Ask me</option>
+                </select>
+              </div>
+
+              {/* Divider + info */}
+              <div style={{ height: 1, background: "rgba(255,255,255,0.10)", margin: "12px 0" }} />
+              <div style={{ color: MUTED2, fontSize: 12, lineHeight: 1.45 }}>
+                <strong style={{ color: TEXT }}>What happens next:</strong> CoachOS will create a feedback ticket. AI may draft a proposed change. Your coach confirms before publishing.
+              </div>
+
+              {/* Error message */}
+              {status === "error" && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    border: "1px solid rgba(251,113,133,0.35)",
+                    background: "rgba(251,113,133,0.10)",
+                    borderRadius: 14,
+                    padding: "10px 12px",
+                    fontSize: 13,
+                    color: "#fb7185",
+                  }}
+                >
+                  {errorMsg}
+                </div>
+              )}
+            </div>
+
+            {/* Footer — submit + cancel */}
+            <div
+              style={{
+                padding: 16,
+                borderTop: "1px solid rgba(255,255,255,.10)",
+                display: "flex",
+                gap: 10,
+                flexShrink: 0,
+              }}
             >
-              {status === "submitting" ? "Submitting…" : "Submit feedback"}
-            </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                style={{
+                  flex: 1,
+                  border: "1px solid rgba(255,255,255,.14)",
+                  background: "rgba(255,255,255,.05)",
+                  color: TEXT,
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={status === "submitting"}
+                style={{
+                  flex: 1,
+                  border: "1px solid rgba(255,179,74,.35)",
+                  background: "linear-gradient(180deg, rgba(255,179,74,.22), rgba(255,179,74,.10))",
+                  color: TEXT,
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  fontWeight: 800,
+                  cursor: status === "submitting" ? "not-allowed" : "pointer",
+                  fontSize: 13,
+                  opacity: status === "submitting" ? 0.6 : 1,
+                }}
+              >
+                {status === "submitting" ? "Submitting…" : "Submit"}
+              </button>
+            </div>
           </form>
         )}
       </div>

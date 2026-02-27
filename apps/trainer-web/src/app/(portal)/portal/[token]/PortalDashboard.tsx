@@ -280,22 +280,39 @@ export default function PortalDashboard({
 
       {/* Nutrition tab content */}
       {activeTab === "nutrition" && (
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div
+          style={{
+            background: "#07081a",
+            minHeight: "calc(100vh - 130px)",
+          }}
+        >
+        <div className="max-w-6xl mx-auto px-4 py-6">
           {mealPlan ? (
             <NutritionView
               plan={mealPlan}
               token={token}
               primaryColor={primaryColor}
               onFeedback={handleOpenFeedback}
+              clientName={clientName}
             />
           ) : (
-            <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 text-center">
-              <p className="font-semibold text-gray-700">No active meal plan yet</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Your coach will publish one when it's ready.
+            <div
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03))",
+                border: "1px solid rgba(255,255,255,.10)",
+                borderRadius: 18,
+                padding: "48px 32px",
+                textAlign: "center",
+                color: "#eef0ff",
+              }}
+            >
+              <p style={{ fontWeight: 700, fontSize: 15, margin: "0 0 6px" }}>No meal plan published yet</p>
+              <p style={{ fontSize: 13, color: "rgba(238,240,255,0.70)", margin: 0 }}>
+                Your coach will publish one when it&apos;s ready.
               </p>
             </div>
           )}
+        </div>
         </div>
       )}
 
