@@ -294,7 +294,7 @@ export default function NutritionClient() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {plans.map((plan) => (
-                    <tr key={plan.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                    <tr key={plan.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-4 py-3">
                         <a
                           href={`/nutrition/${plan.id}`}
@@ -323,7 +323,7 @@ export default function NutritionClient() {
                         {new Date(plan.created_at).toLocaleDateString("en-AU")}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => openEdit(plan)}
                             className="text-xs text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
