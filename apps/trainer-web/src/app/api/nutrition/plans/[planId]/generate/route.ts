@@ -274,7 +274,8 @@ export async function POST(
       prompt = buildSimplePrompt(goal, calorieTarget, macroPct, restrictions, foodList);
     }
 
-    const model = "claude-sonnet-4-6";
+    // Sonnet for short plans (≤3 days, ~13s), Haiku for longer (≤26s Netlify limit)
+    const model = numDays <= 3 ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
     // More tokens for longer plans
     const maxTokens = numDays <= 1 ? 2048 : numDays <= 5 ? 4096 : 8192;
 
