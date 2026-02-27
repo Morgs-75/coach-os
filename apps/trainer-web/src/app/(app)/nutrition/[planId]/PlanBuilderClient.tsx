@@ -435,6 +435,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
       {showGenerateModal && (
         <IntakeWizard
           planId={planId}
+          clientId={plan.client?.id ?? null}
           onClose={() => setShowGenerateModal(false)}
           onGenerated={() => {
             setShowGenerateModal(false);
