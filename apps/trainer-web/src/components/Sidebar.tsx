@@ -50,24 +50,6 @@ export function Sidebar() {
     fetchUnreadCount();
   }, []);
 
-  // Real-time: refresh unread count on new messages
-  useEffect(() => {
-    const channel = supabase
-      .channel("sidebar-unread")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        () => {
-          fetchUnreadCount();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   async function fetchUnreadCount() {
     try {
       const response = await fetch("/api/messages/unread-count");
@@ -97,14 +79,13 @@ export function Sidebar() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("platform_admins")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      // Silently fail if table doesn't exist (406) or user not admin
-      if (!error && data) {
+      if (data) {
         setIsPlatformAdmin(true);
       }
     } catch {
