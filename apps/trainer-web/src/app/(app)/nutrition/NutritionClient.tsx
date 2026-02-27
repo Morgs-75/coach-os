@@ -84,10 +84,10 @@ export default function NutritionClient() {
 
         const { data: clientsData } = await supabase
           .from("clients")
-          .select("id, name, first_name, last_name")
+          .select("id, full_name")
           .eq("org_id", membership.org_id)
           .eq("status", "active")
-          .order("name");
+          .order("full_name");
 
         setClients(clientsData ?? []);
       }
