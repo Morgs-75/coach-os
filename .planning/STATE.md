@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-02-27T05:18:35.510Z"
+milestone: v1.2
+milestone_name: Nutrition Engine
+status: in_progress
+last_updated: "2026-02-27T07:30:00.000Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_phases: 9
+  completed_phases: 8
+  total_plans: 4
+  completed_plans: 1
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 8 — Client Portal Nutrition View
-Plan: 08-03 COMPLETE — Phase 8 COMPLETE
-Status: 08-03 all tasks complete including human-verify checkpoint (approved). Phase 8 fully delivered: DB migration + API routes + portal UI all done.
-Last activity: 2026-02-27 — 08-03 complete: portal nutrition view human-verified and approved
+Phase: Phase 9 — AI Feedback Loop + Versioning
+Plan: 09-01 COMPLETE
+Status: 09-01 complete — migration 0043 applied to Supabase: parent_plan_id FK on meal_plans, ai_draft_* columns on meal_plan_feedback. Ready for Plan 02 (AI draft endpoint).
+Last activity: 2026-02-27 — 09-01 complete: versioning + AI draft schema columns live in DB
 
-Progress: [██████████████████████████████████████] 100% (phase 8 complete — all phases delivered)
+Progress: [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 25% (1/4 plans complete in phase 9)
 
 ## Phase Summary
 
@@ -84,6 +84,10 @@ Progress: [███████████████████████
 - [Phase 08-03]: FeedbackDrawer resets all form fields on close — prevents stale state if reopened on a different meal
 - [Phase 08-03]: page.tsx casts planRes.data as any for nested sort — Supabase inferred types for deeply nested selects are complex; runtime sort is simpler than fighting the type system
 - [Phase 08-03]: Human-verify checkpoint APPROVED 2026-02-27 — full phase 8 nutrition view confirmed working end-to-end
+- [09-01] parent_plan_id uses ON DELETE SET NULL — if parent deleted, children keep data but lose version link (safe, no orphan cascade)
+- [09-01] ai_draft_* columns are all nullable — draft populated only after coach triggers AI endpoint, not on feedback creation
+- [09-01] Supabase Management API requires requests library with browser User-Agent — urllib.request gets Cloudflare 403 (error 1010); requests bypasses this
+- [09-01] PAT decodes as UTF-8 (raw blob bytes), not UTF-16-LE — 44-char sbp_... token confirmed
 
 ### Pending Todos
 
@@ -99,5 +103,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: 08-03 complete — Phase 8 fully delivered. Portal nutrition view human-verified and approved.
+Stopped at: 09-01 complete — Migration 0043 applied. Phase 9 Plan 02 is next (AI draft endpoint).
 Resume file: None
