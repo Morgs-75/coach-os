@@ -951,6 +951,7 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
   const supabase = createClient();
   const [step, setStep] = useState(0);
   const [prefilled, setPrefilled] = useState(false);
+  const [restoredFromPlan, setRestoredFromPlan] = useState(false);
   const [data, setData] = useState<Partial<IntakeData>>({
     primary_goal: "fat_loss",
     timeframe_weeks: 12,
@@ -987,36 +988,57 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Pre-fill from client profile on mount
+  // Pre-fill on mount: plan intake_data wins over client profile
   useEffect(() => {
-    if (!clientId) return;
-    supabase
-      .from("clients")
-      .select("gender, date_of_birth, weight_kg, height_cm, target_weight_kg, dietary_restrictions, health_conditions, goals")
-      .eq("id", clientId)
-      .single()
+    async function load() {
+      // 1. Try plan's saved intake_data first
+      try {
+        const planRes = await fetch(`/api/nutrition/plans/${planId}`);
+        if (planRes.ok) {
+          const { plan } = await planRes.json();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const saved = plan?.intake_data as Record<string, any> | null;
+          if (saved && Object.keys(saved).length > 0) {
+            setData((prev) => ({ ...prev, ...saved }));
+            setPrefilled(true);
+            setRestoredFromPlan(true);
+            return; // skip client profile — plan data is already more complete
+          }
+        }
+      } catch {
+        // ignore — fall through to client profile
+      }
+
+      // 2. Fall back to client profile fields
+      if (!clientId) return;
+      const { data: c } = await supabase
+        .from("clients")
+        .select("gender, date_of_birth, weight_kg, height_cm, target_weight_kg, dietary_restrictions, health_conditions, goals")
+        .eq("id", clientId)
+        .single();
+      if (!c) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then(({ data: c }: { data: Record<string, any> | null }) => {
-        if (!c) return;
-        const patch: Partial<IntakeData> = {};
-        if (c.gender === "male" || c.gender === "female") patch.sex = c.gender as "male" | "female";
-        if (c.date_of_birth) patch.age = calcAgeFromDob(c.date_of_birth);
-        if (c.weight_kg) patch.current_weight_kg = c.weight_kg;
-        if (c.height_cm) patch.height_cm = c.height_cm;
-        if (c.target_weight_kg) patch.target_weight_kg = c.target_weight_kg;
-        if (c.dietary_restrictions?.length) patch.allergies = (c.dietary_restrictions as string[]).join(", ");
-        if (c.health_conditions?.length) patch.medical_conditions = (c.health_conditions as string[]).join(", ");
-        if (c.goals?.length) {
-          const mapped = CLIENT_GOAL_MAP[(c.goals[0] as string).toLowerCase()];
-          if (mapped) patch.primary_goal = mapped;
-        }
-        if (Object.keys(patch).length > 0) {
-          setData((prev) => ({ ...prev, ...patch }));
-          setPrefilled(true);
-        }
-      });
+      const p = c as Record<string, any>;
+      const patch: Partial<IntakeData> = {};
+      if (p.gender === "male" || p.gender === "female") patch.sex = p.gender as "male" | "female";
+      if (p.date_of_birth) patch.age = calcAgeFromDob(p.date_of_birth);
+      if (p.weight_kg) patch.current_weight_kg = p.weight_kg;
+      if (p.height_cm) patch.height_cm = p.height_cm;
+      if (p.target_weight_kg) patch.target_weight_kg = p.target_weight_kg;
+      if (p.dietary_restrictions?.length) patch.allergies = (p.dietary_restrictions as string[]).join(", ");
+      if (p.health_conditions?.length) patch.medical_conditions = (p.health_conditions as string[]).join(", ");
+      if (p.goals?.length) {
+        const mapped = CLIENT_GOAL_MAP[(p.goals[0] as string).toLowerCase()];
+        if (mapped) patch.primary_goal = mapped;
+      }
+      if (Object.keys(patch).length > 0) {
+        setData((prev) => ({ ...prev, ...patch }));
+        setPrefilled(true);
+      }
+    }
+    load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [planId, clientId]);
 
   function patch(patch: Partial<IntakeData>) {
     setData((prev) => ({ ...prev, ...patch }));
@@ -1076,9 +1098,9 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
               <h2 className="text-base font-bold text-gray-900 dark:text-[#eef0ff]">
                 {currentStep.title}
               </h2>
-              {prefilled && step === 0 && (
+              {prefilled && (
                 <span className="text-[10px] bg-brand-50 dark:bg-[rgba(255,179,74,0.1)] text-brand-600 dark:text-[#ffb34a] border border-brand-100 dark:border-[rgba(255,179,74,0.25)] px-2 py-0.5 rounded-full font-medium">
-                  Profile pre-filled
+                  {restoredFromPlan ? "Restored from last time" : "Profile pre-filled"}
                 </span>
               )}
             </div>

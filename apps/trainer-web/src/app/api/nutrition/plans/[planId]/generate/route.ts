@@ -33,7 +33,7 @@ const VALID_MEAL_TYPES = new Set([
   "dinner", "evening_snack", "other",
 ]);
 
-function buildRichPrompt(intake: IntakeData, numDays: number, foodList: string): string {
+function buildRichPrompt(intake: IntakeData, numDays: number, foodList: string, startDay = 1): string {
   const goal = intake.primary_goal?.replace(/_/g, " ") ?? "general health";
   const targetKcal = intake.target_calories ?? 2000;
   const mealsPerDay = intake.meals_per_day ?? 4;
@@ -93,7 +93,7 @@ CALORIE CALCULATION GUIDE — use the kcal/100g values to size portions correctl
 - Scale portions up or down to hit each meal's calorie target
 
 INSTRUCTIONS:
-- Create exactly ${numDays} day(s) (day_number 1 through ${numDays}).
+- Create exactly ${numDays} day(s) (day_number ${startDay} through ${startDay + numDays - 1}).${startDay > 1 ? `\n- This continues a multi-day plan — use different foods from the earlier days.` : ""}
 - Each day must have exactly ${mealsPerDay} meals. Use only these meal_type values: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
 - Each meal MUST deliver approximately ${kcalPerMeal} kcal — use the kcal/100g data to calculate qty_g precisely.
 - Each meal should have 2–4 food components.
@@ -262,86 +262,121 @@ export async function POST(
       })
       .join("\n");
 
-    // Build prompt
-    let prompt: string;
-    if (useIntake && body.intake_data) {
-      prompt = buildRichPrompt(body.intake_data, numDays, foodList);
-    } else {
+    type GeneratedDay = {
+      day_number: number;
+      meals: Array<{
+        meal_type: string;
+        title?: string;
+        components: Array<{ food_item_id: string; qty_g: number }>;
+      }>;
+    };
+
+    // ── Claude call helper ────────────────────────────────────────────────────
+    async function callClaude(prompt: string, requestedDays: number): Promise<GeneratedDay[]> {
+      // Sonnet for short plans (≤3 days, ~13s), Haiku for longer (≤26s Netlify limit)
+      const model = requestedDays <= 3 ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
+      const maxTokens = requestedDays <= 1 ? 2048 : requestedDays <= 4 ? 4096 : 8192;
+
+      const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey!, // non-null: checked above
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: maxTokens,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+
+      if (!aiResp.ok) {
+        const errText = await aiResp.text();
+        console.error("Anthropic API error:", errText);
+        throw new Error("AI generation failed");
+      }
+
+      const aiData = await aiResp.json();
+      const responseText: string = aiData.content?.[0]?.text ?? "";
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error("No JSON in Claude response:", responseText.slice(0, 500));
+        throw new Error("AI returned invalid response");
+      }
+
+      let parsed: { days: GeneratedDay[] };
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch {
+        throw new Error("Failed to parse AI response as JSON");
+      }
+
+      if (!parsed.days || !Array.isArray(parsed.days)) {
+        throw new Error("AI response missing days array");
+      }
+
+      // Translate short IDs back to real UUIDs
+      for (const day of parsed.days) {
+        for (const meal of day.meals ?? []) {
+          for (const comp of meal.components ?? []) {
+            if (comp.food_item_id) {
+              const realId = shortIdToRealId.get(comp.food_item_id);
+              if (realId) comp.food_item_id = realId;
+            }
+          }
+        }
+      }
+
+      return parsed.days;
+    }
+
+    // ── Build prompts ─────────────────────────────────────────────────────────
+    function buildPrompt(startDay: number, count: number): string {
+      if (useIntake && body.intake_data) {
+        return buildRichPrompt(body.intake_data, count, foodList, startDay);
+      }
+      // Simple path always generates from day 1 (no continuation needed)
       const goal = body.goal?.trim() || "general health and balanced nutrition";
       const calorieTarget = body.calorie_target ?? 2000;
       const macroPct = body.macro_split ?? { protein_pct: 30, carb_pct: 45, fat_pct: 25 };
       const restrictions = body.dietary_restrictions?.trim() || "none";
-      prompt = buildSimplePrompt(goal, calorieTarget, macroPct, restrictions, foodList);
+      return buildSimplePrompt(goal, calorieTarget, macroPct, restrictions, foodList);
     }
 
-    // Sonnet for short plans (≤3 days, ~13s), Haiku for longer (≤26s Netlify limit)
-    const model = numDays <= 3 ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
-    // More tokens for longer plans
-    const maxTokens = numDays <= 1 ? 2048 : numDays <= 5 ? 4096 : 8192;
-
-    // Call Claude
-    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("Anthropic API error:", errText);
-      return NextResponse.json({ error: "AI generation failed" }, { status: 500 });
-    }
-
-    const aiData = await aiResponse.json();
-    const responseText: string = aiData.content?.[0]?.text ?? "";
-
-    // Extract JSON from response (strip any accidental markdown fences)
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("No JSON in Claude response:", responseText.slice(0, 500));
-      return NextResponse.json({ error: "AI returned invalid response" }, { status: 500 });
-    }
-
-    let generated: { days: Array<{ day_number: number; meals: Array<{ meal_type: string; title?: string; components: Array<{ food_item_id: string; qty_g: number }> }> }> };
+    // ── First pass ────────────────────────────────────────────────────────────
+    // For plans > 5 days, ask for the first 5 only to stay within Haiku's
+    // 8192-token output ceiling. A second pass fills remaining days.
+    const FIRST_PASS_MAX = 5;
+    const firstPassCount = Math.min(numDays, FIRST_PASS_MAX);
+    let allDays: GeneratedDay[];
     try {
-      generated = JSON.parse(jsonMatch[0]);
-    } catch {
-      return NextResponse.json({ error: "Failed to parse AI response as JSON" }, { status: 500 });
+      allDays = await callClaude(buildPrompt(1, firstPassCount), firstPassCount);
+    } catch (err) {
+      return NextResponse.json({ error: String(err) }, { status: 500 });
     }
 
-    if (!generated.days || !Array.isArray(generated.days)) {
-      return NextResponse.json({ error: "AI response missing days array" }, { status: 500 });
-    }
-
-    // Translate short IDs (F1, F2…) back to real UUIDs in-place
-    for (const day of generated.days) {
-      for (const meal of day.meals ?? []) {
-        for (const comp of meal.components ?? []) {
-          if (comp.food_item_id) {
-            const realId = shortIdToRealId.get(comp.food_item_id);
-            if (realId) comp.food_item_id = realId;
-          }
-        }
+    // ── Second pass (if needed) ───────────────────────────────────────────────
+    if (numDays > FIRST_PASS_MAX) {
+      const startDay2 = firstPassCount + 1;
+      const count2 = numDays - firstPassCount;
+      try {
+        const moreDays = await callClaude(buildPrompt(startDay2, count2), count2);
+        allDays = [...allDays, ...moreDays];
+      } catch (err) {
+        // Log but don't fail — we'll persist whatever days we got in pass 1
+        console.error("Second-pass generation failed:", err);
       }
     }
 
-    // Collect all resolved food_item_ids — all are already validated via the map
+    // ── Collect valid food IDs ────────────────────────────────────────────────
     const validFoodIds = new Set<string>(shortIdToRealId.values());
 
-    // Clear existing days (CASCADE removes meals + components)
+    // ── Clear + insert ────────────────────────────────────────────────────────
     await supabase.from("meal_plan_days").delete().eq("plan_id", planId);
 
-    // Insert days → meals → components
     let daysCreated = 0;
-    for (const day of generated.days) {
+    for (const day of allDays) {
       if (!day.day_number || !Array.isArray(day.meals)) continue;
 
       const { data: insertedDay, error: dayError } = await supabase
