@@ -37,6 +37,7 @@ function buildRichPrompt(intake: IntakeData, numDays: number, foodList: string):
   const goal = intake.primary_goal?.replace(/_/g, " ") ?? "general health";
   const targetKcal = intake.target_calories ?? 2000;
   const mealsPerDay = intake.meals_per_day ?? 4;
+  const kcalPerMeal = Math.round(targetKcal / mealsPerDay);
   const dietStyle = intake.diet_style ?? "omnivore";
   const allergies = intake.allergies || "none";
   const dislikes = intake.dislikes_foods || "none";
@@ -58,7 +59,7 @@ function buildRichPrompt(intake: IntakeData, numDays: number, foodList: string):
 
 CLIENT PROFILE:
 - Goal: ${goal}
-- Daily calorie target: ${targetKcal} kcal
+- Daily calorie target: ${targetKcal} kcal (${mealsPerDay} meals × ~${kcalPerMeal} kcal each)
 - Diet style: ${dietStyle}
 - Allergies/intolerances: ${allergies}
 - Foods they like: ${likes}
@@ -84,13 +85,20 @@ PRACTICAL CONSTRAINTS:
 AVAILABLE FOODS (id | name | group | kcal/100g | P | C | F):
 ${foodList}
 
+CALORIE CALCULATION GUIDE — use the kcal/100g values to size portions correctly:
+- Example: food with 165 kcal/100g and target 500 kcal → qty_g = round(500/165*100) = 303g
+- Chicken breast (lean, grilled) ≈ 165 kcal/100g → 150g serving ≈ 248 kcal
+- Oats (rolled, uncooked) ≈ 380 kcal/100g → 80g serving ≈ 304 kcal
+- White rice (cooked) ≈ 130 kcal/100g → 200g serving ≈ 260 kcal
+- Scale portions up or down to hit each meal's calorie target
+
 INSTRUCTIONS:
 - Create exactly ${numDays} day(s) (day_number 1 through ${numDays}).
-- Each day must have ${mealsPerDay} meals. Use only these meal_type values: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
+- Each day must have exactly ${mealsPerDay} meals. Use only these meal_type values: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
+- Each meal MUST deliver approximately ${kcalPerMeal} kcal — use the kcal/100g data to calculate qty_g precisely.
 - Each meal should have 2–4 food components.
 - Use ONLY the short food IDs from the list above (e.g. F1, F12, F47) — do NOT invent IDs.
-- Set qty_g to realistic serving sizes (oats: 80g, chicken breast: 150g, milk: 200g, etc.).
-- Aim for each day's total calories to be within 10% of ${targetKcal} kcal.
+- The day total MUST be within 5% of ${targetKcal} kcal. This is a hard requirement.
 - Strictly avoid all allergens: ${allergies}.
 - Strictly avoid: ${dislikes}.
 - Vary foods across days — do not repeat the exact same meal on multiple days.
@@ -116,23 +124,27 @@ Respond with ONLY valid JSON — no commentary, no markdown fences:
 }
 
 function buildSimplePrompt(goal: string, calorieTarget: number, macroPct: { protein_pct: number; carb_pct: number; fat_pct: number }, restrictions: string, foodList: string): string {
+  const mealsPerDay = 4;
+  const kcalPerMeal = Math.round(calorieTarget / mealsPerDay);
   return `You are a sports nutrition expert. Generate a 1-day meal plan for a personal training client.
 
 CLIENT GOAL: ${goal}
-DAILY CALORIE TARGET: ${calorieTarget} kcal
+DAILY CALORIE TARGET: ${calorieTarget} kcal (${mealsPerDay} meals × ~${kcalPerMeal} kcal each)
 MACRO SPLIT: Protein ${macroPct.protein_pct}% / Carbs ${macroPct.carb_pct}% / Fat ${macroPct.fat_pct}%
 DIETARY RESTRICTIONS: ${restrictions}
 
 AVAILABLE FOODS (id | name | group | kcal/100g | protein_g | carb_g | fat_g):
 ${foodList}
 
+CALORIE CALCULATION: use kcal/100g to size portions — qty_g = round(meal_target_kcal / food_kcal_per_100g * 100).
+
 INSTRUCTIONS:
 - Create exactly 1 day (day_number 1).
-- Each day must have 3–5 meals using these meal_type values only: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
+- Each day must have exactly ${mealsPerDay} meals using: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
+- Each meal MUST deliver approximately ${kcalPerMeal} kcal — calculate qty_g from the kcal/100g values.
 - Each meal should have 2–4 food components.
 - Use ONLY the short food IDs from the list above (e.g. F1, F12, F47) — do NOT invent IDs.
-- Set qty_g to a realistic serving size (e.g. oats: 80g, chicken breast: 150g, milk: 200g).
-- Aim for each day's total calories to be within 10% of the calorie target.
+- The day total MUST be within 5% of ${calorieTarget} kcal. This is a hard requirement.
 - Respect dietary restrictions strictly.
 
 Respond with ONLY valid JSON in this exact structure — no commentary, no markdown:
@@ -262,8 +274,7 @@ export async function POST(
       prompt = buildSimplePrompt(goal, calorieTarget, macroPct, restrictions, foodList);
     }
 
-    // Always use Haiku — Sonnet exceeds Netlify's 26s function timeout
-    const model = "claude-haiku-4-5-20251001";
+    const model = "claude-sonnet-4-6";
     // More tokens for longer plans
     const maxTokens = numDays <= 1 ? 2048 : numDays <= 5 ? 4096 : 8192;
 
