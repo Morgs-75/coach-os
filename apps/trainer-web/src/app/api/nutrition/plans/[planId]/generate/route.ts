@@ -88,7 +88,7 @@ INSTRUCTIONS:
 - Create exactly ${numDays} day(s) (day_number 1 through ${numDays}).
 - Each day must have ${mealsPerDay} meals. Use only these meal_type values: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
 - Each meal should have 2–4 food components.
-- Use ONLY food_item_ids from the list above — do NOT invent UUIDs.
+- Use ONLY the short food IDs from the list above (e.g. F1, F12, F47) — do NOT invent IDs.
 - Set qty_g to realistic serving sizes (oats: 80g, chicken breast: 150g, milk: 200g, etc.).
 - Aim for each day's total calories to be within 10% of ${targetKcal} kcal.
 - Strictly avoid all allergens: ${allergies}.
@@ -106,7 +106,7 @@ Respond with ONLY valid JSON — no commentary, no markdown fences:
           "meal_type": "breakfast",
           "title": "descriptive title",
           "components": [
-            { "food_item_id": "<uuid from list>", "qty_g": 80 }
+            { "food_item_id": "F3", "qty_g": 80 }
           ]
         }
       ]
@@ -130,7 +130,7 @@ INSTRUCTIONS:
 - Create exactly 1 day (day_number 1).
 - Each day must have 3–5 meals using these meal_type values only: breakfast, morning_snack, lunch, afternoon_snack, dinner, evening_snack, other.
 - Each meal should have 2–4 food components.
-- Use ONLY food_item_ids from the list above — do NOT invent UUIDs.
+- Use ONLY the short food IDs from the list above (e.g. F1, F12, F47) — do NOT invent IDs.
 - Set qty_g to a realistic serving size (e.g. oats: 80g, chicken breast: 150g, milk: 200g).
 - Aim for each day's total calories to be within 10% of the calorie target.
 - Respect dietary restrictions strictly.
@@ -145,7 +145,7 @@ Respond with ONLY valid JSON in this exact structure — no commentary, no markd
           "meal_type": "breakfast",
           "title": "optional descriptive title",
           "components": [
-            { "food_item_id": "<uuid from list>", "qty_g": 80 }
+            { "food_item_id": "F3", "qty_g": 80 }
           ]
         }
       ]
@@ -183,17 +183,24 @@ export async function POST(
     const useIntake = !!body.intake_data;
     const numDays = Math.min(14, Math.max(1, body.plan_length_days ?? 1));
 
-    // Fetch a diverse sample of food_items for the prompt — 80 foods across groups
+    // Fetch a diverse sample of food_items — 120 foods across groups
     const { data: foodSample } = await supabase
       .from("food_items")
       .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
       .not("energy_kcal", "is", null)
       .order("food_group", { ascending: true })
       .order("food_name", { ascending: true })
-      .limit(80);
+      .limit(120);
 
+    // Use short IDs (F1, F2…) in the prompt so the AI never has to copy a UUID.
+    // Build a map to translate back after parsing.
+    const shortIdToRealId = new Map<string, string>();
     const foodList = (foodSample ?? [])
-      .map((f) => `${f.id} | ${f.food_name} | ${f.food_group ?? "General"} | kcal/100g: ${f.energy_kcal ?? "?"} | P: ${f.protein_g ?? "?"} | C: ${f.carb_g ?? "?"} | F: ${f.fat_g ?? "?"}`)
+      .map((f, i) => {
+        const shortId = `F${i + 1}`;
+        shortIdToRealId.set(shortId, f.id);
+        return `${shortId} | ${f.food_name} | ${f.food_group ?? "General"} | kcal/100g: ${f.energy_kcal ?? "?"} | P: ${f.protein_g ?? "?"} | C: ${f.carb_g ?? "?"} | F: ${f.fat_g ?? "?"}`;
+      })
       .join("\n");
 
     // Build prompt
@@ -255,24 +262,20 @@ export async function POST(
       return NextResponse.json({ error: "AI response missing days array" }, { status: 500 });
     }
 
-    // Collect all food_item_ids Claude used and validate them
-    const allFoodIds = new Set<string>();
+    // Translate short IDs (F1, F2…) back to real UUIDs in-place
     for (const day of generated.days) {
       for (const meal of day.meals ?? []) {
         for (const comp of meal.components ?? []) {
-          if (comp.food_item_id) allFoodIds.add(comp.food_item_id);
+          if (comp.food_item_id) {
+            const realId = shortIdToRealId.get(comp.food_item_id);
+            if (realId) comp.food_item_id = realId;
+          }
         }
       }
     }
 
-    const validFoodIds = new Set<string>();
-    if (allFoodIds.size > 0) {
-      const { data: validFoods } = await supabase
-        .from("food_items")
-        .select("id")
-        .in("id", Array.from(allFoodIds));
-      (validFoods ?? []).forEach((f) => validFoodIds.add(f.id));
-    }
+    // Collect all resolved food_item_ids — all are already validated via the map
+    const validFoodIds = new Set<string>(shortIdToRealId.values());
 
     // Clear existing days (CASCADE removes meals + components)
     await supabase.from("meal_plan_days").delete().eq("plan_id", planId);
