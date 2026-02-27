@@ -63,6 +63,15 @@ interface Plan {
   days: Day[];
 }
 
+// --- Version types ---
+
+interface VersionSummary {
+  id: string;
+  version: number;
+  status: "draft" | "published";
+  published_at: string | null;
+}
+
 // --- Macro types ---
 
 interface MacroTotals {
@@ -128,6 +137,15 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [versions, setVersions] = useState<VersionSummary[]>([]);
+
+  const loadVersions = useCallback(async () => {
+    const res = await fetch(`/api/nutrition/plans/${planId}/versions`);
+    if (res.ok) {
+      const data = await res.json();
+      setVersions(data.versions ?? []);
+    }
+  }, [planId]);
 
   const loadPlan = useCallback(async () => {
     try {
@@ -151,6 +169,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
 
   useEffect(() => {
     loadPlan();
+    loadVersions();
   }, [planId]); // Load once on mount; reload called explicitly after mutations
 
   async function handleAddDay() {
@@ -242,6 +261,24 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
       >
         ← Nutrition Plans
       </Link>
+
+      {/* Version selector — shown only when multiple versions exist */}
+      {versions.length > 1 && (
+        <div className="flex justify-end mb-3">
+          <select
+            value={planId}
+            onChange={(e) => { window.location.href = `/nutrition/${e.target.value}`; }}
+            className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-gray-100"
+          >
+            {versions.map((v) => (
+              <option key={v.id} value={v.id}>
+                v{v.version} — {v.status === "published" ? "Published" : "Draft"}
+                {v.id === planId ? " (current)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Plan header */}
       <div className="mb-6 flex items-start justify-between gap-4">
