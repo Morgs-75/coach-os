@@ -208,8 +208,8 @@ export async function POST(
       prompt = buildSimplePrompt(goal, calorieTarget, macroPct, restrictions, foodList);
     }
 
-    // Use sonnet for multi-day / rich intake plans, haiku for simple 1-day
-    const model = (useIntake || numDays > 1) ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
+    // Always use Haiku — Sonnet exceeds Netlify's 26s function timeout
+    const model = "claude-haiku-4-5-20251001";
     // More tokens for longer plans
     const maxTokens = numDays <= 1 ? 2048 : numDays <= 5 ? 4096 : 8192;
 
