@@ -102,9 +102,11 @@ async function main() {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
-  // Find the right worksheet — AFCD Release 3 uses "All solids & liquids per 100g" or similar
+  // Find the right worksheet — AFCD Release 3 uses "Food details" or similar
   let worksheet: ExcelJS.Worksheet | undefined;
   const targetSheetPatterns = [
+    'food details',
+    'food detail',
     'all solids',
     'per 100g',
     'solids & liquids',
@@ -128,8 +130,18 @@ async function main() {
     console.log(`Using worksheet: "${worksheet.name}"`);
   }
 
-  // Read header row (row 1)
-  const headerRow = worksheet.getRow(1);
+  // Detect header row — scan first 5 rows for "food name" column
+  let headerRowNumber = 1;
+  for (let r = 1; r <= 5; r++) {
+    const candidate = worksheet.getRow(r);
+    let found = false;
+    candidate.eachCell({ includeEmpty: false }, (cell) => {
+      if (String(cell.value || '').toLowerCase().includes('food name')) found = true;
+    });
+    if (found) { headerRowNumber = r; break; }
+  }
+  console.log(`Header row detected at row ${headerRowNumber}`);
+  const headerRow = worksheet.getRow(headerRowNumber);
 
   // Detect column positions
   const colFoodId = findColumn(headerRow, ['public food key', 'food id', 'public_food_key']);
@@ -187,7 +199,7 @@ async function main() {
   let skippedRows = 0;
 
   worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-    if (rowNumber === 1) return; // skip header
+    if (rowNumber <= headerRowNumber) return; // skip title rows + header
 
     const foodName = parseString(row.getCell(colFoodName).value);
     if (!foodName) {

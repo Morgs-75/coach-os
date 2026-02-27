@@ -89,15 +89,15 @@ CLIENT_NAME = rows[0]["full_name"]
 
 # ── 2. Pick food items from AFCD ─────────────────────────────────────────────
 chickens = query(
-    "SELECT id, food_name FROM food_items WHERE food_name ILIKE '%chicken%' AND energy_kcal IS NOT NULL LIMIT 1",
+    "SELECT id, food_name FROM food_items WHERE food_name ILIKE '%chicken%'  LIMIT 1",
     "Find chicken food item"
 )
 eggs = query(
-    "SELECT id, food_name FROM food_items WHERE food_name ILIKE '%egg%' AND energy_kcal IS NOT NULL LIMIT 1",
+    "SELECT id, food_name FROM food_items WHERE food_name ILIKE '%egg%'  LIMIT 1",
     "Find egg food item"
 )
 oats = query(
-    "SELECT id, food_name FROM food_items WHERE food_name ILIKE '%oat%' AND energy_kcal IS NOT NULL LIMIT 1",
+    "SELECT id, food_name FROM food_items WHERE food_name ILIKE '%oat%'  LIMIT 1",
     "Find oat food item"
 )
 CHICKEN_ID = chickens[0]["id"] if chickens else None
