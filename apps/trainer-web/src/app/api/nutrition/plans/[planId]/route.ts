@@ -107,3 +107,31 @@ export async function PATCH(
     return NextResponse.json({ error: "Failed to update plan" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ planId: string }> }
+) {
+  try {
+    const { planId } = await params;
+    const supabase = await createClient();
+    const { orgId } = await getOrgAndUser(supabase);
+    if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { error } = await supabase
+      .from("meal_plans")
+      .delete()
+      .eq("id", planId)
+      .eq("org_id", orgId);
+
+    if (error) {
+      console.error("Plan delete error:", error);
+      return NextResponse.json({ error: "Failed to delete plan" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Plan delete error:", error);
+    return NextResponse.json({ error: "Failed to delete plan" }, { status: 500 });
+  }
+}
