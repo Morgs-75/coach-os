@@ -706,13 +706,30 @@ function StepCooking({
       </FieldGroup>
       <div>
         <Label>Available equipment</Label>
-        <input
-          type="text"
-          value={data.equipment ?? ""}
-          onChange={(e) => onChange({ equipment: e.target.value })}
-          className={inputCls}
-          placeholder="e.g. oven, air fryer, stovetop, microwave, no blender"
-        />
+        <div className="flex flex-wrap gap-1.5">
+          {["Stovetop", "Oven", "Microwave", "Air fryer", "Slow cooker", "Rice cooker", "Blender", "BBQ"].map((item) => {
+            const selected = parseItems(data.equipment ?? "").includes(item);
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => {
+                  const current = parseItems(data.equipment ?? "");
+                  const next = selected ? current.filter((x) => x !== item) : [...current, item];
+                  onChange({ equipment: next.join(", ") });
+                }}
+                className={
+                  "px-2.5 py-1 rounded-lg border text-[12px] font-medium transition-colors " +
+                  (selected
+                    ? "border-brand-500 dark:border-[#ffb34a] bg-brand-50 dark:bg-[rgba(255,179,74,0.12)] text-brand-700 dark:text-[#ffb34a]"
+                    : "border-gray-200 dark:border-white/15 text-gray-500 dark:text-[rgba(238,240,255,0.55)] hover:border-gray-300 dark:hover:border-white/25")
+                }
+              >
+                {item}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <input
@@ -813,13 +830,30 @@ function StepConstraints({
       </div>
       <div>
         <Label>Supplements currently taken</Label>
-        <input
-          type="text"
-          value={data.supplements ?? ""}
-          onChange={(e) => onChange({ supplements: e.target.value })}
-          className={inputCls}
-          placeholder="e.g. protein powder, creatine, fish oil — or none"
-        />
+        <div className="flex flex-wrap gap-1.5">
+          {["Protein powder", "Creatine", "Fish oil", "Multivitamin", "Magnesium", "Vitamin D", "Pre-workout", "BCAAs", "Collagen", "Probiotics"].map((item) => {
+            const selected = parseItems(data.supplements ?? "").includes(item);
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => {
+                  const current = parseItems(data.supplements ?? "");
+                  const next = selected ? current.filter((x) => x !== item) : [...current, item];
+                  onChange({ supplements: next.join(", ") });
+                }}
+                className={
+                  "px-2.5 py-1 rounded-lg border text-[12px] font-medium transition-colors " +
+                  (selected
+                    ? "border-brand-500 dark:border-[#ffb34a] bg-brand-50 dark:bg-[rgba(255,179,74,0.12)] text-brand-700 dark:text-[#ffb34a]"
+                    : "border-gray-200 dark:border-white/15 text-gray-500 dark:text-[rgba(238,240,255,0.55)] hover:border-gray-300 dark:hover:border-white/25")
+                }
+              >
+                {item}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div>
         <Label>Alcoholic drinks per week (approx.)</Label>
