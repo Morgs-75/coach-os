@@ -247,7 +247,7 @@ export default function PlanBuilderClient({ planId }: { planId: string }) {
   const selectedDay = plan.days.find((d) => d.id === selectedDayId) ?? null;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       {/* Back nav */}
       <Link
         href="/nutrition"
@@ -1012,7 +1012,7 @@ function GenerateModal({
               Generate with AI
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Claude will create a 3-day meal plan using AFCD foods.
+              Claude will create a 1-day meal plan using AFCD foods.
               Any existing days will be replaced.
             </p>
           </div>
