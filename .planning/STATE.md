@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 8 — Client Portal Nutrition View
-Plan: 08-03 (checkpoint: Tasks 1+2 complete, awaiting human-verify)
-Status: 08-03 Tasks 1+2 complete. NutritionView + FeedbackDrawer built. Nutrition tab wired into portal. Awaiting checkpoint human-verify.
-Last activity: 2026-02-27 — 08-03 tasks 1+2 complete: portal nutrition UI components built and wired
+Plan: 08-03 COMPLETE — Phase 8 COMPLETE
+Status: 08-03 all tasks complete including human-verify checkpoint (approved). Phase 8 fully delivered: DB migration + API routes + portal UI all done.
+Last activity: 2026-02-27 — 08-03 complete: portal nutrition view human-verified and approved
 
-Progress: [████████████████████████████████████░] 75% (phase 7 complete, phase 8 next)
+Progress: [██████████████████████████████████████] 100% (phase 8 complete — all phases delivered)
 
 ## Phase Summary
 
@@ -81,6 +81,9 @@ Progress: [███████████████████████
 - [08-02] Plan ownership verified against client_id + status=published before feedback INSERT — prevents cross-client injection
 - [Phase 08-03]: NutritionPlan + Meal types exported from NutritionView.tsx — shared via import avoids duplicate type declarations
 - [Phase 08-03]: Tab bar nested inside header div — keeps border-b visual grouping correct with -mb-px border overlap pattern
+- [Phase 08-03]: FeedbackDrawer resets all form fields on close — prevents stale state if reopened on a different meal
+- [Phase 08-03]: page.tsx casts planRes.data as any for nested sort — Supabase inferred types for deeply nested selects are complex; runtime sort is simpler than fighting the type system
+- [Phase 08-03]: Human-verify checkpoint APPROVED 2026-02-27 — full phase 8 nutrition view confirmed working end-to-end
 
 ### Pending Todos
 
@@ -96,5 +99,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: 08-03 checkpoint — NutritionView + FeedbackDrawer built, Nutrition tab wired into portal. Awaiting human-verify checkpoint.
+Stopped at: 08-03 complete — Phase 8 fully delivered. Portal nutrition view human-verified and approved.
 Resume file: None

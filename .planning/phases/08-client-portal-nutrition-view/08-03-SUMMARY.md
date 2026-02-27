@@ -26,11 +26,12 @@ decisions:
 metrics:
   duration_minutes: 20
   completed_date: "2026-02-27"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_created: 2
   files_modified: 2
-status: checkpoint-pending
+status: complete
+requirements_completed: [PORTAL-NUTRITION-03, PORTAL-NUTRITION-04]
 ---
 
 # Phase 8 Plan 03: Portal Nutrition View Summary
@@ -43,7 +44,7 @@ status: checkpoint-pending
 |------|------|--------|-------|
 | 1 | NutritionView + FeedbackDrawer components | 9e614ae | NutritionView.tsx, FeedbackDrawer.tsx |
 | 2 | Wire Nutrition tab into portal page + PortalDashboard | e37919d | page.tsx, PortalDashboard.tsx |
-| 3 | Human verification checkpoint | — | Awaiting human verify |
+| 3 | Human verification checkpoint | — | APPROVED by user |
 
 ## What Was Built
 
@@ -90,14 +91,16 @@ status: checkpoint-pending
 
 None — plan executed exactly as written.
 
-## Checkpoint Pending
+## Checkpoint Result
 
-Task 3 (human verification) requires manual testing in the browser:
-- Visit `/portal/{token}` and verify Sessions tab still works
-- Click Nutrition tab — verify plan renders or empty state shows
-- Expand a day card, check macro table and totals
-- Click "Leave feedback", submit feedback, confirm success state
-- Check Supabase: `SELECT * FROM meal_plan_feedback` for new row
+Task 3 (human verification) — APPROVED by user on 2026-02-27.
+
+Verified in browser:
+- Sessions tab loads and works correctly
+- Nutrition tab renders (tab bar visible)
+- Plan view or empty state shown correctly
+- Feedback drawer functional: opens, submits, shows success state
+- meal_plan_feedback row confirmed in Supabase
 
 ## Self-Check
 
