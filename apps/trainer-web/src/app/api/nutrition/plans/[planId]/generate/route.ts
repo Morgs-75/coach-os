@@ -183,14 +183,43 @@ export async function POST(
     const useIntake = !!body.intake_data;
     const numDays = Math.min(14, Math.max(1, body.plan_length_days ?? 1));
 
-    // Fetch a diverse sample of food_items — 120 foods across groups
-    const { data: foodSample } = await supabase
-      .from("food_items")
-      .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
-      .not("energy_kcal", "is", null)
-      .order("food_group", { ascending: true })
-      .order("food_name", { ascending: true })
-      .limit(120);
+    // Fetch a curated food sample biased toward common PT meal-plan ingredients.
+    // Two-pass: priority keywords first, then fill with general variety.
+    const PRIORITY_KEYWORDS = [
+      "chicken","salmon","tuna","beef","pork","turkey","lamb","egg",
+      "milk","yoghurt","yogurt","cheese","ricotta","cottage",
+      "oat","rice","pasta","bread","potato","sweet potato","quinoa",
+      "broccoli","spinach","capsicum","carrot","zucchini","tomato",
+      "lettuce","salad","cucumber","onion","mushroom","asparagus",
+      "apple","banana","berry","berries","orange","mango","grape",
+      "almond","peanut","avocado","olive oil","nut","seed",
+      "tofu","lentil","bean","chickpea","protein powder",
+    ];
+    const orFilter = PRIORITY_KEYWORDS.map((k) => `food_name.ilike.%${k}%`).join(",");
+
+    const [{ data: priorityFoods }, { data: generalFoods }] = await Promise.all([
+      supabase
+        .from("food_items")
+        .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
+        .not("energy_kcal", "is", null)
+        .or(orFilter)
+        .order("food_name", { ascending: true })
+        .limit(150),
+      supabase
+        .from("food_items")
+        .select("id, food_name, food_group, energy_kcal, protein_g, carb_g, fat_g")
+        .not("energy_kcal", "is", null)
+        .order("food_group", { ascending: true })
+        .order("food_name", { ascending: true })
+        .limit(60),
+    ]);
+
+    // Merge: priority foods first, then general foods not already included
+    const priorityIds = new Set((priorityFoods ?? []).map((f) => f.id));
+    const foodSample = [
+      ...(priorityFoods ?? []),
+      ...(generalFoods ?? []).filter((f) => !priorityIds.has(f.id)),
+    ];
 
     // Use short IDs (F1, F2…) in the prompt so the AI never has to copy a UUID.
     // Build a map to translate back after parsing.
