@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-27T04:14:58Z"
+last_updated: "2026-02-27T04:40:00Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 8 — Client Portal Nutrition View
-Plan: 08-02 (1/3 complete)
-Status: 08-01 complete. meal_plan_feedback migration applied to Supabase. Ready for 08-02 (portal nutrition view).
-Last activity: 2026-02-27 — 08-01 complete: meal_plan_feedback table live in Supabase
+Plan: 08-03 (2/3 complete)
+Status: 08-02 complete. GET /api/portal/nutrition + POST /api/portal/nutrition/feedback routes live. Ready for 08-03 (portal nutrition UI).
+Last activity: 2026-02-27 — 08-02 complete: portal nutrition API routes deployed
 
 Progress: [████████████████████████████████████░] 75% (phase 7 complete, phase 8 next)
 
@@ -75,6 +75,10 @@ Progress: [███████████████████████
 - [08-01] forward column allows NULL — covers plan-level feedback without carry-forward preference
 - [08-01] No client INSERT RLS policy — portal API uses service role key which bypasses RLS entirely
 - [08-01] Migration path is supabase/migrations/ (project root) not apps/trainer-web/supabase/migrations/ — plan had wrong path, corrected at execution time
+- [08-02] GET /api/portal/nutrition returns { plan: null } with 200 (not 404) when no published plan exists — portal UI handles no-plan state gracefully
+- [08-02] Two-step plan fetch: find latest plan.id first, then load full nested structure — avoids ORDER BY on nested selects
+- [08-02] feedback INSERT returns { success: true, id: uuid } — id enables optimistic UI in Plan 03
+- [08-02] Plan ownership verified against client_id + status=published before feedback INSERT — prevents cross-client injection
 
 ### Pending Todos
 
@@ -90,5 +94,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: 08-01 complete — meal_plan_feedback migration applied. Next: 08-02 portal nutrition view.
+Stopped at: 08-02 complete — portal nutrition API routes live. Next: 08-03 portal nutrition UI.
 Resume file: None

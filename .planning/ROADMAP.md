@@ -79,7 +79,7 @@ Plans:
 
 **Goal:** Client sees their active meal plan in the portal with the UI shown in the reference design, and can submit feedback on individual meals.
 
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 08-01-PLAN.md — DB migration 0042 (meal_plan_feedback table + RLS) ✅ 2026-02-27
@@ -127,5 +127,5 @@ Plans:
 | 5. Production Hygiene | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
-| 8. Client Portal Nutrition View | v1.2 | 1/3 | In Progress | — |
+| 8. Client Portal Nutrition View | 2/3 | In Progress|  | — |
 | 9. AI Feedback Loop + Versioning | v1.2 | 0/? | Planned | — |
