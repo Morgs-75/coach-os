@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   }
 
   const slotDurationMins = settings?.slot_duration_mins ?? 60;
-  const bufferMins = settings?.buffer_between_mins ?? 15;
+  const bufferMins = settings?.buffer_between_mins ?? 0;
   const minNoticeHours = settings?.min_notice_hours ?? 24;
   const maxAdvanceDays = settings?.max_advance_days ?? 30;
   const timezone = settings?.timezone ?? "Australia/Brisbane";
