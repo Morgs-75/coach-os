@@ -16,7 +16,12 @@ export interface ExistingBooking {
   end_time: string;
 }
 
-/** Convert a local date + time string to a UTC Date using the given timezone. */
+/** Convert a local date + time string to a UTC Date using the given timezone.
+ *  Returns ISO string when called as toUTCFromLocal, Date when called as toUTCDate. */
+export function toUTCFromLocal(dateStr: string, timeStr: string, tz: string): string {
+  return toUTCDate(dateStr, timeStr, tz).toISOString();
+}
+
 function toUTCDate(dateStr: string, timeStr: string, tz: string): Date {
   const [h, m] = timeStr.split(":").map(Number);
   // Create a date string that Intl can parse in the target timezone

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { generateTimeSlots, scoreSlots, getTimezoneDay } from "@/lib/booking/slot-generator";
+import { generateTimeSlots, scoreSlots, getTimezoneDay, toUTCFromLocal } from "@/lib/booking/slot-generator";
 
 /**
  * GET /api/portal/available-slots?token=<uuid>&date=YYYY-MM-DD
@@ -89,7 +89,24 @@ export async function GET(req: NextRequest) {
     .gte("start_time", dateStart)
     .lte("start_time", dateEnd);
 
-  const bookings = existingBookings ?? [];
+  // 6b. Fetch blocked times (both recurring by day_of_week and specific date blocks)
+  const { data: blockedTimes } = await supabase
+    .from("blocked_times")
+    .select("date, day_of_week, start_time, end_time")
+    .eq("org_id", client.org_id)
+    .or(`date.eq.${date},day_of_week.eq.${dayOfWeek}`);
+
+  // Convert blocked times to booking-shaped objects (start_time/end_time as ISO strings)
+  // so the slot generator treats them as occupied slots
+  const blocksAsBookings = (blockedTimes ?? []).map((bt: any) => {
+    const blockDate = bt.date ?? date; // use specific date or the requested date for recurring
+    return {
+      start_time: toUTCFromLocal(blockDate, bt.start_time, timezone),
+      end_time: toUTCFromLocal(blockDate, bt.end_time, timezone),
+    };
+  });
+
+  const bookings = [...(existingBookings ?? []), ...blocksAsBookings];
 
   // Build BookingSettings shape for generateTimeSlots
   const bookingSettings = {
