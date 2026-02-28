@@ -4,7 +4,8 @@
 
 - ✅ **v1.0 Stabilisation** — Phases 1–5 (shipped 2026-02-26) — [Archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Client Portal** — Phases 1–4 (shipped 2026-02-26) — magic link portal, self-booking, Stripe checkout
-- 🚧 **v1.2 Nutrition Engine** — Phases 6–9 — full meal planning: food library, plan builder, AI generation, client portal view, feedback loop
+- ✅ **v1.2 Nutrition Engine** — Phases 6–9 (shipped 2026-02-27) — full meal planning: food library, plan builder, AI generation, client portal view, feedback loop
+- 🚧 **v1.3 Generation Reliability** — Phase 10 — async AI generation with job queue, status polling, and Netlify-safe split endpoints
 
 ## Phases
 
@@ -24,7 +25,11 @@
 - [x] **Phase 6: Nutrition Foundation** — AFCD food library import, DB schema (meal_plans, days, meals, components), /nutrition section scaffold, plan CRUD with date range + client assignment
 - [x] **Phase 7: Plan Builder + AI Generation** — Coach plan builder UI (add days/meals/components, food search), AI generation from client goal/calories/macros/restrictions, macro auto-calculation, publish to portal (completed 2026-02-26)
 - [x] **Phase 8: Client Portal Nutrition View** — Nutrition tab in portal/[token], collapsible day view, per-meal macro tables, day totals + stacked bar chart, feedback drawer (submit + coach notified) (completed 2026-02-27)
-- [ ] **Phase 9: AI Feedback Loop + Versioning** — Coach feedback inbox, AI drafts component swap from AFCD, coach approves/edits draft, new plan version published, version history for coach + client
+- [x] **Phase 9: AI Feedback Loop + Versioning** — Coach feedback inbox, AI drafts component swap from AFCD, coach approves/edits draft, new plan version published, version history for coach + client (completed 2026-02-27)
+
+**v1.3 Generation Reliability:**
+
+- [ ] **Phase 10: Async AI Generation** — Split generate endpoint into start/run/status, add generation_status to meal_plans, frontend polls until complete — prevents Netlify 26s timeout on long AI generation calls
 
 ### Phase 6: Nutrition Foundation
 
@@ -124,6 +129,33 @@ Plans:
 - Approve → new version published, client portal shows updated plan with version badge
 - Old version still accessible via version selector
 
+### Phase 10: Async AI Generation
+
+**Goal:** AI meal plan generation runs asynchronously — splitting the generate endpoint into start/run/status prevents Netlify's 26s timeout, and the frontend polls until the job completes. Architecture is portable to a background worker (Railway) later.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — DB migration 0046 (generation_status + generation_error columns on meal_plans)
+- [ ] 10-02-PLAN.md — API split: /generate/start + /generate/run + /generate/status sub-routes
+- [ ] 10-03-PLAN.md — Frontend: GenerateModal async polling + spinner + error/retry + human-verify checkpoint
+
+**Deliverables:**
+- DB migration: add `generation_status text` (idle/generating/complete/error) + `generation_error text` to `meal_plans`
+- Split `POST /api/nutrition/plans/[planId]/generate` into three endpoints:
+  - `POST .../generate/start` — sets status='generating', returns immediately (~100ms)
+  - `POST .../generate/run` — does AI work (up to 60s), updates status on finish, idempotent (checks status before starting)
+  - `GET .../generate/status` — returns current generation_status
+- Frontend: POST start → immediately POST run (fire-and-forget) → poll status every 3s → on complete reload plan
+- Loading state in GenerateModal shows progress spinner during polling
+- Error state: display generation_error to coach with retry button
+
+**Verification:**
+- Generate button triggers start in <200ms (no hang)
+- Status endpoint returns 'generating' while run is in progress
+- On complete, plan loads with all days populated
+- On error, coach sees error message and can retry
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -136,4 +168,5 @@ Plans:
 | 6. Nutrition Foundation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 8. Client Portal Nutrition View | v1.2 | 3/3 | Complete | 2026-02-27 |
-| 9. AI Feedback Loop + Versioning | 3/4 | In Progress|  | — |
+| 9. AI Feedback Loop + Versioning | v1.2 | 4/4 | Complete | 2026-02-27 |
+| 10. Async AI Generation | v1.3 | 0/3 | Planned | — |
