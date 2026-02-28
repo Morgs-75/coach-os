@@ -89,17 +89,20 @@ export async function GET(req: NextRequest) {
     .gte("start_time", dateStart)
     .lte("start_time", dateEnd);
 
-  // 6b. Fetch blocked times (both recurring by day_of_week and specific date blocks)
-  const { data: blockedTimes } = await supabase
+  // 6b. Fetch ALL blocked times for this org, filter in JS for reliability
+  const { data: allBlockedTimes } = await supabase
     .from("blocked_times")
     .select("date, day_of_week, start_time, end_time")
-    .eq("org_id", client.org_id)
-    .or(`date.eq.${date},day_of_week.eq.${dayOfWeek}`);
+    .eq("org_id", client.org_id);
 
-  // Convert blocked times to booking-shaped objects (start_time/end_time as ISO strings)
-  // so the slot generator treats them as occupied slots
-  const blocksAsBookings = (blockedTimes ?? []).map((bt: any) => {
-    const blockDate = bt.date ?? date; // use specific date or the requested date for recurring
+  // Filter to blocks that apply to this date (specific date match OR recurring day match)
+  const applicableBlocks = (allBlockedTimes ?? []).filter((bt: any) =>
+    (bt.date && bt.date === date) || (bt.day_of_week !== null && bt.day_of_week === dayOfWeek)
+  );
+
+  // Convert blocked times to booking-shaped objects for the slot generator
+  const blocksAsBookings = applicableBlocks.map((bt: any) => {
+    const blockDate = bt.date ?? date;
     return {
       start_time: toUTCFromLocal(blockDate, bt.start_time, timezone),
       end_time: toUTCFromLocal(blockDate, bt.end_time, timezone),
@@ -128,8 +131,33 @@ export async function GET(req: NextRequest) {
     timezone
   );
 
-  // 8. Score slots
-  const scoredSlots = scoreSlots(slots, effectiveDurationMins, bookings, bufferMins);
+  // 8. Post-filter: remove any slot whose local time overlaps a blocked window
+  //    This is a safety net using direct local-time comparison (no UTC conversion needed)
+  const filteredSlots = slots.filter(slotISO => {
+    const slotDate = new Date(slotISO);
+    const slotLocalTime = slotDate.toLocaleTimeString("en-GB", { timeZone: timezone, hour12: false }); // "HH:MM:SS"
+    const slotMins = timeToMins(slotLocalTime);
+    const slotEndMins = slotMins + effectiveDurationMins;
+
+    for (const bt of applicableBlocks) {
+      const blockStart = timeToMins(bt.start_time);
+      const blockEnd = timeToMins(bt.end_time);
+      // Overlap: slot starts before block ends AND slot ends after block starts
+      if (slotMins < blockEnd && slotEndMins > blockStart) {
+        return false; // blocked
+      }
+    }
+    return true;
+  });
+
+  // 9. Score slots (use only real bookings for scoring, not blocks)
+  const scoredSlots = scoreSlots(filteredSlots, effectiveDurationMins, existingBookings ?? [], bufferMins);
 
   return NextResponse.json({ slots: scoredSlots, durationMins: effectiveDurationMins });
+}
+
+/** Convert "HH:MM" or "HH:MM:SS" to minutes since midnight */
+function timeToMins(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
 }
