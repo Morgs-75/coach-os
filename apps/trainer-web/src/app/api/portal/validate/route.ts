@@ -25,10 +25,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid or expired link" }, { status: 404 });
   }
 
+  // Fetch active purchases (server-side to bypass RLS)
+  const { data: purchases } = await supabase
+    .from("client_purchases")
+    .select("id, sessions_remaining, expires_at, session_duration_mins, offer_id(name, session_duration_mins)")
+    .eq("client_id", client.id)
+    .eq("payment_status", "succeeded")
+    .gt("sessions_remaining", 0);
+
+  const activePurchases = (purchases ?? []).filter(
+    (p: any) => !p.expires_at || new Date(p.expires_at) >= new Date()
+  );
+
   return NextResponse.json({
     client_id: client.id,
     client_name: client.full_name,
     org_id: client.org_id,
     org_name: (client.orgs as any)?.name ?? "",
+    active_purchases: activePurchases,
   });
 }

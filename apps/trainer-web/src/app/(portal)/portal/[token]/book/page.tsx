@@ -86,20 +86,9 @@ export default function PortalBookPage() {
       setDisplayName(brandingData[0].display_name ?? "");
     }
 
-    // Fetch purchases with offer name and duration
-    const sessRes = await fetch(
-      `${supaUrl}/rest/v1/client_purchases?select=id,sessions_remaining,expires_at,session_duration_mins,offer_id(name,session_duration_mins)&client_id=eq.${v.client_id}&payment_status=eq.succeeded&sessions_remaining=gt.0`,
-      { headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` } }
-    );
-
-    let purchases: ActivePurchase[] = [];
-    if (sessRes.ok) {
-      const purchasesData = await sessRes.json();
-      purchases = (purchasesData ?? []).filter((p: any) =>
-        !p.expires_at || new Date(p.expires_at) >= new Date()
-      );
-      setActivePurchases(purchases);
-    }
+    // Use purchases from validate response (server-side, bypasses RLS)
+    const purchases: ActivePurchase[] = v.active_purchases ?? [];
+    setActivePurchases(purchases);
 
     // Auto-select if only one purchase and skip to date step
     if (purchases.length === 1) {
