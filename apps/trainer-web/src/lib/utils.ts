@@ -45,3 +45,19 @@ export function formatRelativeTime(date: string | Date): string {
 export function cn(...classes: (string | undefined | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+/**
+ * Convert an Australian phone number to E.164 format for Twilio.
+ * Handles: 0413974875 → +61413974875, 61413974875 → +61413974875,
+ *          +61413974875 → +61413974875 (no-op).
+ * Returns null for empty/invalid input.
+ */
+export function toE164(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/[\s\-()]/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("+")) return digits;
+  if (digits.startsWith("0")) return "+61" + digits.slice(1);
+  if (digits.startsWith("61") && digits.length >= 11) return "+" + digits;
+  return digits.length >= 10 ? "+61" + digits : digits;
+}

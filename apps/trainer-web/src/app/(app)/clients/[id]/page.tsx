@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { toE164 } from "@/lib/utils";
 import type { RiskTier, ActivityType } from "@/types";
 
 const activityIcons: Record<ActivityType, string> = {
@@ -810,7 +811,7 @@ ul { padding-left: 24px; }
       .update({
         full_name: editForm.full_name,
         email: editForm.email || null,
-        phone: editForm.phone || null,
+        phone: toE164(editForm.phone),
         date_of_birth: editForm.date_of_birth || null,
         gender: editForm.gender || null,
         address_line1: editForm.address_line1 || null,
@@ -826,7 +827,7 @@ ul { padding-left: 24px; }
         preferred_training_days: editForm.preferred_training_days.length > 0 ? editForm.preferred_training_days : null,
         preferred_time_windows: editForm.preferred_time_windows.length > 0 ? editForm.preferred_time_windows : null,
         emergency_contact_name: editForm.emergency_contact_name || null,
-        emergency_contact_phone: editForm.emergency_contact_phone || null,
+        emergency_contact_phone: toE164(editForm.emergency_contact_phone),
         notes: editForm.notes || null,
         health_conditions: editForm.health_conditions.length > 0 ? editForm.health_conditions : null,
         injuries: editForm.injuries ? editForm.injuries.split(",").map((s: string) => s.trim()).filter(Boolean) : null,

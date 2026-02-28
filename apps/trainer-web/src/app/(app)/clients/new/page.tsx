@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toE164 } from "@/lib/utils";
 
 const goalOptions = [
   "Lose weight",
@@ -149,7 +150,7 @@ export default function NewClientPage() {
         org_id: membership.org_id,
         full_name: fullName,
         email: email || null,
-        phone: phone || null,
+        phone: toE164(phone),
         date_of_birth: dateOfBirth || null,
         gender: gender || null,
         address_line1: addressLine1 || null,
