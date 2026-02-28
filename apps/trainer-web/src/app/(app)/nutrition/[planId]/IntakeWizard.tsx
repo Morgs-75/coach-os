@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -985,8 +985,9 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
     biggest_challenge: "",
     non_negotiables: "",
   });
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [genPhase, setGenPhase] = useState<"idle" | "starting" | "polling" | "complete" | "error">("idle");
+  const [genError, setGenError] = useState<string | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Pre-fill on mount: plan intake_data wins over client profile
   useEffect(() => {
@@ -1055,31 +1056,85 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
     } as IntakeData;
   }
 
-  async function handleGenerate() {
-    setGenerating(true);
-    setError(null);
-    const finalData = buildFinalData();
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
+  async function startGeneration() {
+    setGenPhase("starting");
+    setGenError(null);
+
+    // Clear any existing poll
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+
+    const finalData = buildFinalData();
+    const runBody = JSON.stringify({
+      intake_data: finalData,
+      plan_length_days: finalData.plan_length_days,
+    });
+
+    // Step 1: POST /start (fast, sets status='generating')
     try {
-      const res = await fetch(`/api/nutrition/plans/${planId}/generate`, {
+      const startRes = await fetch(`/api/nutrition/plans/${planId}/generate/start`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          intake_data: finalData,
-          plan_length_days: finalData.plan_length_days,
-        }),
       });
-      if (res.ok) {
-        onGenerated();
-      } else {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Generation failed");
+      if (!startRes.ok) {
+        const d = await startRes.json().catch(() => ({}));
+        setGenError(d.error ?? "Failed to start generation");
+        setGenPhase("error");
+        return;
       }
     } catch {
-      setError("Generation failed — network error");
-    } finally {
-      setGenerating(false);
+      setGenError("Failed to start generation");
+      setGenPhase("error");
+      return;
     }
+
+    setGenPhase("polling");
+
+    // Step 2: POST /run — fire and forget (do NOT await)
+    fetch(`/api/nutrition/plans/${planId}/generate/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: runBody,
+    }).catch(() => {
+      // Network error on /run is surfaced via /status polling — ignore here
+    });
+
+    // Step 3: Poll /status every 3s
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const statusRes = await fetch(`/api/nutrition/plans/${planId}/generate/status`);
+        if (!statusRes.ok) return; // transient error — keep polling
+        const statusData = await statusRes.json();
+        const status: string = statusData.generation_status ?? "generating";
+
+        if (status === "complete") {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setGenPhase("complete");
+          onGenerated();
+        } else if (status === "error") {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setGenError(statusData.generation_error ?? "Generation failed");
+          setGenPhase("error");
+        }
+        // else still 'generating' — keep polling
+      } catch {
+        // transient fetch error — keep polling
+      }
+    }, 3000);
+  }
+
+  async function handleGenerate() {
+    await startGeneration();
   }
 
   const currentStep = STEPS[step];
@@ -1109,7 +1164,13 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+              onClose();
+            }}
             className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 border border-gray-100 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs transition-colors"
           >
             Cancel
@@ -1170,41 +1231,61 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="px-5 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-900 text-sm text-red-600 dark:text-red-400 flex-shrink-0">
-            {error}
+        {genError && (
+          <div className="px-5 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-900 text-sm text-red-600 dark:text-red-400 flex-shrink-0 space-y-1">
+            <p>{genError}</p>
+            {genPhase === "error" && (
+              <button
+                type="button"
+                onClick={startGeneration}
+                className="text-sm underline text-brand-600 hover:text-brand-700 dark:text-[#ffb34a] dark:hover:text-[#ffc76b]"
+              >
+                Retry
+              </button>
+            )}
           </div>
         )}
 
         {/* Footer nav — not shown on consent step (it has its own CTA) */}
         {currentStep.id !== "consent" && (
-          <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-white/10 flex-shrink-0">
-            <button
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              disabled={isFirst || step === 1}
-              className="px-4 py-2 rounded-xl text-sm border border-gray-200 dark:border-white/15 text-gray-600 dark:text-[rgba(238,240,255,0.7)] hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-            >
-              Back
-            </button>
-            {isLast ? (
-              <button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="bg-brand-600 dark:bg-[rgba(255,179,74,0.2)] dark:border dark:border-[rgba(255,179,74,0.4)] text-white dark:text-[#ffb34a] px-5 py-2 rounded-xl text-sm font-bold hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
-              >
-                {generating && (
-                  <span className="w-3.5 h-3.5 border-2 border-current/40 border-t-current rounded-full animate-spin" />
-                )}
-                {generating ? "Generating…" : "Generate plan"}
-              </button>
-            ) : (
-              <button
-                onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-                className="bg-brand-600 dark:bg-[rgba(255,179,74,0.2)] dark:border dark:border-[rgba(255,179,74,0.4)] text-white dark:text-[#ffb34a] px-5 py-2 rounded-xl text-sm font-bold hover:bg-brand-700 transition-colors"
-              >
-                Next
-              </button>
+          <div className="flex flex-col gap-2 px-5 py-4 border-t border-gray-100 dark:border-white/10 flex-shrink-0">
+            {/* Polling status indicator */}
+            {(genPhase === "starting" || genPhase === "polling") && (
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <svg className="animate-spin h-4 w-4 text-brand-500 dark:text-[#ffb34a]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span>{genPhase === "polling" ? "Generating your plan — this takes 30–60 seconds..." : "Starting..."}</span>
+              </div>
             )}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setStep((s) => Math.max(1, s - 1))}
+                disabled={isFirst || step === 1}
+                className="px-4 py-2 rounded-xl text-sm border border-gray-200 dark:border-white/15 text-gray-600 dark:text-[rgba(238,240,255,0.7)] hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
+              >
+                Back
+              </button>
+              {isLast ? (
+                <button
+                  onClick={handleGenerate}
+                  disabled={genPhase === "starting" || genPhase === "polling"}
+                  className="bg-brand-600 dark:bg-[rgba(255,179,74,0.2)] dark:border dark:border-[rgba(255,179,74,0.4)] text-white dark:text-[#ffb34a] px-5 py-2 rounded-xl text-sm font-bold hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                >
+                  {genPhase === "starting" ? "Starting..." :
+                   genPhase === "polling" ? "Generating your plan..." :
+                   "Generate plan"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                  className="bg-brand-600 dark:bg-[rgba(255,179,74,0.2)] dark:border dark:border-[rgba(255,179,74,0.4)] text-white dark:text-[#ffb34a] px-5 py-2 rounded-xl text-sm font-bold hover:bg-brand-700 transition-colors"
+                >
+                  Next
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
