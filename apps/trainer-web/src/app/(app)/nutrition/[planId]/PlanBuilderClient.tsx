@@ -726,7 +726,7 @@ function MealCard({
   }
 
   return (
-    <div className="bg-white dark:bg-[rgba(16,20,58,0.55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden">
+    <div className="bg-white dark:bg-[rgba(16,20,58,0.55)] border border-gray-200 dark:border-white/10 rounded-2xl">
       {/* Meal header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/10">
         <div>
