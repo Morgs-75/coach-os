@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T01:24:37.991Z"
+last_updated: "2026-02-28T01:32:00Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 10 — Async AI Generation
-Plan: 10-01 COMPLETE
-Status: 10-01 complete — migration 0046 applied (generation_status + generation_error columns on meal_plans). Ready for Plan 02 (split API endpoints: /generate/start, /generate/run, /generate/status).
-Last activity: 2026-02-28 — 10-01 complete: DB migration for async generation status tracking applied to production
+Plan: 10-02 COMPLETE
+Status: 10-02 complete — /generate split into three sub-routes: start (fast), run (AI work, idempotent), status (polling). Old route.ts is a 410 stub. Ready for Plan 03 (frontend async generation UI with polling).
+Last activity: 2026-02-28 — 10-02 complete: API endpoints split for async generation pattern
 
-Progress: [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 33% (1/3 plans complete in phase 10)
+Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 67% (2/3 plans complete in phase 10)
 
 ## Phase Summary
 
@@ -100,6 +100,10 @@ Progress: [█░░░░░░░░░░░░░░░░░░░░░░
 - [Phase 10-01]: generation_status uses NOT NULL DEFAULT idle — safe backfill for existing rows
 - [Phase 10-01]: CHECK constraint at DB level rejects invalid status values — not just application-level validation
 - [Phase 10-01]: generation_error is nullable — null when no error, populated when status=error
+- [10-02]: planId resolved before try block in /run — accessible in outer catch without re-awaiting params
+- [10-02]: generation_status='complete' merged into final updatePayload — single DB round trip for completion + intake_data update
+- [10-02]: Old route.ts kept as 410 stub — avoids 404 on stale client calls, documents the migration
+- [10-02]: Three error update sites in /run: ANTHROPIC_API_KEY missing, first-pass callClaude catch, outer catch
 
 ### Pending Todos
 
@@ -115,5 +119,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: 10-01 complete — migration 0046 applied, generation_status + generation_error live in production. Phase 10 Plan 02 is next.
+Stopped at: Completed 10-02-PLAN.md — /generate split into start/run/status sub-routes, old route.ts is 410 stub. Phase 10 Plan 03 is next (frontend async generation UI).
 Resume file: None

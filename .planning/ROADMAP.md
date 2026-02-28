@@ -133,7 +133,7 @@ Plans:
 
 **Goal:** AI meal plan generation runs asynchronously — splitting the generate endpoint into start/run/status prevents Netlify's 26s timeout, and the frontend polls until the job completes. Architecture is portable to a background worker (Railway) later.
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 10-01-PLAN.md — DB migration 0046 (generation_status + generation_error columns on meal_plans)
@@ -169,4 +169,4 @@ Plans:
 | 7. Plan Builder + AI Generation | v1.2 | 4/4 | Complete | 2026-02-27 |
 | 8. Client Portal Nutrition View | v1.2 | 3/3 | Complete | 2026-02-27 |
 | 9. AI Feedback Loop + Versioning | v1.2 | 4/4 | Complete | 2026-02-27 |
-| 10. Async AI Generation | 1/3 | In Progress|  | — |
+| 10. Async AI Generation | 2/3 | In Progress|  | — |
