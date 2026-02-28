@@ -346,8 +346,12 @@ export default function CalendarPage() {
         ...data,
         org_id: orgId,
         user_id: userId,
-      });
+      }).select();
       error = result.error;
+      if (!error && (!result.data || result.data.length === 0)) {
+        alert("Block time could not be saved — please refresh the page and try again.");
+        return;
+      }
     }
 
     if (error) {
