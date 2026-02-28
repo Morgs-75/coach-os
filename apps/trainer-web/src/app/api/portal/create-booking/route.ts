@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     // Booking settings
     const { data: settings } = await supabase
       .from("booking_settings")
-      .select("slot_duration_mins, allow_client_booking, notify_phone")
+      .select("slot_duration_mins, allow_client_booking, notify_phone, timezone")
       .eq("org_id", client.org_id)
       .single();
 
@@ -135,24 +135,30 @@ export async function POST(request: Request) {
     }
 
     const from = process.env.TWILIO_PHONE_NUMBER;
-    const sessionDate = startDt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
-    const sessionTime = startDt.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true });
+    const tz = settings?.timezone ?? "Australia/Brisbane";
+    const sessionDate = startDt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: tz });
+    const sessionTime = startDt.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz });
 
-    // Client confirmation SMS
+    // Client confirmation SMS — ask to reply YES to confirm attendance
     if (from && client.phone) {
       try {
         await twilioClient.messages.create({
-          body: `Hi ${client.full_name}, your session is confirmed for ${sessionDate} at ${sessionTime}. See you then!`,
+          body: `Hi ${client.full_name}, your session is booked for ${sessionDate} at ${sessionTime}. Please reply YES to confirm your attendance. See you then!`,
           from,
           to: client.phone,
         });
+        // Mark confirmation sent so the cron reminder can chase unconfirmed bookings
+        await supabase
+          .from("bookings")
+          .update({ confirmation_sent_at: new Date().toISOString() })
+          .eq("id", booking.id);
         await supabase.from("client_communications").insert({
           org_id: client.org_id,
           client_id: client.id,
           type: "sms",
           direction: "outbound",
-          subject: "Session Confirmed (Client Portal)",
-          content: `Booking confirmed: ${sessionDate} at ${sessionTime}`,
+          subject: "Session Confirmation Request (Client Portal)",
+          content: `Booking confirmation request: ${sessionDate} at ${sessionTime}`,
         });
       } catch (e) {
         console.error("Client confirmation SMS failed:", e);
