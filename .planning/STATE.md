@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Nutrition Engine
-status: in_progress
-last_updated: "2026-02-27T07:37:30.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-02-28T01:24:37.991Z"
 progress:
-  total_phases: 9
-  completed_phases: 8
-  total_plans: 4
-  completed_plans: 3
+  total_phases: 5
+  completed_phases: 4
+  total_plans: 18
+  completed_plans: 16
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 ## Current Position
 
-Phase: Phase 9 — AI Feedback Loop + Versioning
-Plan: 09-03 COMPLETE
-Status: 09-03 complete — coach feedback inbox (GET /api/nutrition/feedback), FeedbackInbox.tsx, DraftReviewModal.tsx with state machine (idle/drafting/draft_ready/approving/approved/rejected/error) and edit overrides, NutritionClient tabs. Ready for Plan 04 (batch runner or phase close).
-Last activity: 2026-02-27 — 09-03 complete: feedback inbox UI + draft review modal created, TypeScript clean
+Phase: Phase 10 — Async AI Generation
+Plan: 10-01 COMPLETE
+Status: 10-01 complete — migration 0046 applied (generation_status + generation_error columns on meal_plans). Ready for Plan 02 (split API endpoints: /generate/start, /generate/run, /generate/status).
+Last activity: 2026-02-28 — 10-01 complete: DB migration for async generation status tracking applied to production
 
-Progress: [█████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 75% (3/4 plans complete in phase 9)
+Progress: [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 33% (1/3 plans complete in phase 10)
 
 ## Phase Summary
 
@@ -97,6 +97,9 @@ Progress: [█████████░░░░░░░░░░░░░░
 - [09-03] orgId stored in NutritionClient state from membership.org_id set during loadData — passed as prop to FeedbackInbox
 - [09-03] DraftReviewModal initial state determined by item.ai_draft_food_item_id presence — jump to draft_ready if draft already exists
 - [09-03] Feedback tab lazy-mounted with conditional render — no API call until coach navigates to the tab
+- [Phase 10-01]: generation_status uses NOT NULL DEFAULT idle — safe backfill for existing rows
+- [Phase 10-01]: CHECK constraint at DB level rejects invalid status values — not just application-level validation
+- [Phase 10-01]: generation_error is nullable — null when no error, populated when status=error
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: 09-03 complete — Feedback inbox UI + DraftReviewModal state machine created. Phase 9 Plan 04 is next.
+Last session: 2026-02-28
+Stopped at: 10-01 complete — migration 0046 applied, generation_status + generation_error live in production. Phase 10 Plan 02 is next.
 Resume file: None
