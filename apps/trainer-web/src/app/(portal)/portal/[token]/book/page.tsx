@@ -5,6 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 
 type ScoredSlot = { start: string; end: string; score: number; recommended: boolean };
 
+type ActivePurchase = {
+  id: string;
+  sessions_remaining: number;
+  expires_at: string | null;
+  session_duration_mins: number | null;
+  offer_id: { name: string; session_duration_mins: number | null } | null;
+};
+
 // Note: this page intentionally uses client-side data fetching via the
 // /api/portal/validate endpoint so the token never touches the server render.
 
@@ -12,6 +20,14 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function fmt(iso: string, opts: Intl.DateTimeFormatOptions, timeZone?: string) {
   return new Date(iso).toLocaleString("en-AU", { ...opts, ...(timeZone ? { timeZone } : {}) });
+}
+
+function getDuration(p: ActivePurchase): number {
+  return p.session_duration_mins ?? p.offer_id?.session_duration_mins ?? 60;
+}
+
+function getOfferName(p: ActivePurchase): string {
+  return p.offer_id?.name ?? "Session Package";
 }
 
 export default function PortalBookPage() {
@@ -25,18 +41,21 @@ export default function PortalBookPage() {
   const [orgId, setOrgId] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#0ea5e9");
   const [displayName, setDisplayName] = useState("");
-  const [sessionsRemaining, setSessionsRemaining] = useState(0);
-  const [purchasedDurationMins, setPurchasedDurationMins] = useState<number | null>(null);
+  const [activePurchases, setActivePurchases] = useState<ActivePurchase[]>([]);
+  const [selectedPurchase, setSelectedPurchase] = useState<ActivePurchase | null>(null);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [timezone, setTimezone] = useState("Australia/Brisbane");
   const [slotDurationMins, setSlotDurationMins] = useState(60);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [step, setStep] = useState<"date" | "time" | "confirm" | "done">("date");
+  const [step, setStep] = useState<"package" | "date" | "time" | "confirm" | "done">("package");
   const [booking, setBooking] = useState(false);
   const [timeSlots, setTimeSlots] = useState<ScoredSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [datesLoading, setDatesLoading] = useState(false);
+  // Track if package was auto-selected (single purchase) to control back navigation
+  const [autoSelected, setAutoSelected] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -57,12 +76,9 @@ export default function PortalBookPage() {
     const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supaKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-    const [brandingRes, datesRes] = await Promise.all([
-      fetch(`${supaUrl}/rest/v1/branding?select=display_name,primary_color&org_id=eq.${v.org_id}`, {
-        headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` },
-      }),
-      fetch(`/api/portal/available-dates?token=${token}`),
-    ]);
+    const brandingRes = await fetch(`${supaUrl}/rest/v1/branding?select=display_name,primary_color&org_id=eq.${v.org_id}`, {
+      headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` },
+    });
 
     const brandingData = await brandingRes.json();
     if (brandingData?.[0]) {
@@ -70,69 +86,95 @@ export default function PortalBookPage() {
       setDisplayName(brandingData[0].display_name ?? "");
     }
 
-    if (datesRes.ok) {
-      const datesData = await datesRes.json();
-      if (datesData.error) {
-        setError(datesData.error);
-        setLoading(false);
-        return;
-      }
-      setAvailableDates(datesData.dates ?? []);
-      setTimezone(datesData.timezone ?? "Australia/Brisbane");
-    }
-
-    // Fetch sessions remaining (may fail due to RLS — that's OK, server gates at booking time)
+    // Fetch purchases with offer name and duration
     const sessRes = await fetch(
-      `${supaUrl}/rest/v1/client_purchases?select=sessions_remaining,expires_at,session_duration_mins,offer_id(session_duration_mins)&client_id=eq.${v.client_id}&payment_status=eq.succeeded&sessions_remaining=gt.0`,
+      `${supaUrl}/rest/v1/client_purchases?select=id,sessions_remaining,expires_at,session_duration_mins,offer_id(name,session_duration_mins)&client_id=eq.${v.client_id}&payment_status=eq.succeeded&sessions_remaining=gt.0`,
       { headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` } }
     );
+
+    let purchases: ActivePurchase[] = [];
     if (sessRes.ok) {
       const purchasesData = await sessRes.json();
-      const activePurchases = (purchasesData ?? []).filter((p: any) =>
+      purchases = (purchasesData ?? []).filter((p: any) =>
         !p.expires_at || new Date(p.expires_at) >= new Date()
       );
-      const remaining = activePurchases.reduce((sum: number, p: any) => sum + (p.sessions_remaining ?? 0), 0);
-      setSessionsRemaining(remaining);
-      const withDuration = activePurchases.find((p: any) =>
-        (p.session_duration_mins ?? p.offer_id?.session_duration_mins) != null
-      );
-      if (withDuration) {
-        setPurchasedDurationMins(
-          withDuration.session_duration_mins ?? withDuration.offer_id?.session_duration_mins
-        );
-      }
+      setActivePurchases(purchases);
+    }
+
+    // Auto-select if only one purchase and skip to date step
+    if (purchases.length === 1) {
+      setSelectedPurchase(purchases[0]);
+      setAutoSelected(true);
+      setStep("date");
+      // Fetch dates for this purchase's duration
+      await fetchDates(token, getDuration(purchases[0]));
+    } else if (purchases.length === 0) {
+      // No sessions — still show date step (server will gate at booking time)
+      setStep("date");
+      setAutoSelected(true);
+      await fetchDates(token);
     }
 
     setLoading(false);
   }
 
-  const effectiveDurationMins = purchasedDurationMins ?? slotDurationMins;
+  async function fetchDates(tkn: string, duration?: number) {
+    setDatesLoading(true);
+    const durationQuery = duration ? `&duration=${duration}` : "";
+    const datesRes = await fetch(`/api/portal/available-dates?token=${tkn}${durationQuery}`);
+    if (datesRes.ok) {
+      const datesData = await datesRes.json();
+      if (datesData.error) {
+        setError(datesData.error);
+      } else {
+        setAvailableDates(datesData.dates ?? []);
+        setTimezone(datesData.timezone ?? "Australia/Brisbane");
+      }
+    }
+    setDatesLoading(false);
+  }
+
+  function selectPackage(purchase: ActivePurchase) {
+    setSelectedPurchase(purchase);
+    setAutoSelected(false);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setAvailableDates([]);
+    setStep("date");
+    fetchDates(token, getDuration(purchase));
+  }
+
+  const effectiveDurationMins = selectedPurchase ? getDuration(selectedPurchase) : slotDurationMins;
+
+  const sessionsRemaining = activePurchases.reduce((sum, p) => sum + (p.sessions_remaining ?? 0), 0);
 
   // When a date is selected, fetch scored slots from the server
   useEffect(() => {
     if (!selectedDate || !token) return;
-    // Format the date in the coach's timezone to get the correct YYYY-MM-DD
     const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(selectedDate);
+    const durationQuery = selectedPurchase ? `&duration=${getDuration(selectedPurchase)}` : "";
     setSlotsLoading(true);
-    fetch(`/api/portal/available-slots?token=${token}&date=${dateStr}`)
+    fetch(`/api/portal/available-slots?token=${token}&date=${dateStr}${durationQuery}`)
       .then(r => r.json())
       .then(data => {
         setTimeSlots(data.slots ?? []);
-        if (data.durationMins) setPurchasedDurationMins(data.durationMins);
       })
       .catch(() => setTimeSlots([]))
       .finally(() => setSlotsLoading(false));
-  }, [selectedDate, token, timezone]);
+  }, [selectedDate, token, timezone, selectedPurchase]);
 
   async function handleConfirm() {
     if (!selectedTime) return;
     setBooking(true);
     setError("");
 
+    const body: any = { token, start_time: selectedTime };
+    if (selectedPurchase) body.purchase_id = selectedPurchase.id;
+
     const res = await fetch("/api/portal/create-booking", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, start_time: selectedTime }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
 
@@ -145,6 +187,33 @@ export default function PortalBookPage() {
     }
   }
 
+  function handleBack() {
+    switch (step) {
+      case "package":
+        router.back();
+        break;
+      case "date":
+        if (autoSelected) {
+          router.back();
+        } else {
+          setStep("package");
+          setSelectedPurchase(null);
+          setAvailableDates([]);
+        }
+        break;
+      case "time":
+        setStep("date");
+        setSelectedDate(null);
+        break;
+      case "confirm":
+        setStep("time");
+        setSelectedTime(null);
+        break;
+      default:
+        router.back();
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -153,12 +222,12 @@ export default function PortalBookPage() {
     );
   }
 
-  if (error && step !== "date") {
+  if (error && step !== "date" && step !== "package") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center">
           <p className="text-red-600 font-medium">{error}</p>
-          <button onClick={() => router.back()} className="mt-4 text-sm text-gray-500 underline">← Back</button>
+          <button onClick={() => router.back()} className="mt-4 text-sm text-gray-500 underline">Back</button>
         </div>
       </div>
     );
@@ -169,7 +238,7 @@ export default function PortalBookPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-2xl mx-auto px-4 py-5 flex items-center gap-3">
-          <button onClick={() => step === "date" ? router.back() : setStep("date")} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
+          <button onClick={handleBack} className="text-gray-400 hover:text-gray-600 text-lg">&larr;</button>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: primaryColor }}>
               {displayName}
@@ -208,12 +277,52 @@ export default function PortalBookPage() {
           </div>
         )}
 
+        {step === "package" && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">Select a package</h2>
+              <p className="text-sm text-gray-500 mt-1">Choose which package to use for this session</p>
+            </div>
+            <div className="p-4 space-y-3">
+              {activePurchases.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => selectPackage(p)}
+                  className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-gray-400 transition-all"
+                >
+                  <p className="font-medium text-gray-900">{getOfferName(p)}</p>
+                  <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
+                    <span>{getDuration(p)} min session</span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span>{p.sessions_remaining} session{p.sessions_remaining !== 1 ? "s" : ""} left</span>
+                    {p.expires_at && (
+                      <>
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span>Expires {new Date(p.expires_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {step === "date" && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">Select a date</h2>
+              {selectedPurchase && (
+                <p className="text-sm text-gray-500 mt-1">
+                  {getOfferName(selectedPurchase)} &middot; {getDuration(selectedPurchase)} min
+                </p>
+              )}
             </div>
-            {availableDates.length > 0 ? (
+            {datesLoading ? (
+              <div className="px-5 py-8 flex justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+              </div>
+            ) : availableDates.length > 0 ? (
               <div className="p-4 grid grid-cols-4 sm:grid-cols-5 gap-2">
                 {availableDates.map(dateStr => {
                   // dateStr is YYYY-MM-DD in coach timezone — parse at midday UTC to avoid day-shift
@@ -242,7 +351,7 @@ export default function PortalBookPage() {
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">
-                Select a time — {selectedDate.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: timezone })}
+                Select a time &mdash; {selectedDate.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: timezone })}
               </h2>
             </div>
             {slotsLoading ? (
@@ -278,6 +387,11 @@ export default function PortalBookPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
             <h2 className="font-semibold text-gray-900">Confirm booking</h2>
             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+              {selectedPurchase && (
+                <p className="text-sm font-medium" style={{ color: primaryColor }}>
+                  {getOfferName(selectedPurchase)}
+                </p>
+              )}
               <p className="font-medium text-gray-900">
                 {fmt(selectedTime, { weekday: "long", day: "numeric", month: "long" }, timezone)}
               </p>
@@ -290,7 +404,7 @@ export default function PortalBookPage() {
                   timezone
                 )}
               </p>
-              <p className="text-sm text-gray-500">{effectiveDurationMins} mins · in person</p>
+              <p className="text-sm text-gray-500">{effectiveDurationMins} mins &middot; in person</p>
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button
@@ -299,7 +413,7 @@ export default function PortalBookPage() {
               className="w-full py-3 rounded-lg text-white font-medium disabled:opacity-50"
               style={{ backgroundColor: primaryColor }}
             >
-              {booking ? "Booking…" : "Confirm booking"}
+              {booking ? "Booking\u2026" : "Confirm booking"}
             </button>
           </div>
         )}

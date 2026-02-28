@@ -11,7 +11,9 @@ export const dynamic = "force-dynamic";
  * Only dates with at least one bookable slot (after filtering blocked times) are returned.
  */
 export async function GET(req: NextRequest) {
-  const token = new URL(req.url).searchParams.get("token");
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token");
+  const durationParam = searchParams.get("duration");
   if (!token) return NextResponse.json({ error: "Missing token" }, { status: 400 });
 
   const supabase = createServiceClient();
@@ -42,7 +44,7 @@ export async function GET(req: NextRequest) {
   // Fetch purchased duration
   const { data: purchases } = await supabase
     .from("client_purchases")
-    .select("session_duration_mins, offer_id(session_duration_mins)")
+    .select("session_duration_mins, expires_at, offer_id(session_duration_mins)")
     .eq("client_id", client.id)
     .eq("payment_status", "succeeded")
     .gt("sessions_remaining", 0);
@@ -54,7 +56,7 @@ export async function GET(req: NextRequest) {
     (activePurchases[0] as any)?.session_duration_mins ??
     ((activePurchases[0] as any)?.offer_id as any)?.session_duration_mins ??
     null;
-  const effectiveDurationMins = purchasedDuration ?? slotDurationMins;
+  const effectiveDurationMins = durationParam ? parseInt(durationParam, 10) : (purchasedDuration ?? slotDurationMins);
 
   // Fetch availability, bookings, and blocked times
   const [{ data: availability }, { data: allBookings }, { data: allBlockedTimes }] = await Promise.all([

@@ -68,10 +68,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Resolve purchased duration: prefer column value, fall back to offer join, then org default
-    const resolvedPurchase = activePurchases.sort(
+    // Resolve purchased duration: if purchase_id specified, use that purchase; otherwise earliest-expiring
+    const sortedPurchases = activePurchases.sort(
       (a: any, b: any) => (a.expires_at ?? "9999") < (b.expires_at ?? "9999") ? -1 : 1
-    )[0] as any;
+    );
+    const resolvedPurchase = (
+      purchase_id
+        ? activePurchases.find((p: any) => p.id === purchase_id) ?? sortedPurchases[0]
+        : sortedPurchases[0]
+    ) as any;
     const purchasedDurationMins: number =
       resolvedPurchase.session_duration_mins ??
       (resolvedPurchase.offer_id as any)?.session_duration_mins ??

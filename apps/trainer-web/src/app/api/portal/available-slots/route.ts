@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");
   const date = searchParams.get("date"); // YYYY-MM-DD
+  const durationParam = searchParams.get("duration");
 
   if (!token || !date) {
     return NextResponse.json({ error: "Missing token or date" }, { status: 400 });
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
   // 3. Fetch active purchases to determine session duration
   const { data: purchases } = await supabase
     .from("client_purchases")
-    .select("session_duration_mins, offer_id(session_duration_mins)")
+    .select("session_duration_mins, expires_at, offer_id(session_duration_mins)")
     .eq("client_id", client.id)
     .eq("payment_status", "succeeded")
     .gt("sessions_remaining", 0);
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
     ((activePurchases[0] as any)?.offer_id as any)?.session_duration_mins ??
     null;
 
-  const effectiveDurationMins = purchasedDuration ?? slotDurationMins;
+  const effectiveDurationMins = durationParam ? parseInt(durationParam, 10) : (purchasedDuration ?? slotDurationMins);
 
   // 4. Get day_of_week in the coach's timezone (not UTC)
   const midday = new Date(`${date}T12:00:00Z`);
