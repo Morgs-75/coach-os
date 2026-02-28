@@ -263,18 +263,40 @@ export async function POST(
       })
     );
 
+    // Per-group family cap: high-variety groups (Fruit, Vegetables) keep only 1
+    // entry per ingredient family (e.g. 1 apple, 1 broccoli) so the model can't
+    // stack multiple apple cultivars in one meal. Proteins allow more variants
+    // since "Beef, mince" and "Beef, diced" are nutritionally distinct.
+    const FAMILY_CAPS: Record<string, number> = {
+      Fruit: 1,
+      Vegetables: 1,
+      Cereals: 2,
+    };
+    const DEFAULT_FAMILY_CAP = 4;
+
     const foodSample = groupResults.flatMap((r, i) => {
       const rows = r.data ?? [];
       const label = TARGET_GROUPS[i].label;
-      // Stamp group label so the AI prompt shows a meaningful group column
-      return rows.map((f) => ({ ...f, food_group: f.food_group ?? label }));
+      const cap = FAMILY_CAPS[label] ?? DEFAULT_FAMILY_CAP;
+      const familyCounts = new Map<string, number>();
+      return rows
+        .map(f => ({ ...f, food_group: f.food_group ?? label }))
+        .filter(f => {
+          const family = f.food_name.split(",")[0].trim().toLowerCase();
+          const count = familyCounts.get(family) ?? 0;
+          if (count >= cap) return false;
+          familyCounts.set(family, count + 1);
+          return true;
+        });
     });
+
+    const dedupedFoodSample = foodSample; // alias — caps applied above
 
     // Use short IDs (F1, F2…) in the prompt so the AI never has to copy a UUID.
     // Build maps to translate back after parsing.
     const shortIdToRealId = new Map<string, string>();
     const shortIdToFoodName = new Map<string, string>();
-    const foodList = (foodSample ?? [])
+    const foodList = dedupedFoodSample
       .map((f, i) => {
         const shortId = `F${i + 1}`;
         shortIdToRealId.set(shortId, f.id);
@@ -421,9 +443,10 @@ export async function POST(
       ? (body.intake_data.target_calories ?? 2000)
       : (body.calorie_target ?? 2000);
 
-    // Build UUID → kcal/100g lookup from the food sample used in this request
+    // Build UUID → kcal/100g lookup using energy_kcal — same value the UI and
+    // verify script use, so scaling targets exactly match what is displayed.
     const realIdToEnergy = new Map<string, number>();
-    for (const f of foodSample) {
+    for (const f of dedupedFoodSample) {
       if (f.energy_kcal != null) realIdToEnergy.set(f.id, f.energy_kcal);
     }
 
