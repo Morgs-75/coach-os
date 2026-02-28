@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateTimeSlots, toUTCFromLocal } from "@/lib/booking/slot-generator";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/portal/available-dates?token=<uuid>
  * Returns { dates: string[], timezone: string }
