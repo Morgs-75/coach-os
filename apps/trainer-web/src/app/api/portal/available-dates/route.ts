@@ -119,27 +119,10 @@ export async function GET(req: NextRequest) {
       allConflicts, bufferMins, 15, timezone
     );
 
-    // Post-filter with local-time block check
-    const available = slots.filter(slotISO => {
-      const slotDate = new Date(slotISO);
-      const slotLocalTime = slotDate.toLocaleTimeString("en-GB", { timeZone: timezone, hour12: false });
-      const slotMins = timeToMins(slotLocalTime);
-      const slotEndMins = slotMins + effectiveDurationMins;
-      for (const bt of applicableBlocks) {
-        const blockStart = timeToMins(bt.start_time);
-        const blockEnd = timeToMins(bt.end_time);
-        if (slotMins < blockEnd && slotEndMins > blockStart) return false;
-      }
-      return true;
-    });
-
-    if (available.length > 0) dates.push(dateStr);
+    if (slots.length > 0) dates.push(dateStr);
   }
 
-  return NextResponse.json({ dates, timezone });
-}
-
-function timeToMins(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+  return NextResponse.json({ dates, timezone }, {
+    headers: { "Cache-Control": "no-store" },
+  });
 }

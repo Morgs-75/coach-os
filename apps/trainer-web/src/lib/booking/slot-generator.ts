@@ -24,13 +24,22 @@ export function toUTCFromLocal(dateStr: string, timeStr: string, tz: string): st
 
 function toUTCDate(dateStr: string, timeStr: string, tz: string): Date {
   const [h, m] = timeStr.split(":").map(Number);
-  // Create a date string that Intl can parse in the target timezone
-  const local = new Date(`${dateStr}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
-  // Get the UTC offset for this timezone at this date/time
-  const utcStr = local.toLocaleString("en-US", { timeZone: "UTC" });
-  const tzStr = local.toLocaleString("en-US", { timeZone: tz });
-  const diff = new Date(utcStr).getTime() - new Date(tzStr).getTime();
-  return new Date(local.getTime() + diff);
+  const year = parseInt(dateStr.slice(0, 4));
+  const month = parseInt(dateStr.slice(5, 7)) - 1;
+  const day = parseInt(dateStr.slice(8, 10));
+  // Build a UTC timestamp for h:m on this date
+  const utcGuess = new Date(Date.UTC(year, month, day, h, m, 0));
+  // Ask: "what local time is it in `tz` at this UTC moment?"
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hour: "numeric", minute: "numeric",
+    hour12: false, year: "numeric", month: "numeric", day: "numeric"
+  }).formatToParts(utcGuess);
+  const tzH = parseInt(parts.find(p => p.type === "hour")!.value);
+  const tzM = parseInt(parts.find(p => p.type === "minute")!.value);
+  let offsetMins = (tzH * 60 + tzM) - (h * 60 + m);
+  if (offsetMins > 720) offsetMins -= 1440;
+  if (offsetMins < -720) offsetMins += 1440;
+  return new Date(utcGuess.getTime() - offsetMins * 60000);
 }
 
 /** Get the day-of-week (0=Sun..6=Sat) for a Date interpreted in the given timezone. */

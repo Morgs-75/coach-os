@@ -131,33 +131,10 @@ export async function GET(req: NextRequest) {
     timezone
   );
 
-  // 8. Post-filter: remove any slot whose local time overlaps a blocked window
-  //    This is a safety net using direct local-time comparison (no UTC conversion needed)
-  const filteredSlots = slots.filter(slotISO => {
-    const slotDate = new Date(slotISO);
-    const slotLocalTime = slotDate.toLocaleTimeString("en-GB", { timeZone: timezone, hour12: false }); // "HH:MM:SS"
-    const slotMins = timeToMins(slotLocalTime);
-    const slotEndMins = slotMins + effectiveDurationMins;
+  // 8. Score slots (use only real bookings for scoring, not blocks)
+  const scoredSlots = scoreSlots(slots, effectiveDurationMins, existingBookings ?? [], bufferMins);
 
-    for (const bt of applicableBlocks) {
-      const blockStart = timeToMins(bt.start_time);
-      const blockEnd = timeToMins(bt.end_time);
-      // Overlap: slot starts before block ends AND slot ends after block starts
-      if (slotMins < blockEnd && slotEndMins > blockStart) {
-        return false; // blocked
-      }
-    }
-    return true;
+  return NextResponse.json({ slots: scoredSlots, durationMins: effectiveDurationMins }, {
+    headers: { "Cache-Control": "no-store" },
   });
-
-  // 9. Score slots (use only real bookings for scoring, not blocks)
-  const scoredSlots = scoreSlots(filteredSlots, effectiveDurationMins, existingBookings ?? [], bufferMins);
-
-  return NextResponse.json({ slots: scoredSlots, durationMins: effectiveDurationMins });
-}
-
-/** Convert "HH:MM" or "HH:MM:SS" to minutes since midnight */
-function timeToMins(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
 }
