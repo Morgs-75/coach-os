@@ -101,6 +101,7 @@ INSTRUCTIONS:
 - The day total MUST be within 5% of ${targetKcal} kcal. This is a hard requirement.
 - Strictly avoid all allergens: ${allergies}.
 - Strictly avoid: ${dislikes}.
+- Each food item (by ID) must appear at most once across all meals in a single day — no duplicates within a day.
 - Vary foods across days — do not repeat the exact same meal on multiple days.
 - ${repeatMeals.startsWith("No") ? "Use different meals each day." : "Repeating similar meals is acceptable."}
 
@@ -121,6 +122,22 @@ Respond with ONLY valid JSON — no commentary, no markdown fences:
     }
   ]
 }`;
+}
+
+/** Extract the first complete JSON object from a string using brace-depth tracking.
+ *  Prevents greedy regex from absorbing trailing content (e.g. Sonnet commentary). */
+function extractRootJson(text: string): string | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
 }
 
 function buildSimplePrompt(goal: string, calorieTarget: number, macroPct: { protein_pct: number; carb_pct: number; fat_pct: number }, restrictions: string, foodList: string): string {
@@ -299,15 +316,15 @@ export async function POST(
 
       const aiData = await aiResp.json();
       const responseText: string = aiData.content?.[0]?.text ?? "";
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      const jsonStr = extractRootJson(responseText);
+      if (!jsonStr) {
         console.error("No JSON in Claude response:", responseText.slice(0, 500));
         throw new Error("AI returned invalid response");
       }
 
       let parsed: { days: GeneratedDay[] };
       try {
-        parsed = JSON.parse(jsonMatch[0]);
+        parsed = JSON.parse(jsonStr);
       } catch {
         throw new Error("Failed to parse AI response as JSON");
       }
