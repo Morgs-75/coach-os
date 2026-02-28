@@ -3,11 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrg } from "@/lib/get-org";
 import twilio from "twilio";
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
 /**
  * POST /api/nutrition/plans/[planId]/notify
  * Sends an SMS to the plan's client notifying them their meal plan is ready.
@@ -21,6 +16,13 @@ export async function POST(
     const { planId } = await params;
     const org = await getOrg();
     if (!org) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_PHONE_NUMBER;
+    if (!sid || !authToken || !from) {
+      return NextResponse.json({ error: "SMS not configured — missing Twilio credentials" }, { status: 500 });
+    }
 
     const supabase = await createClient();
 
@@ -49,9 +51,7 @@ export async function POST(
     const portalUrl = `${baseUrl}/portal/${client.portal_token}`;
     const message = `Hi ${client.full_name}, your new meal plan "${plan.name}" is ready. View it here: ${portalUrl}`;
 
-    const from = process.env.TWILIO_PHONE_NUMBER;
-    if (!from) return NextResponse.json({ error: "SMS not configured" }, { status: 500 });
-
+    const twilioClient = twilio(sid, authToken);
     await twilioClient.messages.create({ body: message, from, to: client.phone });
 
     await supabase.from("client_communications").insert({
