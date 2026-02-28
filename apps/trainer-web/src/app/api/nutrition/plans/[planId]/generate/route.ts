@@ -85,12 +85,12 @@ PRACTICAL CONSTRAINTS:
 AVAILABLE FOODS (id | name | group | kcal/100g | P | C | F):
 ${foodList}
 
-CALORIE CALCULATION GUIDE — use the kcal/100g values to size portions correctly:
-- Example: food with 165 kcal/100g and target 500 kcal → qty_g = round(500/165*100) = 303g
-- Chicken breast (lean, grilled) ≈ 165 kcal/100g → 150g serving ≈ 248 kcal
-- Oats (rolled, uncooked) ≈ 380 kcal/100g → 80g serving ≈ 304 kcal
-- White rice (cooked) ≈ 130 kcal/100g → 200g serving ≈ 260 kcal
-- Scale portions up or down to hit each meal's calorie target
+CALORIE CALCULATION GUIDE — CRITICAL: use the kcal/100g column to size every portion:
+- Formula: qty_g = round(meal_target_kcal / food_kcal_per_100g * 100)
+- Example A: target 750 kcal, food is 165 kcal/100g → qty_g = round(750/165*100) = 455g
+- Example B: target 750 kcal, food is 380 kcal/100g → qty_g = round(750/380*100) = 197g
+- Each meal target is ~${kcalPerMeal} kcal. A 2-component meal needs both components to add up to ~${kcalPerMeal} kcal.
+- DO NOT use small portions (e.g. 50g) for multiple low-density foods in one meal — that will only provide 50–150 kcal, far below the ${kcalPerMeal} kcal target.
 
 INSTRUCTIONS:
 - Create exactly ${numDays} day(s) (day_number ${startDay} through ${startDay + numDays - 1}).${startDay > 1 ? `\n- This continues a multi-day plan — use different foods from the earlier days.` : ""}
@@ -102,6 +102,8 @@ INSTRUCTIONS:
 - Strictly avoid all allergens: ${allergies}.
 - Strictly avoid: ${dislikes}.
 - Each food item (by ID) must appear at most once across all meals in a single day — no duplicates within a day.
+- Foods sharing the same first word are the same ingredient (e.g. all "Apple, *" variants = one apple, all "Broccoli, *" = one broccoli). Use each ingredient family at most once per day.
+- Limit fruit to 1 serving per day total (across all meals combined).
 - Vary foods across days — do not repeat the exact same meal on multiple days.
 - ${repeatMeals.startsWith("No") ? "Use different meals each day." : "Repeating similar meals is acceptable."}
 
@@ -269,12 +271,14 @@ export async function POST(
     });
 
     // Use short IDs (F1, F2…) in the prompt so the AI never has to copy a UUID.
-    // Build a map to translate back after parsing.
+    // Build maps to translate back after parsing.
     const shortIdToRealId = new Map<string, string>();
+    const shortIdToFoodName = new Map<string, string>();
     const foodList = (foodSample ?? [])
       .map((f, i) => {
         const shortId = `F${i + 1}`;
         shortIdToRealId.set(shortId, f.id);
+        shortIdToFoodName.set(shortId, f.food_name);
         return `${shortId} | ${f.food_name} | ${f.food_group ?? "General"} | kcal/100g: ${f.energy_kcal ?? "?"} | P: ${f.protein_g ?? "?"} | C: ${f.carb_g ?? "?"} | F: ${f.fat_g ?? "?"}`;
       })
       .join("\n");
@@ -331,6 +335,30 @@ export async function POST(
 
       if (!parsed.days || !Array.isArray(parsed.days)) {
         throw new Error("AI response missing days array");
+      }
+
+      // ── Enforce uniqueness per day (code-side, model-agnostic) ──────────────
+      // Rule 1: same food ID at most once per day.
+      // Rule 2: same ingredient family (first word of food name) at most once per day.
+      // This catches Haiku violations without relying on prompt compliance.
+      // Meals that are left empty after deduplication are dropped entirely;
+      // the calorie scaler compensates across the remaining meals.
+      for (const day of parsed.days) {
+        const usedIds = new Set<string>();
+        const usedFamilies = new Set<string>();
+        for (const meal of day.meals ?? []) {
+          meal.components = (meal.components ?? []).filter(comp => {
+            const id = comp.food_item_id;
+            const foodName = shortIdToFoodName.get(id) ?? id;
+            const family = foodName.split(",")[0].trim().toLowerCase();
+            if (usedIds.has(id) || usedFamilies.has(family)) return false;
+            usedIds.add(id);
+            usedFamilies.add(family);
+            return true;
+          });
+        }
+        // Drop meals emptied by deduplication
+        day.meals = (day.meals ?? []).filter(meal => (meal.components ?? []).length > 0);
       }
 
       // Translate short IDs back to real UUIDs
