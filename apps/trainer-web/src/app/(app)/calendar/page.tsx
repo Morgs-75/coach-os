@@ -770,7 +770,7 @@ export default function CalendarPage() {
 
   function getBlockAtSlot(date: Date, hour: number, minute: number): BlockedTime | null {
     const dayOfWeek = date.getDay();
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`;
     return blockedTimes.find((b) => {
       if (!(b.start_time <= timeStr && b.end_time > timeStr)) return false;
@@ -782,7 +782,7 @@ export default function CalendarPage() {
 
   function isAvailable(date: Date, hour: number, minute: number): boolean {
     const dayOfWeek = date.getDay();
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`;
 
     // Check if this slot is blocked
@@ -854,7 +854,7 @@ export default function CalendarPage() {
               // Default to next hour
               const now = new Date();
               now.setHours(now.getHours() + 1, 0, 0, 0);
-              const defaultDatetime = now.toISOString().slice(0, 16);
+              const defaultDatetime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
               setBookingForm({
                 client_id: "",
                 duration: defaultSessionType?.duration_mins || 60,
@@ -879,7 +879,7 @@ export default function CalendarPage() {
               tomorrow.setDate(tomorrow.getDate() + 1);
               setBlockForm({
                 type: "specific",
-                date: tomorrow.toISOString().split("T")[0],
+                date: `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`,
                 day_of_week: 1,
                 start_time: "05:00",
                 end_time: "21:00",
