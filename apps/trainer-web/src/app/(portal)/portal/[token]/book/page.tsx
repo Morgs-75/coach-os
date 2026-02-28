@@ -358,11 +358,6 @@ export default function PortalBookPage() {
                     <p className="text-sm font-medium text-gray-900">
                       {fmt(slot.start, { hour: "numeric", minute: "2-digit", hour12: true }, timezone)}
                     </p>
-                    {slot.recommended && (
-                      <span className="text-xs bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-full px-2 py-0.5 ml-2">
-                        Best
-                      </span>
-                    )}
                   </button>
                 ))}
               </div>
