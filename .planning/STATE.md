@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: Phase 10 — Async AI Generation
-Plan: 10-02 COMPLETE
-Status: 10-02 complete — /generate split into three sub-routes: start (fast), run (AI work, idempotent), status (polling). Old route.ts is a 410 stub. Ready for Plan 03 (frontend async generation UI with polling).
-Last activity: 2026-02-28 — 10-02 complete: API endpoints split for async generation pattern
+Plan: 10-03 CHECKPOINT (human-verify)
+Status: 10-03 Task 1 complete — IntakeWizard rewritten with async start+run+poll pattern. Awaiting human verification of end-to-end async generation flow. Changes pushed to GitHub (17b6064), ready for Netlify deploy.
+Last activity: 2026-02-28 — 10-03 Task 1: IntakeWizard async generation UI complete
 
-Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 67% (2/3 plans complete in phase 10)
+Progress: [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 89% (2.5/3 plans complete in phase 10)
 
 ## Phase Summary
 
@@ -104,6 +104,9 @@ Progress: [██░░░░░░░░░░░░░░░░░░░░░
 - [10-02]: generation_status='complete' merged into final updatePayload — single DB round trip for completion + intake_data update
 - [10-02]: Old route.ts kept as 410 stub — avoids 404 on stale client calls, documents the migration
 - [10-02]: Three error update sites in /run: ANTHROPIC_API_KEY missing, first-pass callClaude catch, outer catch
+- [10-03]: IntakeWizard is the actual generation entrypoint — not GenerateModal (which was dead code); changes applied to IntakeWizard.tsx
+- [10-03]: Dead GenerateModal function removed from PlanBuilderClient.tsx — it was calling the old /generate 410 stub
+- [10-03]: runBody built from buildFinalData() inside startGeneration() — intake_data shape computed fresh on each attempt including Retry
 
 ### Pending Todos
 
@@ -119,5 +122,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 10-02-PLAN.md — /generate split into start/run/status sub-routes, old route.ts is 410 stub. Phase 10 Plan 03 is next (frontend async generation UI).
+Stopped at: 10-03-PLAN.md checkpoint:human-verify — Task 1 complete (IntakeWizard async UI), pushed to GitHub. Deploy with: cd apps/trainer-web && netlify deploy --prod --trigger
 Resume file: None
