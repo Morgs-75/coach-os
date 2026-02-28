@@ -96,6 +96,7 @@ export async function GET(req: NextRequest) {
     const blocksAsBookings = applicableBlocks.map((bt: any) => ({
       start_time: toUTCFromLocal(bt.date ?? dateStr, bt.start_time, timezone),
       end_time: toUTCFromLocal(bt.date ?? dateStr, bt.end_time, timezone),
+      no_buffer: true,
     }));
 
     // Get bookings for this date

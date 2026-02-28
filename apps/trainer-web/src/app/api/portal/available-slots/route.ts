@@ -108,6 +108,7 @@ export async function GET(req: NextRequest) {
     return {
       start_time: toUTCFromLocal(blockDate, bt.start_time, timezone),
       end_time: toUTCFromLocal(blockDate, bt.end_time, timezone),
+      no_buffer: true,
     };
   });
 

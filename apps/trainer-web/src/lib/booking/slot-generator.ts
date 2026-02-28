@@ -14,6 +14,7 @@ export interface BookingSettings {
 export interface ExistingBooking {
   start_time: string;
   end_time: string;
+  no_buffer?: boolean;
 }
 
 /** Convert a local date + time string to a UTC Date using the given timezone.
@@ -132,8 +133,9 @@ export function generateTimeSlots(
         const conflict = existingBookings.some(b => {
           const bs = new Date(b.start_time);
           const be = new Date(b.end_time);
-          const blockedStart = new Date(bs.getTime() - bufferMins * 60_000);
-          const blockedEnd = new Date(be.getTime() + bufferMins * 60_000);
+          const buf = b.no_buffer ? 0 : bufferMins;
+          const blockedStart = new Date(bs.getTime() - buf * 60_000);
+          const blockedEnd = new Date(be.getTime() + buf * 60_000);
           return current < blockedEnd && slotEnd > blockedStart;
         });
         if (!conflict) slots.push(current.toISOString());
