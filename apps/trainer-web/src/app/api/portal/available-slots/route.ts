@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { generateTimeSlots, scoreSlots } from "@/lib/booking/slot-generator";
+import { generateTimeSlots, scoreSlots, getTimezoneDay } from "@/lib/booking/slot-generator";
 
 /**
  * GET /api/portal/available-slots?token=<uuid>&date=YYYY-MM-DD
@@ -29,10 +29,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid token" }, { status: 404 });
   }
 
-  // 2. Fetch booking settings
+  // 2. Fetch booking settings (including timezone)
   const { data: settings } = await supabase
     .from("booking_settings")
-    .select("slot_duration_mins, buffer_between_mins, min_notice_hours, max_advance_days")
+    .select("slot_duration_mins, buffer_between_mins, min_notice_hours, max_advance_days, timezone")
     .eq("org_id", client.org_id)
     .single();
 
@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
   const bufferMins = settings?.buffer_between_mins ?? 15;
   const minNoticeHours = settings?.min_notice_hours ?? 24;
   const maxAdvanceDays = settings?.max_advance_days ?? 30;
+  const timezone = settings?.timezone ?? "Australia/Brisbane";
 
   // 3. Fetch active purchases to determine session duration
   const { data: purchases } = await supabase
@@ -60,9 +61,10 @@ export async function GET(req: NextRequest) {
 
   const effectiveDurationMins = purchasedDuration ?? slotDurationMins;
 
-  // 4. Parse date and get day_of_week
-  const dateObj = new Date(date + "T00:00:00");
-  const dayOfWeek = dateObj.getDay();
+  // 4. Get day_of_week in the coach's timezone (not UTC)
+  const midday = new Date(`${date}T12:00:00Z`);
+  const dayStr = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(midday);
+  const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(dayStr);
 
   // 5. Fetch availability for this day
   const { data: availabilityRows } = await supabase
@@ -76,9 +78,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ slots: [], durationMins: effectiveDurationMins });
   }
 
-  // 6. Fetch existing bookings for this date
-  const dateStart = new Date(`${date}T00:00:00`).toISOString();
-  const dateEnd = new Date(`${date}T23:59:59`).toISOString();
+  // 6. Fetch existing bookings for this date (coach-timezone midnight-to-midnight)
+  const { start: dateStart, end: dateEnd } = getTimezoneDay(date, timezone);
 
   const { data: existingBookings } = await supabase
     .from("bookings")
@@ -98,15 +99,16 @@ export async function GET(req: NextRequest) {
     buffer_between_mins: bufferMins,
   };
 
-  // 7. Generate slots using existing slot-generator
+  // 7. Generate slots using timezone-aware slot-generator
   const slots = generateTimeSlots(
-    dateObj,
+    date,
     effectiveDurationMins,
     availabilityRows,
     bookingSettings,
     bookings,
     bufferMins,
-    15
+    15,
+    timezone
   );
 
   // 8. Score slots

@@ -16,37 +16,66 @@ export interface ExistingBooking {
   end_time: string;
 }
 
+/** Convert a local date + time string to a UTC Date using the given timezone. */
+function toUTCDate(dateStr: string, timeStr: string, tz: string): Date {
+  const [h, m] = timeStr.split(":").map(Number);
+  // Create a date string that Intl can parse in the target timezone
+  const local = new Date(`${dateStr}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
+  // Get the UTC offset for this timezone at this date/time
+  const utcStr = local.toLocaleString("en-US", { timeZone: "UTC" });
+  const tzStr = local.toLocaleString("en-US", { timeZone: tz });
+  const diff = new Date(utcStr).getTime() - new Date(tzStr).getTime();
+  return new Date(local.getTime() + diff);
+}
+
+/** Get the day-of-week (0=Sun..6=Sat) for a Date interpreted in the given timezone. */
+function getDayInTimezone(date: Date, tz: string): number {
+  const dayStr = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(date);
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(dayStr);
+}
+
+/** Get midnight-to-midnight range in the given timezone, returned as UTC ISO strings. */
+export function getTimezoneDay(dateStr: string, tz: string): { start: string; end: string } {
+  const dayStart = toUTCDate(dateStr, "00:00", tz);
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { start: dayStart.toISOString(), end: dayEnd.toISOString() };
+}
+
 /** Returns dates that have at least one available time slot, respecting min_notice_hours. */
 export function generateAvailableDates(
   availability: Availability[],
   settings: BookingSettings,
   existingBookings: ExistingBooking[],
   durationMins: number,
-  bufferMins: number
+  bufferMins: number,
+  timezone: string = "Australia/Brisbane"
 ): Date[] {
   const dates: Date[] = [];
-  const minDate = new Date();
-  minDate.setHours(minDate.getHours() + settings.min_notice_hours);
+  const now = new Date();
+  const minTime = new Date(now.getTime() + settings.min_notice_hours * 60 * 60 * 1000);
 
   for (let i = 0; i < settings.max_advance_days; i++) {
-    const date = new Date();
+    const date = new Date(now);
     date.setDate(date.getDate() + i);
-    date.setHours(0, 0, 0, 0);
 
-    if (
-      availability.some(a => a.day_of_week === date.getDay()) &&
-      date >= minDate
-    ) {
+    // Format as YYYY-MM-DD in the coach's timezone
+    const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(date);
+    const dayOfWeek = getDayInTimezone(date, timezone);
+
+    if (availability.some(a => a.day_of_week === dayOfWeek)) {
       const slots = generateTimeSlots(
-        date,
+        dateStr,
         durationMins,
         availability,
         settings,
         existingBookings,
-        bufferMins
+        bufferMins,
+        15,
+        timezone
       );
       if (slots.length > 0) {
-        dates.push(date);
+        // Store the date as midnight UTC for the coach's date (for display purposes)
+        dates.push(toUTCDate(dateStr, "00:00", timezone));
       }
     }
   }
@@ -56,31 +85,32 @@ export function generateAvailableDates(
 
 /** Returns available slot ISO strings for a given date. */
 export function generateTimeSlots(
-  selectedDate: Date,
+  selectedDate: string | Date,
   durationMins: number,
   availability: Availability[],
   settings: BookingSettings,
   existingBookings: ExistingBooking[],
   bufferMins: number = settings.buffer_between_mins,
-  slotIntervalMins: number = 15
+  slotIntervalMins: number = 15,
+  timezone: string = "Australia/Brisbane"
 ): string[] {
-  const slots: string[] = [];
-  const dayAvailability = availability.filter(
-    a => a.day_of_week === selectedDate.getDay()
-  );
+  // Normalize selectedDate to a YYYY-MM-DD string
+  const dateStr = typeof selectedDate === "string"
+    ? selectedDate.slice(0, 10) // handle both "2026-03-02" and "2026-03-02T00:00:00"
+    : new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(selectedDate);
 
-  const minTime = new Date();
-  minTime.setHours(minTime.getHours() + settings.min_notice_hours);
+  const dayOfWeek = getDayInTimezone(toUTCDate(dateStr, "12:00", timezone), timezone);
+  const dayAvailability = availability.filter(a => a.day_of_week === dayOfWeek);
+
+  const now = new Date();
+  const minTime = new Date(now.getTime() + settings.min_notice_hours * 60 * 60 * 1000);
+
+  const slots: string[] = [];
 
   for (const avail of dayAvailability) {
-    const [startHour, startMin] = avail.start_time.split(":").map(Number);
-    const [endHour, endMin] = avail.end_time.split(":").map(Number);
-
-    let current = new Date(selectedDate);
-    current.setHours(startHour, startMin, 0, 0);
-
-    const windowEnd = new Date(selectedDate);
-    windowEnd.setHours(endHour, endMin, 0, 0);
+    // Convert availability start/end to UTC dates for this specific date
+    let current = toUTCDate(dateStr, avail.start_time, timezone);
+    const windowEnd = toUTCDate(dateStr, avail.end_time, timezone);
 
     while (current.getTime() + durationMins * 60_000 <= windowEnd.getTime()) {
       if (current > minTime) {
@@ -88,10 +118,8 @@ export function generateTimeSlots(
         const conflict = existingBookings.some(b => {
           const bs = new Date(b.start_time);
           const be = new Date(b.end_time);
-          // Booking occupies [bs - bufferMins, be + bufferMins]
           const blockedStart = new Date(bs.getTime() - bufferMins * 60_000);
           const blockedEnd = new Date(be.getTime() + bufferMins * 60_000);
-          // Slot conflicts if it overlaps the blocked window
           return current < blockedEnd && slotEnd > blockedStart;
         });
         if (!conflict) slots.push(current.toISOString());
@@ -132,7 +160,8 @@ export function scoreSlots(
       if (gapBefore >= 30 * 60000 || gapBefore === 0) score += 1; // clean gap or back-to-back
     }
 
-    const recommended = existingBookings.length === 0 || score >= 2;
+    // Only recommend when there ARE existing bookings and the slot optimally fills gaps
+    const recommended = existingBookings.length > 0 && score >= 2;
     return { start: slotStart, end: end.toISOString(), score, recommended };
   });
 }

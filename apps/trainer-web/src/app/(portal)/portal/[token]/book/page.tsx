@@ -16,8 +16,8 @@ type ScoredSlot = { start: string; end: string; score: number; recommended: bool
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function fmt(iso: string, opts: Intl.DateTimeFormatOptions) {
-  return new Date(iso).toLocaleString("en-AU", opts);
+function fmt(iso: string, opts: Intl.DateTimeFormatOptions, timeZone?: string) {
+  return new Date(iso).toLocaleString("en-AU", { ...opts, ...(timeZone ? { timeZone } : {}) });
 }
 
 export default function PortalBookPage() {
@@ -34,6 +34,7 @@ export default function PortalBookPage() {
   const [sessionsRemaining, setSessionsRemaining] = useState(0);
   const [purchasedDurationMins, setPurchasedDurationMins] = useState<number | null>(null);
   const [availability, setAvailability] = useState<Availability[]>([]);
+  const [timezone, setTimezone] = useState("Australia/Brisbane");
   const [settings, setSettings] = useState<BookingSettings>({
     min_notice_hours: 24,
     max_advance_days: 30,
@@ -79,7 +80,7 @@ export default function PortalBookPage() {
     const [brandingData, availData, settingsData] = await Promise.all([
       rpc("branding", `select=display_name,primary_color&org_id=eq.${v.org_id}`),
       rpc("availability", `select=day_of_week,start_time,end_time&org_id=eq.${v.org_id}&is_available=eq.true`),
-      rpc("booking_settings", `select=min_notice_hours,max_advance_days,slot_duration_mins,buffer_between_mins,allow_client_booking&org_id=eq.${v.org_id}`),
+      rpc("booking_settings", `select=min_notice_hours,max_advance_days,slot_duration_mins,buffer_between_mins,allow_client_booking,timezone&org_id=eq.${v.org_id}`),
     ]);
 
     if (brandingData?.[0]) {
@@ -87,6 +88,8 @@ export default function PortalBookPage() {
       setDisplayName(brandingData[0].display_name ?? "");
     }
     if (Array.isArray(availData)) setAvailability(availData);
+
+    let tz = "Australia/Brisbane";
     if (settingsData?.[0]) {
       const s = settingsData[0];
       if (!s.allow_client_booking) {
@@ -94,6 +97,8 @@ export default function PortalBookPage() {
         setLoading(false);
         return;
       }
+      tz = s.timezone ?? "Australia/Brisbane";
+      setTimezone(tz);
       setSettings({
         min_notice_hours: s.min_notice_hours ?? 24,
         max_advance_days: s.max_advance_days ?? 30,
@@ -145,8 +150,8 @@ export default function PortalBookPage() {
   }
 
   const availableDates = useMemo(
-    () => generateAvailableDates(availability, settings, [], settings.slot_duration_mins, settings.buffer_between_mins),
-    [availability, settings]
+    () => generateAvailableDates(availability, settings, [], settings.slot_duration_mins, settings.buffer_between_mins, timezone),
+    [availability, settings, timezone]
   );
 
   const effectiveDurationMins = purchasedDurationMins ?? settings.slot_duration_mins;
@@ -154,7 +159,8 @@ export default function PortalBookPage() {
   // When a date is selected, fetch scored slots from the server
   useEffect(() => {
     if (!selectedDate || !token) return;
-    const dateStr = selectedDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    // Format the date in the coach's timezone to get the correct YYYY-MM-DD
+    const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(selectedDate);
     setSlotsLoading(true);
     fetch(`/api/portal/available-slots?token=${token}&date=${dateStr}`)
       .then(r => r.json())
@@ -164,7 +170,7 @@ export default function PortalBookPage() {
       })
       .catch(() => setTimeSlots([]))
       .finally(() => setSlotsLoading(false));
-  }, [selectedDate, token]);
+  }, [selectedDate, token, timezone]);
 
   async function handleConfirm() {
     if (!selectedTime) return;
@@ -235,9 +241,9 @@ export default function PortalBookPage() {
             </div>
             <p className="text-lg font-semibold text-gray-900">Session booked!</p>
             <p className="text-sm text-gray-500">
-              {selectedTime && fmt(selectedTime, { weekday: "long", day: "numeric", month: "long" })}
+              {selectedTime && fmt(selectedTime, { weekday: "long", day: "numeric", month: "long" }, timezone)}
               {" at "}
-              {selectedTime && fmt(selectedTime, { hour: "numeric", minute: "2-digit", hour12: true })}
+              {selectedTime && fmt(selectedTime, { hour: "numeric", minute: "2-digit", hour12: true }, timezone)}
             </p>
             <p className="text-xs text-gray-400">A confirmation SMS has been sent to you.</p>
             <button
@@ -257,16 +263,20 @@ export default function PortalBookPage() {
             </div>
             {availableDates.length > 0 ? (
               <div className="p-4 grid grid-cols-4 sm:grid-cols-5 gap-2">
-                {availableDates.map(date => (
-                  <button
-                    key={date.toISOString()}
-                    onClick={() => { setSelectedDate(date); setSelectedTime(null); setStep("time"); }}
-                    className="p-3 rounded-lg border border-gray-200 text-center hover:border-gray-400 transition-all"
-                  >
-                    <p className="text-xs text-gray-500">{DAYS[date.getDay()]}</p>
-                    <p className="text-lg font-medium text-gray-900">{date.getDate()}</p>
-                  </button>
-                ))}
+                {availableDates.map(date => {
+                  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(date);
+                  const dayNum = new Intl.DateTimeFormat("en-AU", { timeZone: timezone, day: "numeric" }).format(date);
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      onClick={() => { setSelectedDate(date); setSelectedTime(null); setStep("time"); }}
+                      className="p-3 rounded-lg border border-gray-200 text-center hover:border-gray-400 transition-all"
+                    >
+                      <p className="text-xs text-gray-500">{dayOfWeek}</p>
+                      <p className="text-lg font-medium text-gray-900">{dayNum}</p>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <div className="px-5 py-8 text-center text-sm text-gray-500">No available dates</div>
@@ -278,7 +288,7 @@ export default function PortalBookPage() {
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">
-                Select a time — {selectedDate.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" })}
+                Select a time — {selectedDate.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: timezone })}
               </h2>
             </div>
             {slotsLoading ? (
@@ -294,7 +304,7 @@ export default function PortalBookPage() {
                     className="p-3 rounded-lg border border-gray-200 text-center hover:border-gray-400 transition-all"
                   >
                     <p className="text-sm font-medium text-gray-900">
-                      {fmt(slot.start, { hour: "numeric", minute: "2-digit", hour12: true })}
+                      {fmt(slot.start, { hour: "numeric", minute: "2-digit", hour12: true }, timezone)}
                     </p>
                     {slot.recommended && (
                       <span className="text-xs bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-full px-2 py-0.5 ml-2">
@@ -315,14 +325,15 @@ export default function PortalBookPage() {
             <h2 className="font-semibold text-gray-900">Confirm booking</h2>
             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
               <p className="font-medium text-gray-900">
-                {fmt(selectedTime, { weekday: "long", day: "numeric", month: "long" })}
+                {fmt(selectedTime, { weekday: "long", day: "numeric", month: "long" }, timezone)}
               </p>
               <p className="text-sm text-gray-500">
-                {fmt(selectedTime, { hour: "numeric", minute: "2-digit", hour12: true })}
+                {fmt(selectedTime, { hour: "numeric", minute: "2-digit", hour12: true }, timezone)}
                 {" – "}
                 {fmt(
                   new Date(new Date(selectedTime).getTime() + effectiveDurationMins * 60_000).toISOString(),
-                  { hour: "numeric", minute: "2-digit", hour12: true }
+                  { hour: "numeric", minute: "2-digit", hour12: true },
+                  timezone
                 )}
               </p>
               <p className="text-sm text-gray-500">{effectiveDurationMins} mins · in person</p>
