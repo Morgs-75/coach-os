@@ -1,13 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  generateAvailableDates,
-  type Availability,
-  type BookingSettings,
-  type ExistingBooking,
-} from "@/lib/booking/slot-generator";
 
 type ScoredSlot = { start: string; end: string; score: number; recommended: boolean };
 
@@ -33,15 +27,9 @@ export default function PortalBookPage() {
   const [displayName, setDisplayName] = useState("");
   const [sessionsRemaining, setSessionsRemaining] = useState(0);
   const [purchasedDurationMins, setPurchasedDurationMins] = useState<number | null>(null);
-  const [availability, setAvailability] = useState<Availability[]>([]);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [timezone, setTimezone] = useState("Australia/Brisbane");
-  const [settings, setSettings] = useState<BookingSettings>({
-    min_notice_hours: 24,
-    max_advance_days: 30,
-    slot_duration_mins: 60,
-    buffer_between_mins: 15,
-  });
-  const [existingBookings, setExistingBookings] = useState<ExistingBooking[]>([]);
+  const [slotDurationMins, setSlotDurationMins] = useState(60);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -65,59 +53,39 @@ export default function PortalBookPage() {
     setClientName(v.client_name);
     setOrgId(v.org_id);
 
-    // Load branding + availability + settings + existing bookings in parallel
-    // We use the public anon key here — all these tables are public-readable
+    // Load branding from Supabase (public-readable)
     const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supaKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-    async function rpc(table: string, query: string) {
-      const r = await fetch(`${supaUrl}/rest/v1/${table}?${query}`, {
+    const [brandingRes, datesRes] = await Promise.all([
+      fetch(`${supaUrl}/rest/v1/branding?select=display_name,primary_color&org_id=eq.${v.org_id}`, {
         headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` },
-      });
-      return r.json();
-    }
-
-    const [brandingData, availData, settingsData] = await Promise.all([
-      rpc("branding", `select=display_name,primary_color&org_id=eq.${v.org_id}`),
-      rpc("availability", `select=day_of_week,start_time,end_time&org_id=eq.${v.org_id}&is_available=eq.true`),
-      rpc("booking_settings", `select=min_notice_hours,max_advance_days,slot_duration_mins,buffer_between_mins,allow_client_booking,timezone&org_id=eq.${v.org_id}`),
+      }),
+      fetch(`/api/portal/available-dates?token=${token}`),
     ]);
 
+    const brandingData = await brandingRes.json();
     if (brandingData?.[0]) {
       setPrimaryColor(brandingData[0].primary_color ?? "#0ea5e9");
       setDisplayName(brandingData[0].display_name ?? "");
     }
-    if (Array.isArray(availData)) setAvailability(availData);
 
-    let tz = "Australia/Brisbane";
-    if (settingsData?.[0]) {
-      const s = settingsData[0];
-      if (!s.allow_client_booking) {
-        setError("Online self-booking is not currently enabled.");
+    if (datesRes.ok) {
+      const datesData = await datesRes.json();
+      if (datesData.error) {
+        setError(datesData.error);
         setLoading(false);
         return;
       }
-      tz = s.timezone ?? "Australia/Brisbane";
-      setTimezone(tz);
-      setSettings({
-        min_notice_hours: s.min_notice_hours ?? 24,
-        max_advance_days: s.max_advance_days ?? 30,
-        slot_duration_mins: s.slot_duration_mins ?? 60,
-        buffer_between_mins: s.buffer_between_mins ?? 15,
-      });
+      setAvailableDates(datesData.dates ?? []);
+      setTimezone(datesData.timezone ?? "Australia/Brisbane");
     }
 
-    // Check sessions remaining via validate response (already has org context)
-    // Re-fetch purchases using the service-side validate enrichment isn't available
-    // client-side, so call /api/portal/validate which returns the info we need.
-    // Actually validate only returns client/org — fetch sessions separately.
+    // Fetch sessions remaining (may fail due to RLS — that's OK, server gates at booking time)
     const sessRes = await fetch(
       `${supaUrl}/rest/v1/client_purchases?select=sessions_remaining,expires_at,session_duration_mins,offer_id(session_duration_mins)&client_id=eq.${v.client_id}&payment_status=eq.succeeded&sessions_remaining=gt.0`,
       { headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` } }
     );
-    // This call will fail due to RLS (no auth) — that's expected. We rely on the
-    // server-side API to gate on sessions_remaining at booking time. Show the UI
-    // anyway; the API will reject if 0 sessions remain.
     if (sessRes.ok) {
       const purchasesData = await sessRes.json();
       const activePurchases = (purchasesData ?? []).filter((p: any) =>
@@ -125,7 +93,6 @@ export default function PortalBookPage() {
       );
       const remaining = activePurchases.reduce((sum: number, p: any) => sum + (p.sessions_remaining ?? 0), 0);
       setSessionsRemaining(remaining);
-      // Use the duration from the earliest-expiring active purchase that has one
       const withDuration = activePurchases.find((p: any) =>
         (p.session_duration_mins ?? p.offer_id?.session_duration_mins) != null
       );
@@ -136,25 +103,10 @@ export default function PortalBookPage() {
       }
     }
 
-    // Load existing bookings for conflict detection
-    const now = new Date().toISOString();
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + (settingsData?.[0]?.max_advance_days ?? 30));
-    const bookingsData = await rpc(
-      "bookings",
-      `select=start_time,end_time&org_id=eq.${v.org_id}&status=neq.cancelled&start_time=gte.${now}&start_time=lte.${maxDate.toISOString()}`
-    );
-    if (Array.isArray(bookingsData)) setExistingBookings(bookingsData);
-
     setLoading(false);
   }
 
-  const availableDates = useMemo(
-    () => generateAvailableDates(availability, settings, [], settings.slot_duration_mins, settings.buffer_between_mins, timezone),
-    [availability, settings, timezone]
-  );
-
-  const effectiveDurationMins = purchasedDurationMins ?? settings.slot_duration_mins;
+  const effectiveDurationMins = purchasedDurationMins ?? slotDurationMins;
 
   // When a date is selected, fetch scored slots from the server
   useEffect(() => {
@@ -263,13 +215,15 @@ export default function PortalBookPage() {
             </div>
             {availableDates.length > 0 ? (
               <div className="p-4 grid grid-cols-4 sm:grid-cols-5 gap-2">
-                {availableDates.map(date => {
-                  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(date);
-                  const dayNum = new Intl.DateTimeFormat("en-AU", { timeZone: timezone, day: "numeric" }).format(date);
+                {availableDates.map(dateStr => {
+                  // dateStr is YYYY-MM-DD in coach timezone — parse at midday UTC to avoid day-shift
+                  const d = new Date(`${dateStr}T12:00:00Z`);
+                  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(d);
+                  const dayNum = new Intl.DateTimeFormat("en-AU", { timeZone: timezone, day: "numeric" }).format(d);
                   return (
                     <button
-                      key={date.toISOString()}
-                      onClick={() => { setSelectedDate(date); setSelectedTime(null); setStep("time"); }}
+                      key={dateStr}
+                      onClick={() => { setSelectedDate(d); setSelectedTime(null); setStep("time"); }}
                       className="p-3 rounded-lg border border-gray-200 text-center hover:border-gray-400 transition-all"
                     >
                       <p className="text-xs text-gray-500">{dayOfWeek}</p>
