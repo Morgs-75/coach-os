@@ -31,6 +31,7 @@ type BlockedTime = {
 type Client = {
   id: string;
   full_name: string;
+  portal_token: string | null;
 };
 
 type SessionType = {
@@ -49,6 +50,7 @@ type ClientPackage = {
   sessions_used: number;
   payment_status: string;
   expires_at: string | null;
+  bookable_remaining: number;
   offers: {
     name: string;
     session_duration_mins: number | null;
@@ -250,7 +252,7 @@ export default function CalendarPage() {
         .eq("org_id", membership.org_id),
       supabase
         .from("clients")
-        .select("id, full_name")
+        .select("id, full_name, portal_token")
         .eq("org_id", membership.org_id)
         .eq("status", "active")
         .order("full_name"),
@@ -412,12 +414,15 @@ export default function CalendarPage() {
       });
 
       const now = new Date();
-      const available = data.filter((p: any) => {
-        const held = heldCounts.get(p.id) || 0;
-        const hasSessionsLeft = (p.sessions_total - p.sessions_used - held) > 0;
-        const notExpired = !p.expires_at || new Date(p.expires_at) > now;
-        return hasSessionsLeft && notExpired;
-      });
+      const available = data
+        .map((p: any) => {
+          const held = heldCounts.get(p.id) || 0;
+          return { ...p, bookable_remaining: p.sessions_total - p.sessions_used - held };
+        })
+        .filter((p: any) => {
+          const notExpired = !p.expires_at || new Date(p.expires_at) > now;
+          return p.bookable_remaining > 0 && notExpired;
+        });
       setClientPackages(available as unknown as ClientPackage[]);
     }
   }
@@ -539,10 +544,33 @@ export default function CalendarPage() {
             .eq("org_id", orgId)
             .maybeSingle();
           const orgTimezone = bookingSetting?.timezone || "Australia/Brisbane";
-          const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", timeZone: orgTimezone });
-          const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: orgTimezone });
-          const calendarLink = `https://coach-os.netlify.app/api/calendar/${newBooking.id}`;
-          message = `Hi ${client.full_name.split(" ")[0]}, your session is confirmed for ${dateStr} at ${timeStr}.${requestConfirm ? " Reply Y to confirm." : ""} Add to calendar: ${calendarLink} See you then!`;
+          const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: orgTimezone });
+          const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: orgTimezone });
+
+          // Build message matching portal SMS format
+          const firstName = client.full_name.split(" ")[0];
+          let message_parts = [`Hi ${firstName}, your session is booked for ${dateStr} at ${timeStr}.`];
+
+          // Include package info if a package was selected
+          const selectedPkg = bookingForm.client_purchase_id
+            ? clientPackages.find(p => p.id === bookingForm.client_purchase_id)
+            : null;
+          if (selectedPkg) {
+            const remaining = selectedPkg.bookable_remaining - 1; // minus this booking
+            message_parts.push(`You have ${remaining} session${remaining !== 1 ? "s" : ""} remaining on your ${selectedPkg.offers?.name} package.`);
+          }
+
+          // Include portal link if client has a token
+          if (client.portal_token) {
+            const portalLink = `https://coach-os.netlify.app/portal/${client.portal_token}`;
+            message_parts.push(`You can review your packages and sessions booked here: ${portalLink}`);
+          }
+
+          if (requestConfirm) {
+            message_parts.push(`\nPlease reply Y to confirm your attendance.`);
+          }
+          message_parts.push(`See you then!`);
+          message = message_parts.join(" ");
         }
 
         try {
@@ -1326,7 +1354,7 @@ export default function CalendarPage() {
                       <option value="">No package (casual session)</option>
                       {clientPackages.map((pkg) => (
                         <option key={pkg.id} value={pkg.id}>
-                          {pkg.offers?.name} - {pkg.sessions_total - pkg.sessions_used} sessions left
+                          {pkg.offers?.name} - {pkg.bookable_remaining} session{pkg.bookable_remaining !== 1 ? "s" : ""} left
                         </option>
                       ))}
                     </select>
