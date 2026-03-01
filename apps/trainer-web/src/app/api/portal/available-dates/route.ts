@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   const { data: settings } = await supabase
     .from("booking_settings")
-    .select("slot_duration_mins, buffer_between_mins, min_notice_hours, max_advance_days, timezone, allow_client_booking")
+    .select("slot_duration_mins, buffer_between_mins, min_notice_hours, max_advance_days, timezone, allow_client_booking, early_cutoff_time, early_cutoff_before_hour, late_notice_hours")
     .eq("org_id", client.org_id)
     .single();
 
@@ -117,6 +117,9 @@ export async function GET(req: NextRequest) {
       max_advance_days: maxAdvanceDays,
       slot_duration_mins: effectiveDurationMins,
       buffer_between_mins: bufferMins,
+      early_cutoff_time: settings?.early_cutoff_time ?? "20:00",
+      early_cutoff_before_hour: settings?.early_cutoff_before_hour ?? 9,
+      late_notice_hours: settings?.late_notice_hours ?? 2,
     };
 
     const slots = generateTimeSlots(

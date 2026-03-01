@@ -13,6 +13,13 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("Australia/Brisbane");
   const [orgId, setOrgId] = useState("");
 
+  // Booking cutoff rules
+  const [earlyCutoffBeforeHour, setEarlyCutoffBeforeHour] = useState(9);
+  const [earlyCutoffTime, setEarlyCutoffTime] = useState("20:00");
+  const [lateNoticeHours, setLateNoticeHours] = useState(2);
+  const [savingCutoff, setSavingCutoff] = useState(false);
+  const [cutoffMessage, setCutoffMessage] = useState("");
+
   // Payment processing settings
   const [gstRegistered, setGstRegistered] = useState(false);
   const [passStripeFees, setPassStripeFees] = useState(false);
@@ -68,12 +75,15 @@ export default function SettingsPage() {
     // Load booking settings
     const { data: bookingSettings } = await supabase
       .from("booking_settings")
-      .select("timezone, gst_registered, pass_stripe_fees")
+      .select("timezone, gst_registered, pass_stripe_fees, early_cutoff_time, early_cutoff_before_hour, late_notice_hours")
       .eq("org_id", membership.org_id)
       .maybeSingle();
     if (bookingSettings?.timezone) setTimezone(bookingSettings.timezone);
     if (bookingSettings?.gst_registered != null) setGstRegistered(bookingSettings.gst_registered);
     if (bookingSettings?.pass_stripe_fees != null) setPassStripeFees(bookingSettings.pass_stripe_fees);
+    if (bookingSettings?.early_cutoff_time) setEarlyCutoffTime(bookingSettings.early_cutoff_time);
+    if (bookingSettings?.early_cutoff_before_hour != null) setEarlyCutoffBeforeHour(bookingSettings.early_cutoff_before_hour);
+    if (bookingSettings?.late_notice_hours != null) setLateNoticeHours(bookingSettings.late_notice_hours);
 
     // Load org
     const { data: org } = await supabase
@@ -221,6 +231,21 @@ export default function SettingsPage() {
       .eq("org_id", orgId);
     setPaymentMessage(error ? "Failed to save" : "Payment settings saved!");
     setSavingPayment(false);
+  }
+
+  async function handleSaveCutoff() {
+    setSavingCutoff(true);
+    setCutoffMessage("");
+    const { error } = await supabase
+      .from("booking_settings")
+      .update({
+        early_cutoff_time: earlyCutoffTime,
+        early_cutoff_before_hour: earlyCutoffBeforeHour,
+        late_notice_hours: lateNoticeHours,
+      })
+      .eq("org_id", orgId);
+    setCutoffMessage(error ? "Failed to save" : "Booking rules saved!");
+    setSavingCutoff(false);
   }
 
   async function handleSaveWaiver() {
@@ -417,6 +442,77 @@ export default function SettingsPage() {
           {message && <span className="text-green-600">{message}</span>}
         </div>
       </form>
+
+      {/* Booking Rules */}
+      <div className="card p-6 mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Booking Rules</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Control how far in advance clients must book. Early morning sessions use a &quot;night before&quot; cutoff, while later sessions use a standard notice period.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="earlyCutoffBeforeHour" className="label">
+              Early morning cutoff hour
+            </label>
+            <select
+              id="earlyCutoffBeforeHour"
+              value={earlyCutoffBeforeHour}
+              onChange={(e) => setEarlyCutoffBeforeHour(parseInt(e.target.value))}
+              className="input"
+            >
+              {Array.from({ length: 9 }, (_, i) => i + 5).map(h => (
+                <option key={h} value={h}>
+                  Before {h === 12 ? "12:00 PM" : h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Sessions before this hour use the night-before rule</p>
+          </div>
+          <div>
+            <label htmlFor="earlyCutoffTime" className="label">
+              Book by time (night before)
+            </label>
+            <select
+              id="earlyCutoffTime"
+              value={earlyCutoffTime}
+              onChange={(e) => setEarlyCutoffTime(e.target.value)}
+              className="input"
+            >
+              {["17:00", "18:00", "19:00", "20:00", "21:00", "22:00"].map(t => {
+                const h = parseInt(t.split(":")[0]);
+                const label = h > 12 ? `${h - 12}:00 PM` : `${h}:00 AM`;
+                return <option key={t} value={t}>{label}</option>;
+              })}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Deadline to book early morning sessions</p>
+          </div>
+          <div>
+            <label htmlFor="lateNoticeHours" className="label">
+              Standard notice (hours)
+            </label>
+            <input
+              id="lateNoticeHours"
+              type="number"
+              min={1}
+              max={48}
+              value={lateNoticeHours}
+              onChange={(e) => setLateNoticeHours(parseInt(e.target.value) || 2)}
+              className="input"
+            />
+            <p className="text-xs text-gray-400 mt-1">Hours before session for all other times</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 mt-4">
+          <button onClick={handleSaveCutoff} className="btn-primary" disabled={savingCutoff}>
+            {savingCutoff ? "Saving..." : "Save Booking Rules"}
+          </button>
+          {cutoffMessage && (
+            <span className={cutoffMessage.includes("Failed") ? "text-red-600" : "text-green-600"}>
+              {cutoffMessage}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Waiver Template */}
       <div className="card p-6 mt-8">

@@ -9,6 +9,9 @@ export interface BookingSettings {
   max_advance_days: number;
   slot_duration_mins: number;
   buffer_between_mins: number;
+  early_cutoff_time?: string;        // e.g. "20:00" — book-by time the night before for early slots
+  early_cutoff_before_hour?: number;  // e.g. 9 — slots before 9am use night-before cutoff
+  late_notice_hours?: number;         // e.g. 2 — hours notice for slots at/after cutoff hour
 }
 
 export interface ExistingBooking {
@@ -67,7 +70,6 @@ export function generateAvailableDates(
 ): Date[] {
   const dates: Date[] = [];
   const now = new Date();
-  const minTime = new Date(now.getTime() + settings.min_notice_hours * 60 * 60 * 1000);
 
   for (let i = 0; i < settings.max_advance_days; i++) {
     const date = new Date(now);
@@ -118,7 +120,9 @@ export function generateTimeSlots(
   const dayAvailability = availability.filter(a => a.day_of_week === dayOfWeek);
 
   const now = new Date();
-  const minTime = new Date(now.getTime() + settings.min_notice_hours * 60 * 60 * 1000);
+  const earlyCutoffTime = settings.early_cutoff_time ?? "20:00";
+  const earlyCutoffBeforeHour = settings.early_cutoff_before_hour ?? 9;
+  const lateNoticeHours = settings.late_notice_hours ?? 2;
 
   const slots: string[] = [];
 
@@ -128,7 +132,21 @@ export function generateTimeSlots(
     const windowEnd = toUTCDate(dateStr, avail.end_time, timezone);
 
     while (current.getTime() + durationMins * 60_000 <= windowEnd.getTime()) {
-      if (current > minTime) {
+      // Per-slot cutoff: early-morning slots use night-before cutoff, later slots use hours-before
+      const slotLocalHour = parseInt(
+        new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", hour12: false }).format(current)
+      );
+      let cutoff: Date;
+      if (slotLocalHour < earlyCutoffBeforeHour) {
+        // Cutoff = previous day at early_cutoff_time in coach TZ
+        const prevDay = new Date(current.getTime() - 24 * 60 * 60 * 1000);
+        const prevDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(prevDay);
+        cutoff = toUTCDate(prevDateStr, earlyCutoffTime, timezone);
+      } else {
+        // Cutoff = slot start minus late_notice_hours
+        cutoff = new Date(current.getTime() - lateNoticeHours * 60 * 60 * 1000);
+      }
+      if (now < cutoff) {
         const slotEnd = new Date(current.getTime() + durationMins * 60_000);
         const conflict = existingBookings.some(b => {
           const bs = new Date(b.start_time);
