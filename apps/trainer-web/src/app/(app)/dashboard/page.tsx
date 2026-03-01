@@ -388,6 +388,18 @@ export default async function DashboardPage({
     return d.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: tz });
   };
 
+  // ── Setup checklist items ────────────────────────────────────────────────
+  const activeClientCount = activeClientsRes.count || 0;
+  const hasStripe = false; // TODO: check stripe_connect_id on org when available
+  const hasOffers = (offers: boolean) => true; // offers are loaded elsewhere; we check client count as proxy
+  const setupItems = [
+    { label: "Add your first client", done: activeClientCount > 0, href: "/clients/new" },
+    { label: "Create a pricing offer", done: recentBookings.length > 0 || purchases.length > 0, href: "/pricing" },
+    { label: "Set up Stripe payments", done: hasStripe, href: "/settings" },
+    { label: "Book your first session", done: recentBookings.length > 0, href: "/calendar" },
+  ];
+  const showChecklist = activeClientCount < 3;
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
@@ -404,6 +416,43 @@ export default async function DashboardPage({
           </Link>
         </div>
       </div>
+
+      {/* ── Setup Checklist (new coaches) ── */}
+      {showChecklist && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5">
+          <h2 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">Get started with Coach OS</h2>
+          <div className="space-y-2">
+            {setupItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="flex items-center gap-3 group"
+              >
+                <span className={clsx(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                  item.done
+                    ? "bg-green-500 border-green-500"
+                    : "border-gray-300 dark:border-gray-600 group-hover:border-blue-400"
+                )}>
+                  {item.done && (
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+                <span className={clsx(
+                  "text-sm",
+                  item.done
+                    ? "text-gray-400 dark:text-gray-500 line-through"
+                    : "text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                )}>
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Date range filter ── */}
       <DashboardDateFilter from={fromStr} to={toStr} />

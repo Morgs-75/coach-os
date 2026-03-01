@@ -121,8 +121,13 @@ export default async function ClientsPage() {
             })}
             {(!clients || clients.length === 0) && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                  No clients yet. Add your first client to get started.
+                <td colSpan={4} className="px-6 py-16 text-center">
+                  <p className="text-3xl mb-3">👥</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium mb-1">No clients yet</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Add your first client to start managing your business.</p>
+                  <Link href="/clients/new" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors">
+                    + Add Client
+                  </Link>
                 </td>
               </tr>
             )}

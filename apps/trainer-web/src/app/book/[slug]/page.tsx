@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 import { clsx } from "clsx";
@@ -25,22 +25,11 @@ interface Offer {
   session_duration_mins: number | null;
 }
 
-interface Availability {
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-}
-
-interface BookingSettings {
-  min_notice_hours: number;
-  max_advance_days: number;
-  slot_duration_mins: number;
-  buffer_between_mins: number;
-}
-
-interface ExistingBooking {
-  start_time: string;
-  end_time: string;
+interface ScoredSlot {
+  start: string;
+  end: string;
+  score: number;
+  recommended: boolean;
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -53,19 +42,11 @@ export default function PublicBookingPage() {
   const [org, setOrg] = useState<Org | null>(null);
   const [branding, setBranding] = useState<Branding | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [availability, setAvailability] = useState<Availability[]>([]);
-  const [settings, setSettings] = useState<BookingSettings>({
-    min_notice_hours: 24,
-    max_advance_days: 30,
-    slot_duration_mins: 60,
-    buffer_between_mins: 15,
-  });
-  const [existingBookings, setExistingBookings] = useState<ExistingBooking[]>([]);
 
   // Booking flow state
   const [step, setStep] = useState<"service" | "date" | "time" | "details" | "confirmed">("service");
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [clientForm, setClientForm] = useState({
     name: "",
@@ -76,6 +57,14 @@ export default function PublicBookingPage() {
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState("");
 
+  // API-driven data
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [timeSlots, setTimeSlots] = useState<ScoredSlot[]>([]);
+  const [durationMins, setDurationMins] = useState(60);
+  const [loadingDates, setLoadingDates] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [bookingDisabled, setBookingDisabled] = useState(false);
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -83,13 +72,12 @@ export default function PublicBookingPage() {
   }, [slug]);
 
   async function loadOrgData() {
-    // Find org by slug (using name for now, could add slug column later)
+    // Find org by slug
     const { data: orgsData } = await supabase
       .from("orgs")
       .select("id, name")
       .ilike("name", slug.replace(/-/g, " "));
 
-    // Try exact match first, then fuzzy
     let org = orgsData?.find(o => o.name.toLowerCase().replace(/\s+/g, "-") === slug.toLowerCase());
     if (!org && orgsData?.length) org = orgsData[0];
 
@@ -100,143 +88,60 @@ export default function PublicBookingPage() {
 
     setOrg(org);
 
-    // Load branding
-    const { data: brandingData } = await supabase
-      .from("branding")
-      .select("display_name, primary_color, logo_url")
-      .eq("org_id", org.id)
-      .single();
+    // Load branding + offers in parallel
+    const [{ data: brandingData }, { data: offersData }] = await Promise.all([
+      supabase.from("branding").select("display_name, primary_color, logo_url")
+        .eq("org_id", org.id).single(),
+      supabase.from("offers").select("*")
+        .eq("org_id", org.id).eq("is_active", true).order("sort_order"),
+    ]);
 
     if (brandingData) setBranding(brandingData);
-
-    // Load active offers (single sessions and packs)
-    const { data: offersData } = await supabase
-      .from("offers")
-      .select("*")
-      .eq("org_id", org.id)
-      .eq("is_active", true)
-      .order("sort_order");
-
     if (offersData) setOffers(offersData);
-
-    // Load availability
-    const { data: availData } = await supabase
-      .from("availability")
-      .select("day_of_week, start_time, end_time")
-      .eq("org_id", org.id)
-      .eq("is_available", true);
-
-    if (availData) setAvailability(availData);
-
-    // Load booking settings
-    const { data: settingsData } = await supabase
-      .from("booking_settings")
-      .select("*")
-      .eq("org_id", org.id)
-      .single();
-
-    if (settingsData) {
-      setSettings({
-        min_notice_hours: settingsData.min_notice_hours || 24,
-        max_advance_days: settingsData.max_advance_days || 30,
-        slot_duration_mins: settingsData.slot_duration_mins || 60,
-        buffer_between_mins: settingsData.buffer_between_mins || 15,
-      });
-    }
-
-    // Load existing bookings for the next 30 days
-    const now = new Date();
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 30);
-
-    const { data: bookingsData } = await supabase
-      .from("bookings")
-      .select("start_time, end_time")
-      .eq("org_id", org.id)
-      .gte("start_time", now.toISOString())
-      .lte("start_time", maxDate.toISOString())
-      .neq("status", "cancelled");
-
-    if (bookingsData) setExistingBookings(bookingsData);
 
     setLoading(false);
   }
 
-  // Generate available dates
-  const availableDates = useMemo(() => {
-    const dates: Date[] = [];
-    const now = new Date();
-    const minDate = new Date(now);
-    minDate.setHours(minDate.getHours() + settings.min_notice_hours);
-
-    for (let i = 0; i < settings.max_advance_days; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      date.setHours(0, 0, 0, 0);
-
-      // Check if this day has availability
-      const dayOfWeek = date.getDay();
-      const hasAvailability = availability.some(a => a.day_of_week === dayOfWeek);
-
-      if (hasAvailability && date >= minDate) {
-        dates.push(date);
+  // Fetch available dates when offer is selected
+  async function loadAvailableDates(offer: Offer) {
+    setLoadingDates(true);
+    setAvailableDates([]);
+    setBookingDisabled(false);
+    try {
+      const params = new URLSearchParams({ slug });
+      if (offer.id) params.set("offer_id", offer.id);
+      const res = await fetch(`/api/public/available-dates?${params}`);
+      const data = await res.json();
+      if (res.status === 403) {
+        setBookingDisabled(true);
+        setError(data.error || "Online booking is not available.");
+      } else if (data.dates) {
+        setAvailableDates(data.dates);
       }
+    } catch {
+      setError("Failed to load available dates.");
     }
+    setLoadingDates(false);
+  }
 
-    return dates;
-  }, [availability, settings]);
-
-  // Generate time slots for selected date
-  const timeSlots = useMemo(() => {
-    if (!selectedDate || !selectedOffer) return [];
-
-    const slots: string[] = [];
-    const dayOfWeek = selectedDate.getDay();
-    const dayAvailability = availability.filter(a => a.day_of_week === dayOfWeek);
-    const duration = selectedOffer.session_duration_mins || settings.slot_duration_mins;
-    const buffer = settings.buffer_between_mins;
-
-    const now = new Date();
-    const minTime = new Date(now);
-    minTime.setHours(minTime.getHours() + settings.min_notice_hours);
-
-    for (const avail of dayAvailability) {
-      const [startHour, startMin] = avail.start_time.split(":").map(Number);
-      const [endHour, endMin] = avail.end_time.split(":").map(Number);
-
-      let currentTime = new Date(selectedDate);
-      currentTime.setHours(startHour, startMin, 0, 0);
-
-      const endTime = new Date(selectedDate);
-      endTime.setHours(endHour, endMin, 0, 0);
-
-      while (currentTime.getTime() + duration * 60000 <= endTime.getTime()) {
-        // Check if slot is in the future
-        if (currentTime > minTime) {
-          // Check if slot conflicts with existing bookings
-          const slotEnd = new Date(currentTime.getTime() + duration * 60000);
-          const hasConflict = existingBookings.some(booking => {
-            const bookingStart = new Date(booking.start_time);
-            const bookingEnd = new Date(booking.end_time);
-            return (
-              (currentTime >= bookingStart && currentTime < bookingEnd) ||
-              (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
-              (currentTime <= bookingStart && slotEnd >= bookingEnd)
-            );
-          });
-
-          if (!hasConflict) {
-            slots.push(currentTime.toISOString());
-          }
-        }
-
-        // Move to next slot
-        currentTime.setMinutes(currentTime.getMinutes() + duration + buffer);
+  // Fetch time slots when date is selected
+  async function loadTimeSlots(date: string) {
+    setLoadingSlots(true);
+    setTimeSlots([]);
+    try {
+      const params = new URLSearchParams({ slug, date });
+      if (selectedOffer?.id) params.set("offer_id", selectedOffer.id);
+      const res = await fetch(`/api/public/available-slots?${params}`);
+      const data = await res.json();
+      if (data.slots) {
+        setTimeSlots(data.slots);
+        if (data.durationMins) setDurationMins(data.durationMins);
       }
+    } catch {
+      setError("Failed to load available times.");
     }
-
-    return slots;
-  }, [selectedDate, selectedOffer, availability, existingBookings, settings]);
+    setLoadingSlots(false);
+  }
 
   async function handleBooking() {
     if (!org || !selectedOffer || !selectedDate || !selectedTime) return;
@@ -245,13 +150,11 @@ export default function PublicBookingPage() {
     setError("");
 
     const startTime = new Date(selectedTime);
-    const duration = selectedOffer.session_duration_mins || settings.slot_duration_mins;
-    const endTime = new Date(startTime.getTime() + duration * 60000);
+    const endTime = new Date(startTime.getTime() + durationMins * 60000);
 
-    // First, create or find the client
+    // Create or find client
     let clientId: string;
 
-    // Check if client exists
     const { data: existingClient } = await supabase
       .from("clients")
       .select("id")
@@ -262,7 +165,6 @@ export default function PublicBookingPage() {
     if (existingClient) {
       clientId = existingClient.id;
     } else {
-      // Create new client
       const { data: newClient, error: clientError } = await supabase
         .from("clients")
         .insert({
@@ -285,7 +187,7 @@ export default function PublicBookingPage() {
       clientId = newClient.id;
     }
 
-    // Check client has a signed waiver
+    // Check waiver
     const { data: signedWaivers } = await supabase
       .from("client_waivers")
       .select("id")
@@ -299,7 +201,7 @@ export default function PublicBookingPage() {
       return;
     }
 
-    // Create the booking
+    // Create booking
     const { error: bookingError } = await supabase
       .from("bookings")
       .insert({
@@ -308,11 +210,11 @@ export default function PublicBookingPage() {
         offer_id: selectedOffer.id,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
-        duration_mins: duration,
+        duration_mins: durationMins,
         session_type: "pt_session",
         location_type: "in_person",
         status: "confirmed",
-        booked_by: clientId,
+        booked_by: null,
         booking_source: "client",
         client_notes: clientForm.notes || null,
       });
@@ -335,12 +237,15 @@ export default function PublicBookingPage() {
     });
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-AU", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
+  const formatDateDisplay = (dateStr: string) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return {
+      day: DAYS[date.getDay()],
+      date: d,
+      month: date.toLocaleDateString("en-AU", { month: "short" }),
+      full: date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }),
+    };
   };
 
   const formatCurrency = (cents: number) => {
@@ -350,8 +255,6 @@ export default function PublicBookingPage() {
       minimumFractionDigits: 0,
     }).format(cents / 100);
   };
-
-  const primaryColor = branding?.primary_color || "#0ea5e9";
 
   if (loading) {
     return (
@@ -420,6 +323,7 @@ export default function PublicBookingPage() {
                   key={offer.id}
                   onClick={() => {
                     setSelectedOffer(offer);
+                    loadAvailableDates(offer);
                     setStep("date");
                   }}
                   className="w-full bg-white rounded-lg border border-gray-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all"
@@ -450,37 +354,50 @@ export default function PublicBookingPage() {
         {step === "date" && (
           <div>
             <button
-              onClick={() => setStep("service")}
+              onClick={() => { setStep("service"); setSelectedOffer(null); }}
               className="text-sm text-gray-500 hover:text-gray-700 mb-4"
             >
-              ← Back
+              &larr; Back
             </button>
             <h2 className="text-lg font-medium text-gray-900 mb-4">Select a date</h2>
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-              {availableDates.length > 0 ? availableDates.map((date) => (
-                <button
-                  key={date.toISOString()}
-                  onClick={() => {
-                    setSelectedDate(date);
-                    setSelectedTime(null);
-                    setStep("time");
-                  }}
-                  className={clsx(
-                    "p-3 rounded-lg border text-center transition-all",
-                    selectedDate?.toDateString() === date.toDateString()
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  )}
-                >
-                  <p className="text-xs text-gray-500">{DAYS[date.getDay()]}</p>
-                  <p className="text-lg font-medium text-gray-900">{date.getDate()}</p>
-                </button>
-              )) : (
-                <p className="col-span-full text-gray-500 text-center py-8">
-                  No available dates
-                </p>
-              )}
-            </div>
+
+            {bookingDisabled ? (
+              <p className="text-gray-500 text-center py-8">{error}</p>
+            ) : loadingDates ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                {availableDates.length > 0 ? availableDates.map((dateStr) => {
+                  const d = formatDateDisplay(dateStr);
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => {
+                        setSelectedDate(dateStr);
+                        setSelectedTime(null);
+                        loadTimeSlots(dateStr);
+                        setStep("time");
+                      }}
+                      className={clsx(
+                        "p-3 rounded-lg border text-center transition-all",
+                        selectedDate === dateStr
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      )}
+                    >
+                      <p className="text-xs text-gray-500">{d.day}</p>
+                      <p className="text-lg font-medium text-gray-900">{d.date}</p>
+                    </button>
+                  );
+                }) : (
+                  <p className="col-span-full text-gray-500 text-center py-8">
+                    No available dates
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -491,33 +408,42 @@ export default function PublicBookingPage() {
               onClick={() => setStep("date")}
               className="text-sm text-gray-500 hover:text-gray-700 mb-4"
             >
-              ← Back
+              &larr; Back
             </button>
             <h2 className="text-lg font-medium text-gray-900 mb-1">Select a time</h2>
-            <p className="text-sm text-gray-500 mb-4">{formatDate(selectedDate!)}</p>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {timeSlots.length > 0 ? timeSlots.map((slot) => (
-                <button
-                  key={slot}
-                  onClick={() => {
-                    setSelectedTime(slot);
-                    setStep("details");
-                  }}
-                  className={clsx(
-                    "p-3 rounded-lg border text-center transition-all",
-                    selectedTime === slot
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  )}
-                >
-                  <p className="text-sm font-medium text-gray-900">{formatTime(slot)}</p>
-                </button>
-              )) : (
-                <p className="col-span-full text-gray-500 text-center py-8">
-                  No available times for this date
-                </p>
-              )}
-            </div>
+            {selectedDate && (
+              <p className="text-sm text-gray-500 mb-4">{formatDateDisplay(selectedDate).full}</p>
+            )}
+
+            {loadingSlots ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {timeSlots.length > 0 ? timeSlots.map((slot) => (
+                  <button
+                    key={slot.start}
+                    onClick={() => {
+                      setSelectedTime(slot.start);
+                      setStep("details");
+                    }}
+                    className={clsx(
+                      "p-3 rounded-lg border text-center transition-all",
+                      selectedTime === slot.start
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    )}
+                  >
+                    <p className="text-sm font-medium text-gray-900">{formatTime(slot.start)}</p>
+                  </button>
+                )) : (
+                  <p className="col-span-full text-gray-500 text-center py-8">
+                    No available times for this date
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -528,7 +454,7 @@ export default function PublicBookingPage() {
               onClick={() => setStep("time")}
               className="text-sm text-gray-500 hover:text-gray-700 mb-4"
             >
-              ← Back
+              &larr; Back
             </button>
             <h2 className="text-lg font-medium text-gray-900 mb-4">Your details</h2>
 
@@ -536,7 +462,7 @@ export default function PublicBookingPage() {
             <div className="bg-gray-100 rounded-lg p-4 mb-6">
               <p className="font-medium text-gray-900">{selectedOffer?.name}</p>
               <p className="text-sm text-gray-500">
-                {formatDate(selectedDate!)} at {formatTime(selectedTime!)}
+                {selectedDate && formatDateDisplay(selectedDate).full} at {selectedTime && formatTime(selectedTime)}
               </p>
               <p className="text-sm font-medium text-gray-900 mt-2">
                 {formatCurrency(selectedOffer?.price_cents || 0)}
@@ -614,7 +540,7 @@ export default function PublicBookingPage() {
             <div className="bg-white rounded-lg border border-gray-200 p-4 inline-block text-left">
               <p className="font-medium text-gray-900">{selectedOffer?.name}</p>
               <p className="text-sm text-gray-500">
-                {formatDate(selectedDate!)} at {formatTime(selectedTime!)}
+                {selectedDate && formatDateDisplay(selectedDate).full} at {selectedTime && formatTime(selectedTime)}
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 with {branding?.display_name || org.name}
