@@ -176,7 +176,7 @@ export async function POST(request: Request) {
         const portalLink = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${token}`;
 
         await twilioClient.messages.create({
-          body: `Hi ${client.full_name}, your session is booked for ${sessionDate} at ${sessionTime}. You have ${remaining} session${remaining !== 1 ? "s" : ""} remaining on your ${packageName} package. You can review your packages and sessions booked here: ${portalLink}`,
+          body: `Hi ${client.full_name}, your session is booked for ${sessionDate} at ${sessionTime}. You have ${remaining} session${remaining !== 1 ? "s" : ""} remaining on your ${packageName} package. You can review your packages and sessions booked here: ${portalLink}\n\nPlease reply Y to confirm your attendance. See you then!`,
           from,
           to: client.phone,
         });
