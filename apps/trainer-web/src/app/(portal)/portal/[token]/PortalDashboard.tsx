@@ -301,17 +301,25 @@ export default function PortalDashboard({
                 <h2 className="font-semibold text-gray-900">Your packages</h2>
               </div>
               <div className="divide-y divide-gray-100">
-                {activePurchases.map((p) => {
+                {[...activePurchases].sort((a, b) => b.bookable_remaining - a.bookable_remaining).map((p) => {
                   const used = p.sessions_total - p.sessions_remaining;
                   const booked = p.sessions_remaining - p.bookable_remaining;
                   const remaining = p.bookable_remaining;
                   const pct = p.sessions_total > 0 ? ((used / p.sessions_total) * 100) : 0;
+                  const isUsedUp = remaining <= 0 && booked <= 0;
                   return (
-                    <div key={p.id} className="px-5 py-4">
+                    <div key={p.id} className={`px-5 py-4 ${isUsedUp ? "opacity-60" : ""}`}>
                       <div className="flex items-center justify-between mb-3">
-                        <p className="font-medium text-gray-900 text-sm">
-                          {(p.offer_id as any)?.name ?? "Package"}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {(p.offer_id as any)?.name ?? "Package"}
+                          </p>
+                          {isUsedUp && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                              Used up
+                            </span>
+                          )}
+                        </div>
                         {p.expires_at && (
                           <span className="text-xs text-gray-400">
                             Expires {new Date(p.expires_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
