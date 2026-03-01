@@ -156,11 +156,27 @@ export async function POST(request: Request) {
     const sessionDate = startDt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: tz });
     const sessionTime = startDt.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: tz });
 
-    // Client confirmation SMS — ask to reply YES to confirm attendance
+    // Client confirmation SMS — include remaining sessions and portal link
     if (from && client.phone) {
       try {
+        // Get updated bookable count after this booking was created
+        const { data: remainingAfter } = await supabase.rpc("bookable_sessions_remaining", {
+          p_purchase_id: resolvedPurchaseId,
+        });
+        const remaining = remainingAfter ?? 0;
+
+        // Get offer name
+        const { data: offerData } = await supabase
+          .from("client_purchases")
+          .select("offer_id(name)")
+          .eq("id", resolvedPurchaseId)
+          .single();
+        const packageName = (offerData?.offer_id as any)?.name ?? "package";
+
+        const portalLink = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${token}`;
+
         await twilioClient.messages.create({
-          body: `Hi ${client.full_name}, your session is booked for ${sessionDate} at ${sessionTime}. Please reply YES to confirm your attendance. See you then!`,
+          body: `Hi ${client.full_name}, your session is booked for ${sessionDate} at ${sessionTime}. You have ${remaining} session${remaining !== 1 ? "s" : ""} remaining on your ${packageName} package. You can review your packages and sessions booked here: ${portalLink}`,
           from,
           to: client.phone,
         });
