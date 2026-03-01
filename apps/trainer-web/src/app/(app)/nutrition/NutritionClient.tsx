@@ -64,6 +64,7 @@ export default function NutritionClient() {
   });
   const [activeTab, setActiveTab] = useState<"plans" | "feedback">("plans");
   const [orgId, setOrgId] = useState<string | null>(null);
+  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
 
   // Edit state
   const [editingPlan, setEditingPlan] = useState<MealPlan | null>(null);
@@ -98,8 +99,22 @@ export default function NutritionClient() {
           .eq("org_id", membership.org_id)
           .eq("status", "active")
           .order("full_name");
-
         setClients(clientsData ?? []);
+
+        // Fetch pending feedback count for this org's plans
+        const { data: orgPlans } = await supabase
+          .from("meal_plans")
+          .select("id")
+          .eq("org_id", membership.org_id);
+        const planIds = (orgPlans ?? []).map((p: any) => p.id);
+        if (planIds.length > 0) {
+          const { count } = await supabase
+            .from("meal_plan_feedback")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "pending")
+            .in("plan_id", planIds);
+          setPendingFeedbackCount(count ?? 0);
+        }
       }
 
       const params = new URLSearchParams();
@@ -255,9 +270,14 @@ export default function NutritionClient() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setActiveTab("feedback")}
-                className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5"
               >
                 Client feedback
+                {pendingFeedbackCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                    {pendingFeedbackCount}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setShowModal(true)}
@@ -287,6 +307,7 @@ export default function NutritionClient() {
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Plan Name</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date Range</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Version</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
                     <th className="w-20" />
@@ -308,6 +329,9 @@ export default function NutritionClient() {
                       </td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                         {formatDateRange(plan.start_date, plan.end_date)}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">
+                        v{plan.version}
                       </td>
                       <td className="px-4 py-3">
                         <span className={clsx(
