@@ -431,6 +431,11 @@ export default function CalendarPage() {
     const available = isAvailable(date, hour, minute);
     const booked = isBookedSlot(date, hour, minute);
 
+    // Prevent opening booking modal for past time slots
+    const slotTime = new Date(date);
+    slotTime.setHours(hour, minute, 0, 0);
+    if (slotTime < new Date()) return;
+
     if (available && !booked) {
       setSelectedSlot({ date, hour, minute });
       const defaultSessionType = sessionTypes[0];
@@ -468,6 +473,12 @@ export default function CalendarPage() {
       startTime = new Date(bookingForm.datetime);
     } else {
       return; // No time selected
+    }
+
+    // Prevent booking in the past
+    if (startTime < new Date()) {
+      alert("Cannot create a booking in the past. Please select a future time slot.");
+      return;
     }
 
     setSaving(true);
@@ -1192,6 +1203,9 @@ export default function CalendarPage() {
               const booking = getBookingAtSlot(date, slot.hour, slot.minute);
               const isBooked = isBookedSlot(date, slot.hour, slot.minute);
               const bookingType = booking ? sessionTypes.find(st => st.id === booking.session_type_id || st.slug === booking.session_type) : null;
+              const slotDate = new Date(date);
+              slotDate.setHours(slot.hour, slot.minute, 0, 0);
+              const isPast = slotDate < new Date();
 
               return (
                 <div
@@ -1209,9 +1223,10 @@ export default function CalendarPage() {
                   className={clsx(
                     "border-l border-gray-100 relative border-t",
                     slot.minute === 0 ? "border-t-gray-300" : "border-t-gray-100",
-                    available && !isBooked && "bg-green-50 hover:bg-green-100 cursor-pointer",
+                    isPast && !isBooked && "bg-gray-50 dark:bg-gray-800 opacity-50",
+                    !isPast && available && !isBooked && "bg-green-50 hover:bg-green-100 cursor-pointer",
                     isBooked && "cursor-pointer",
-                    !available && !isBooked && "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
+                    !isPast && !available && !isBooked && "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
                   )}
                   style={{ height: `${rowHeight}px` }}
                 >
