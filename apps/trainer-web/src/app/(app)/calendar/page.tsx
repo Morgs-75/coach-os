@@ -696,10 +696,47 @@ export default function CalendarPage() {
 
   async function sendBookingConfirmation(booking: Booking) {
     const startTime = new Date(booking.start_time);
-    const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
-    const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const { data: bookingSetting } = await supabase
+      .from("booking_settings")
+      .select("timezone")
+      .eq("org_id", orgId)
+      .maybeSingle();
+    const orgTimezone = bookingSetting?.timezone || "Australia/Brisbane";
+    const dateStr = startTime.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: orgTimezone });
+    const timeStr = startTime.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: orgTimezone });
 
-    const message = `Hi ${booking.client_name?.split(" ")[0]}, your session is confirmed for ${dateStr} at ${timeStr}. See you then!`;
+    const firstName = booking.client_name?.split(" ")[0] ?? "there";
+    const parts = [`Hi ${firstName}, your session is booked for ${dateStr} at ${timeStr}.`];
+
+    // Include package info if booking has a purchase
+    if (booking.purchase_id) {
+      const { data: purchase } = await supabase
+        .from("client_purchases")
+        .select("sessions_total, sessions_used, offer_id(name)")
+        .eq("id", booking.purchase_id)
+        .single();
+      if (purchase) {
+        // Count held bookings for this purchase (confirmed/pending)
+        const { count } = await supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("purchase_id", booking.purchase_id)
+          .in("status", ["confirmed", "pending"]);
+        const held = count ?? 0;
+        const remaining = purchase.sessions_total - purchase.sessions_used - held;
+        const pkgName = (purchase.offer_id as any)?.name ?? "package";
+        parts.push(`You have ${remaining} session${remaining !== 1 ? "s" : ""} remaining on your ${pkgName} package.`);
+      }
+    }
+
+    // Include portal link if client has a token
+    const client = clients.find(c => c.id === booking.client_id);
+    if (client?.portal_token) {
+      parts.push(`You can review your packages and sessions booked here: https://coach-os.netlify.app/portal/${client.portal_token}`);
+    }
+
+    parts.push(`\nPlease reply Y to confirm your attendance. See you then!`);
+    const message = parts.join(" ");
 
     if (confirm(`Send SMS confirmation?\n\n"${message}"`)) {
       try {
@@ -710,6 +747,7 @@ export default function CalendarPage() {
             booking_id: booking.id,
             client_id: booking.client_id,
             message,
+            request_confirmation: true,
           }),
         });
 
@@ -717,6 +755,12 @@ export default function CalendarPage() {
           const err = await response.json().catch(() => ({}));
           console.error("SMS send failed:", err);
         }
+
+        // Mark confirmation sent
+        await supabase
+          .from("bookings")
+          .update({ confirmation_sent_at: new Date().toISOString() })
+          .eq("id", booking.id);
 
         setShowBookingModal(false);
         setEditingBooking(null);
