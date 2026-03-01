@@ -92,7 +92,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
   );
 
   const sessionsRemaining = enrichedPurchases.reduce(
-    (sum: number, p: any) => sum + (p.sessions_remaining ?? 0),
+    (sum: number, p: any) => sum + (p.bookable_remaining ?? 0),
     0
   );
 
