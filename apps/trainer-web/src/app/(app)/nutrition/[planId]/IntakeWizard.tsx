@@ -988,6 +988,7 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
   const [genPhase, setGenPhase] = useState<"idle" | "starting" | "polling" | "complete" | "error">("idle");
   const [genError, setGenError] = useState<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
 
   // Pre-fill on mount: plan intake_data wins over client profile
   useEffect(() => {
@@ -1107,9 +1108,18 @@ export default function IntakeWizard({ planId, clientId, onClose, onGenerated }:
       // Network error on /run is surfaced via /status polling — ignore here
     });
 
-    // Step 3: Poll /status every 3s
+    // Step 3: Poll /status every 3s (timeout after 90s / 30 polls)
+    pollCountRef.current = 0;
     pollIntervalRef.current = setInterval(async () => {
+      pollCountRef.current += 1;
       try {
+        if (pollCountRef.current > 30) {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setGenError("Generation timed out. Please try again.");
+          setGenPhase("error");
+          return;
+        }
         const statusRes = await fetch(`/api/nutrition/plans/${planId}/generate/status`);
         if (!statusRes.ok) return; // transient error — keep polling
         const statusData = await statusRes.json();
