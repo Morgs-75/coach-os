@@ -37,11 +37,21 @@ export async function GET(request: NextRequest) {
     (p: any) => !p.expires_at || new Date(p.expires_at) >= new Date()
   );
 
+  // Enrich each purchase with bookable_remaining (sessions_remaining minus future bookings)
+  const enrichedPurchases = await Promise.all(
+    activePurchases.map(async (p: any) => {
+      const { data: bookable } = await supabase.rpc("bookable_sessions_remaining", {
+        p_purchase_id: p.id,
+      });
+      return { ...p, bookable_remaining: bookable ?? 0 };
+    })
+  );
+
   return NextResponse.json({
     client_id: client.id,
     client_name: client.full_name,
     org_id: client.org_id,
     org_name: (client.orgs as any)?.name ?? "",
-    active_purchases: activePurchases,
+    active_purchases: enrichedPurchases,
   });
 }

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid link" }, { status: 401 });
     }
 
-    // Check sessions remaining
+    // Check sessions remaining (includes future confirmed bookings)
     const { data: purchases } = await supabase
       .from("client_purchases")
       .select("id, sessions_remaining, expires_at, session_duration_mins, offer_id(session_duration_mins)")
@@ -82,6 +82,18 @@ export async function POST(request: Request) {
       (resolvedPurchase.offer_id as any)?.session_duration_mins ??
       settings?.slot_duration_mins ??
       60;
+
+    // Atomic check: are there bookable sessions left (sessions_remaining minus future bookings)?
+    const { data: bookableCount } = await supabase.rpc("bookable_sessions_remaining", {
+      p_purchase_id: resolvedPurchase.id,
+    });
+
+    if ((bookableCount ?? 0) <= 0) {
+      return NextResponse.json(
+        { error: "All your available sessions are already booked. Please wait for a session to complete or purchase a new package." },
+        { status: 400 }
+      );
+    }
 
     const startDt = new Date(start_time);
     const endDt = new Date(startDt.getTime() + purchasedDurationMins * 60_000);

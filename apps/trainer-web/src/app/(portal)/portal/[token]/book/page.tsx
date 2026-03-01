@@ -8,6 +8,7 @@ type ScoredSlot = { start: string; end: string; score: number; recommended: bool
 type ActivePurchase = {
   id: string;
   sessions_remaining: number;
+  bookable_remaining: number;
   expires_at: string | null;
   session_duration_mins: number | null;
   offer_id: { name: string; session_duration_mins: number | null } | null;
@@ -90,15 +91,17 @@ export default function PortalBookPage() {
     const purchases: ActivePurchase[] = v.active_purchases ?? [];
     setActivePurchases(purchases);
 
-    // Auto-select if only one purchase and skip to date step
-    if (purchases.length === 1) {
-      setSelectedPurchase(purchases[0]);
+    // Filter to purchases with bookable sessions remaining
+    const bookable = purchases.filter((p: ActivePurchase) => (p.bookable_remaining ?? p.sessions_remaining) > 0);
+
+    // Auto-select if only one bookable purchase and skip to date step
+    if (bookable.length === 1) {
+      setSelectedPurchase(bookable[0]);
       setAutoSelected(true);
       setStep("date");
-      // Fetch dates for this purchase's duration
-      await fetchDates(token, getDuration(purchases[0]));
-    } else if (purchases.length === 0) {
-      // No sessions — still show date step (server will gate at booking time)
+      await fetchDates(token, getDuration(bookable[0]));
+    } else if (bookable.length === 0) {
+      // No bookable sessions — still show date step (server will gate at booking time)
       setStep("date");
       setAutoSelected(true);
       await fetchDates(token);
@@ -135,7 +138,8 @@ export default function PortalBookPage() {
 
   const effectiveDurationMins = selectedPurchase ? getDuration(selectedPurchase) : slotDurationMins;
 
-  const sessionsRemaining = activePurchases.reduce((sum, p) => sum + (p.sessions_remaining ?? 0), 0);
+  const sessionsRemaining = activePurchases.reduce((sum, p) => sum + (p.bookable_remaining ?? p.sessions_remaining ?? 0), 0);
+  const bookablePurchases = activePurchases.filter(p => (p.bookable_remaining ?? p.sessions_remaining) > 0);
 
   // When a date is selected, fetch scored slots from the server
   useEffect(() => {
@@ -273,26 +277,39 @@ export default function PortalBookPage() {
               <p className="text-sm text-gray-500 mt-1">Choose which package to use for this session</p>
             </div>
             <div className="p-4 space-y-3">
-              {activePurchases.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => selectPackage(p)}
-                  className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-gray-400 transition-all"
-                >
-                  <p className="font-medium text-gray-900">{getOfferName(p)}</p>
-                  <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
-                    <span>{getDuration(p)} min session</span>
-                    <span className="w-1 h-1 rounded-full bg-gray-300" />
-                    <span>{p.sessions_remaining} session{p.sessions_remaining !== 1 ? "s" : ""} left</span>
-                    {p.expires_at && (
-                      <>
-                        <span className="w-1 h-1 rounded-full bg-gray-300" />
-                        <span>Expires {new Date(p.expires_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}</span>
-                      </>
-                    )}
-                  </div>
-                </button>
-              ))}
+              {activePurchases.map(p => {
+                const bookable = p.bookable_remaining ?? p.sessions_remaining;
+                const isDisabled = bookable <= 0;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => !isDisabled && selectPackage(p)}
+                    disabled={isDisabled}
+                    className={`w-full text-left p-4 rounded-lg border transition-all ${
+                      isDisabled
+                        ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                        : "border-gray-200 hover:border-gray-400"
+                    }`}
+                  >
+                    <p className={`font-medium ${isDisabled ? "text-gray-400" : "text-gray-900"}`}>{getOfferName(p)}</p>
+                    <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
+                      <span>{getDuration(p)} min session</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <span>
+                        {isDisabled
+                          ? "All sessions booked"
+                          : `${bookable} session${bookable !== 1 ? "s" : ""} available to book`}
+                      </span>
+                      {p.expires_at && (
+                        <>
+                          <span className="w-1 h-1 rounded-full bg-gray-300" />
+                          <span>Expires {new Date(p.expires_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}</span>
+                        </>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
