@@ -13,6 +13,15 @@ interface Booking {
   status: string;
 }
 
+interface ActivePurchase {
+  id: string;
+  sessions_total: number;
+  sessions_remaining: number;
+  bookable_remaining: number;
+  expires_at: string | null;
+  offer_id: { name: string } | null;
+}
+
 interface Props {
   token: string;
   clientName: string;
@@ -23,6 +32,7 @@ interface Props {
   upcomingBookings: Booking[];
   pastBookings: Booking[];
   mealPlan: NutritionPlan | null;
+  activePurchases: ActivePurchase[];
 }
 
 function fmtDate(iso: string) {
@@ -42,6 +52,7 @@ export default function PortalDashboard({
   upcomingBookings,
   pastBookings,
   mealPlan,
+  activePurchases,
 }: Props) {
   const searchParams = useSearchParams();
   const justPurchased = searchParams.get("purchased") === "1";
@@ -53,7 +64,7 @@ export default function PortalDashboard({
   const [pastOpen, setPastOpen] = useState(true);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"sessions" | "nutrition">("sessions");
+  const [activeTab, setActiveTab] = useState<"sessions" | "packages" | "nutrition">("sessions");
 
   // Feedback drawer state
   const [feedbackMeal, setFeedbackMeal] = useState<Meal | null>(null);
@@ -118,20 +129,23 @@ export default function PortalDashboard({
 
         {/* Tab bar */}
         <div className="max-w-2xl mx-auto px-4 flex gap-1">
-          {(["sessions", "nutrition"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === tab
-                  ? "border-current font-semibold"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-              style={activeTab === tab ? { color: primaryColor, borderColor: primaryColor } : {}}
-            >
-              {tab === "sessions" ? "Sessions" : "Nutrition"}
-            </button>
-          ))}
+          {(["sessions", "packages", "nutrition"] as const).map(tab => {
+            const label = tab === "sessions" ? "Sessions" : tab === "packages" ? "Packages" : "Nutrition";
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  activeTab === tab
+                    ? "border-current font-semibold"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+                style={activeTab === tab ? { color: primaryColor, borderColor: primaryColor } : {}}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -275,6 +289,78 @@ export default function PortalDashboard({
           <p className="text-center text-xs text-gray-400 pt-2">
             This is your personal portal link — keep it safe.
           </p>
+        </div>
+      )}
+
+      {/* Packages tab content */}
+      {activeTab === "packages" && (
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+          {activePurchases.length > 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900">Your packages</h2>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {activePurchases.map((p) => {
+                  const used = p.sessions_total - p.sessions_remaining;
+                  const booked = p.sessions_remaining - p.bookable_remaining;
+                  const remaining = p.bookable_remaining;
+                  const pct = p.sessions_total > 0 ? ((used / p.sessions_total) * 100) : 0;
+                  return (
+                    <div key={p.id} className="px-5 py-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="font-medium text-gray-900 text-sm">
+                          {(p.offer_id as any)?.name ?? "Package"}
+                        </p>
+                        {p.expires_at && (
+                          <span className="text-xs text-gray-400">
+                            Expires {new Date(p.expires_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        )}
+                      </div>
+                      {/* Progress bar */}
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${pct}%`, backgroundColor: primaryColor }}
+                        />
+                      </div>
+                      {/* Stats grid */}
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{p.sessions_total}</p>
+                          <p className="text-xs text-gray-500">Total</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{used}</p>
+                          <p className="text-xs text-gray-500">Used</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-amber-600">{booked}</p>
+                          <p className="text-xs text-gray-500">Booked</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold" style={{ color: primaryColor }}>{remaining}</p>
+                          <p className="text-xs text-gray-500">Remaining</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 px-5 py-8 text-center">
+              <p className="text-sm text-gray-500">No active packages</p>
+              <Link
+                href={`/portal/${token}/packages`}
+                className="inline-block mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Buy sessions
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

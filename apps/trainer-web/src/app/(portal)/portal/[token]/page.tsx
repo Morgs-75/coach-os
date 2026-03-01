@@ -44,7 +44,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
       .limit(10),
     supabase
       .from("client_purchases")
-      .select("sessions_remaining, expires_at")
+      .select("id, sessions_total, sessions_remaining, expires_at, offer_id(name)")
       .eq("client_id", client.id)
       .eq("payment_status", "succeeded"),
     supabase
@@ -77,10 +77,24 @@ export default async function PortalPage({ params }: PortalPageProps) {
   const displayName = brandingRes.data?.display_name ?? orgName;
   const primaryColor = brandingRes.data?.primary_color ?? "#0ea5e9";
 
-  const sessionsRemaining = (purchasesRes.data ?? []).reduce((sum, p) => {
-    if (p.expires_at && new Date(p.expires_at) < new Date()) return sum;
-    return sum + (p.sessions_remaining ?? 0);
-  }, 0);
+  // Filter active (non-expired) purchases and enrich with bookable_remaining
+  const activePurchases = (purchasesRes.data ?? []).filter(
+    (p: any) => !p.expires_at || new Date(p.expires_at) >= new Date()
+  );
+
+  const enrichedPurchases = await Promise.all(
+    activePurchases.map(async (p: any) => {
+      const { data: bookable } = await supabase.rpc("bookable_sessions_remaining", {
+        p_purchase_id: p.id,
+      });
+      return { ...p, bookable_remaining: bookable ?? 0 };
+    })
+  );
+
+  const sessionsRemaining = enrichedPurchases.reduce(
+    (sum: number, p: any) => sum + (p.sessions_remaining ?? 0),
+    0
+  );
 
   const cancelNoticeHours = settingsRes.data?.cancel_notice_hours ?? 24;
 
@@ -117,6 +131,7 @@ export default async function PortalPage({ params }: PortalPageProps) {
       upcomingBookings={upcomingRes.data ?? []}
       pastBookings={pastRes.data ?? []}
       mealPlan={mealPlan}
+      activePurchases={enrichedPurchases}
     />
   );
 }

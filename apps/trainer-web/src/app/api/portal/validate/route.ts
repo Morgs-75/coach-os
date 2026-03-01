@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   // Fetch active purchases (server-side to bypass RLS)
   const { data: purchases } = await supabase
     .from("client_purchases")
-    .select("id, sessions_remaining, expires_at, session_duration_mins, offer_id(name, session_duration_mins)")
+    .select("id, sessions_total, sessions_remaining, expires_at, session_duration_mins, offer_id(name, session_duration_mins)")
     .eq("client_id", client.id)
     .eq("payment_status", "succeeded")
     .gt("sessions_remaining", 0);
